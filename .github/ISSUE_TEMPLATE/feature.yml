@@ -1,0 +1,37 @@
+name: 기능 요청
+description: 새 기능이나 개선을 제안합니다
+title: "FEAT: "
+labels: ["기능"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 개요
+      description: 무엇을, 왜 필요한지 한두 문장으로 설명하세요.
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 상세 내용 / 수용 기준
+      description: 완료로 볼 수 있는 조건, 관련 화면·API·데이터·규칙 등을 적으세요.
+    validations:
+      required: false
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: 관련 마일스톤
+      options:
+        - 예선 제출물
+        - 본선 대비 고도화
+        - 본선 현장
+        - 미정
+    validations:
+      required: false
+  - type: textarea
+    id: refs
+    attributes:
+      label: 참고
+      description: 관련 이슈·문서·설계(ADR) 링크가 있으면 남기세요.
+    validations:
+      required: false

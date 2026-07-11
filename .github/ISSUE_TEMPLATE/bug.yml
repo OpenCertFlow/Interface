@@ -1,0 +1,37 @@
+name: 버그 신고
+description: 의도대로 동작하지 않는 문제를 신고합니다
+title: "FIX: "
+labels: ["버그"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 현상
+      description: 어떤 문제가 발생하는지 설명하세요.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 절차
+      description: 문제를 재현하는 단계를 순서대로 적으세요.
+      placeholder: |
+        1. ...
+        2. ...
+        3. 오류 발생
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+      description: 원래 어떻게 동작해야 하는지 적으세요.
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 환경 / 로그
+      description: 실행 환경, traceId, 오류 로그 등을 남기세요.
+    validations:
+      required: false
