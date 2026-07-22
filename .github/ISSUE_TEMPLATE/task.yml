@@ -1,26 +1,32 @@
-name: 작업 / 인프라
-description: 기능 외 작업(리팩터링·인프라·문서·테스트)을 등록합니다
-title: "CHORE: "
+name: "🛠 Task"
+description: "기능 외 작업(리팩터링·인프라·문서·테스트)"
+title: "[ 페이지명 ] "
 labels: []
 body:
-  - type: textarea
-    id: work
+  - type: markdown
     attributes:
-      label: 작업 내용
-      description: 무엇을 할지 설명하세요.
+      value: |
+        제목은 `[ 페이지명 ] 내용` 형식으로 작성합니다. (예: `[ CI ] 파이프라인 캐시 적용`)
+        **대괄호 안에 띄어쓰기가 있어요!**
+  - type: textarea
+    attributes:
+      label: 🛠 어떤 작업인가요?
+      description: 무엇을 할지 설명해 주세요.
     validations:
       required: true
   - type: textarea
-    id: done
     attributes:
-      label: 완료 조건
-      description: 어떤 상태가 되면 완료로 볼지 적으세요.
+      label: ✅ To Dos
+      description: 할 일을 체크박스 형태로 적어주세요.
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
     validations:
-      required: false
+      required: true
   - type: dropdown
-    id: kind
     attributes:
-      label: 분류
+      label: 📂 분류
       options:
         - 인프라
         - 문서
@@ -29,3 +35,7 @@ body:
         - 기타
     validations:
       required: false
+  - type: textarea
+    attributes:
+      label: 🙋🏻 참고 자료
+      description: 참고 자료가 있다면 작성해 주세요.

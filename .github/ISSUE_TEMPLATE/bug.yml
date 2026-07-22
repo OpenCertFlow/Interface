@@ -1,20 +1,23 @@
-name: 버그 신고
-description: 의도대로 동작하지 않는 문제를 신고합니다
-title: "FIX: "
+name: "🐛 Bug"
+description: "의도대로 동작하지 않는 문제 신고"
+title: "[ 페이지명 ] "
 labels: ["버그"]
 body:
-  - type: textarea
-    id: what
+  - type: markdown
     attributes:
-      label: 현상
-      description: 어떤 문제가 발생하는지 설명하세요.
+      value: |
+        제목은 `[ 페이지명 ] 내용` 형식으로 작성합니다. (예: `[ Main ] 목록 스크롤 시 앱 종료`)
+        **대괄호 안에 띄어쓰기가 있어요!**
+  - type: textarea
+    attributes:
+      label: 🐛 어떤 문제인가요?
+      description: 어떤 문제가 발생하는지 설명해 주세요.
     validations:
       required: true
   - type: textarea
-    id: steps
     attributes:
-      label: 재현 절차
-      description: 문제를 재현하는 단계를 순서대로 적으세요.
+      label: 🔁 재현 절차
+      description: 문제를 재현하는 단계를 순서대로 적어주세요.
       placeholder: |
         1. ...
         2. ...
@@ -22,16 +25,21 @@ body:
     validations:
       required: true
   - type: textarea
-    id: expected
     attributes:
-      label: 기대 동작
-      description: 원래 어떻게 동작해야 하는지 적으세요.
+      label: 💚 기대 동작
+      description: 원래 어떻게 동작해야 하는지 적어주세요.
     validations:
       required: true
   - type: textarea
-    id: env
     attributes:
-      label: 환경 / 로그
-      description: 실행 환경, traceId, 오류 로그 등을 남기세요.
+      label: ✅ To Dos
+      description: 해결을 위해 할 일을 체크박스로 적어주세요.
+      value: |
+        - [ ]
+        - [ ]
     validations:
       required: false
+  - type: textarea
+    attributes:
+      label: 🙋🏻 환경 / 로그
+      description: 실행 환경, traceId, 오류 로그 등을 남겨주세요.

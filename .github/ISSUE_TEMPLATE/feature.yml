@@ -1,19 +1,29 @@
 name: "✨ Feature"
 description: "새로운 기능 추가"
+title: "[ 페이지명 ] "
 labels: ["feature"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        제목은 `[ 페이지명 ] 내용` 형식으로 작성합니다. (예: `[ Main ] 메인 뷰 구현`)
+        **대괄호 안에 띄어쓰기가 있어요!** 구현 완료 시 캡처도 남겨주세요.
   - type: textarea
     attributes:
-      label: 📄 설명
+      label: 💚 어떤 기능인가요?
       description: 새로운 기능에 대한 설명을 작성해 주세요.
       placeholder: 자세히 적을수록 좋습니다!
     validations:
       required: true
   - type: textarea
     attributes:
-      label: ✅ 작업할 내용
+      label: ✅ To Dos
       description: 할 일을 체크박스 형태로 작성해주세요.
       placeholder: 최대한 세분화 해서 적어주세요!
+      value: |
+        - [ ]
+        - [ ]
+        - [ ]
     validations:
       required: true
   - type: textarea
