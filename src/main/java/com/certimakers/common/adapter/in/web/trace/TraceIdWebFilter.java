@@ -1,6 +1,5 @@
 package com.certimakers.common.adapter.in.web.trace;
 
-import com.certimakers.common.domain.port.IdGenerator;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -19,21 +18,25 @@ import reactor.util.context.Context;
  *
  * <p>백엔드 → AI 워커 호출에도 같은 헤더가 전파된다({@code WebClientConfig}). 이것이 분산 추적의
  * 최소 형태이며, 해커톤 규모에서는 이것으로 충분하다(ADR-0004).
+ *
+ * <p>이 필터는 <b>네티 이벤트 루프에서 모든 요청마다</b> 실행된다. 따라서 추적 ID 생성에
+ * {@code SecureRandom} 기반 {@code IdGenerator}를 쓰지 않고 {@link TraceIdFactory}를 쓴다 —
+ * 이유는 그 클래스에 적어 두었다.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class TraceIdWebFilter implements WebFilter {
 
-    private final IdGenerator idGenerator;
+    private final TraceIdFactory traceIdFactory;
 
-    public TraceIdWebFilter(IdGenerator idGenerator) {
-        this.idGenerator = idGenerator;
+    public TraceIdWebFilter(TraceIdFactory traceIdFactory) {
+        this.traceIdFactory = traceIdFactory;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String inbound = exchange.getRequest().getHeaders().getFirst(TraceId.HEADER);
-        String traceId = StringUtils.hasText(inbound) ? inbound : idGenerator.nextId().toString();
+        String traceId = StringUtils.hasText(inbound) ? inbound : traceIdFactory.newTraceId();
 
         exchange.getResponse().getHeaders().set(TraceId.HEADER, traceId);
         return chain.filter(exchange).contextWrite(Context.of(TraceId.CONTEXT_KEY, traceId));

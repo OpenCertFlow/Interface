@@ -91,6 +91,21 @@ class ArchitectureTest {
     // 3. WebFlux + JPA 규율 (ADR-0002)
     // ─────────────────────────────────────────────────────────────
 
+    /**
+     * 웹 어댑터는 네티 이벤트 루프에서 실행된다. {@code IdGenerator}는 {@code SecureRandom} 기반이고,
+     * 리눅스에서 {@code SecureRandom}은 {@code /dev/urandom}을 파일로 읽는다 — 이벤트 루프에서
+     * 그것을 호출하면 BlockHound가 잡아내는 실제 블로킹이 된다. 윈도우에서는 다른 PRNG 공급자를 써서
+     * 드러나지 않으므로, 로컬 개발만으로는 절대 발견되지 않는다. 그래서 규칙으로 못 박는다.
+     *
+     * <p>식별자 생성은 애플리케이션 서비스에서, 즉 블로킹 스케줄러 위에서 한다.
+     */
+    @ArchTest
+    static final ArchRule 웹_어댑터는_보안난수_식별자_생성기를_쓰지_않는다 = noClasses()
+            .that().resideInAPackage(ADAPTER_IN)
+            .should().dependOnClassesThat()
+            .haveFullyQualifiedName("com.certimakers.common.domain.port.IdGenerator")
+            .because("이벤트 루프에서 SecureRandom을 호출하면 리눅스에서 파일 읽기로 블로킹된다(ADR-0002)");
+
     @ArchTest
     static final ArchRule 애플리케이션에_트랜잭션_애노테이션을_붙이지_않는다 = noClasses()
             .that().resideInAPackage(APPLICATION)
