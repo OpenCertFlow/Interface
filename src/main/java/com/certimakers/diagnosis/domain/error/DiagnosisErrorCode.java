@@ -16,7 +16,14 @@ public enum DiagnosisErrorCode implements ErrorCode {
     INVALID_STATE_TRANSITION("CM-DIAG-003", "현재 진단 상태에서 수행할 수 없는 작업입니다.", ErrorType.CONFLICT),
 
     /** 진단 결과 저장 실패. 폴백이 없는 진단 실패 지점(500). */
-    DIAGNOSIS_SAVE_FAILED("CM-DIAG-004", "진단 결과 저장에 실패했습니다.", ErrorType.INTERNAL);
+    DIAGNOSIS_SAVE_FAILED("CM-DIAG-004", "진단 결과 저장에 실패했습니다.", ErrorType.INTERNAL),
+
+    /**
+     * 룰 평가가 끝나지 않은 진단으로 시뮬레이션·보완 계획을 요청했다. 점수와 체크리스트가 없으면
+     * 비교 기준이 없어 "무엇이 달라지는가"를 답할 수 없다.
+     */
+    SIMULATION_NOT_AVAILABLE("CM-DIAG-005",
+            "아직 평가가 완료되지 않은 진단은 시뮬레이션할 수 없습니다.", ErrorType.CONFLICT);
 
     private final String code;
     private final String defaultMessage;
