@@ -1,0 +1,13 @@
+# PR이 올라오면 여기 지정된 사람이 자동으로 리뷰어로 요청된다.
+# 나중 줄이 앞 줄을 덮어쓰므로, 더 좁은 경로를 아래에 둔다.
+
+# 기본 소유자
+*                           @RosieOh
+
+# 인프라·CI·배포
+/.github/                   @RosieOh
+/docker-compose.yml         @RosieOh
+/Dockerfile                 @RosieOh
+
+# 문서·설계(ADR)
+/docs/                      @RosieOh
