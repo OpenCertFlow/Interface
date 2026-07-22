@@ -7,6 +7,9 @@ import com.certimakers.common.domain.port.TimeProvider;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
 import com.certimakers.diagnosis.application.port.in.GetDiagnosisReportQuery;
+import com.certimakers.diagnosis.application.port.in.GetRemediationPlanQuery;
+import com.certimakers.diagnosis.application.port.in.SimulateCommand;
+import com.certimakers.diagnosis.application.port.in.SimulateDiagnosisUseCase;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import jakarta.validation.Valid;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 /**
@@ -29,17 +33,26 @@ public class DiagnosisController {
 
     private final DiagnoseProductUseCase diagnoseProductUseCase;
     private final GetDiagnosisReportQuery getDiagnosisReportQuery;
+    private final SimulateDiagnosisUseCase simulateDiagnosisUseCase;
+    private final GetRemediationPlanQuery getRemediationPlanQuery;
     private final DiagnosisWebMapper webMapper;
+    private final SimulationWebMapper simulationWebMapper;
     private final TimeProvider timeProvider;
 
     public DiagnosisController(
             DiagnoseProductUseCase diagnoseProductUseCase,
             GetDiagnosisReportQuery getDiagnosisReportQuery,
+            SimulateDiagnosisUseCase simulateDiagnosisUseCase,
+            GetRemediationPlanQuery getRemediationPlanQuery,
             DiagnosisWebMapper webMapper,
+            SimulationWebMapper simulationWebMapper,
             TimeProvider timeProvider) {
         this.diagnoseProductUseCase = diagnoseProductUseCase;
         this.getDiagnosisReportQuery = getDiagnosisReportQuery;
+        this.simulateDiagnosisUseCase = simulateDiagnosisUseCase;
+        this.getRemediationPlanQuery = getRemediationPlanQuery;
         this.webMapper = webMapper;
+        this.simulationWebMapper = simulationWebMapper;
         this.timeProvider = timeProvider;
     }
 
@@ -56,6 +69,41 @@ public class DiagnosisController {
             @PathVariable UUID id) {
         return getDiagnosisReportQuery.getById(DiagnosisId.of(id))
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.OK));
+    }
+
+    /**
+     * 반사실 시뮬레이션. "이 서류를 준비하면 / 이 사양을 바꾸면 결과가 어떻게 달라지는가".
+     *
+     * <p>결과를 저장하지 않으므로 조회 성격이지만, 가정을 본문으로 받아야 해서 POST를 쓴다.
+     * 저장하지 않는다는 사실이 응답의 {@code notice}에 명시된다.
+     */
+    @PostMapping("/{id}/simulations")
+    public Mono<ResponseEntity<ApiResponse<SimulationResponse>>> simulate(
+            @PathVariable UUID id, @Valid @RequestBody SimulateRequest request) {
+
+        SimulateCommand command = new SimulateCommand(
+                DiagnosisId.of(id), simulationWebMapper.toAdjustment(request));
+
+        return simulateDiagnosisUseCase.simulate(command)
+                .flatMap(outcome -> TraceId.current().map(traceId -> ResponseEntity.ok(
+                        ApiResponse.success(
+                                simulationWebMapper.toResponse(id.toString(), outcome),
+                                traceId,
+                                timeProvider.now()))));
+    }
+
+    /** 목표 준비도에 도달하기 위한 최소 보완 경로. */
+    @GetMapping("/{id}/remediation-plan")
+    public Mono<ResponseEntity<ApiResponse<RemediationPlanResponse>>> remediationPlan(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "100") int targetScore) {
+
+        return getRemediationPlanQuery.plan(DiagnosisId.of(id), targetScore)
+                .flatMap(plan -> TraceId.current().map(traceId -> ResponseEntity.ok(
+                        ApiResponse.success(
+                                simulationWebMapper.toResponse(id.toString(), plan),
+                                traceId,
+                                timeProvider.now()))));
     }
 
     private Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> wrap(
