@@ -9,7 +9,7 @@ Spring Boot 3.5 (WebFlux) · Java 17 · PostgreSQL · 헥사고날 아키텍처
 ## 실행
 
 ```bash
-docker compose up -d postgres qdrant     # 프로젝트 루트에서
+docker compose up -d postgres redis qdrant     # 프로젝트 루트에서
 cd backend
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
