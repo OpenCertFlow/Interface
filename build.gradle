@@ -21,6 +21,7 @@ ext {
 	archunitVersion = '1.3.0'
 	springdocVersion = '2.8.6'
 	blockhoundVersion = '1.0.11.RELEASE'
+	jjwtVersion = '0.12.6'
 }
 
 dependencies {
@@ -28,9 +29,20 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// 리액티브 시큐리티. 서블릿 필터 체인이 아니라 SecurityWebFilterChain을 쓴다(WebFlux 일관성).
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// 이메일 인증 코드·비밀번호 재설정 토큰 저장소. Lettuce 기반이라 논블로킹이다.
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+	// 이메일 발송. JavaMailSender는 블로킹이므로 BlockingBridge로 감싼다.
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:${springdocVersion}"
+
+	// JWT 발급·검증. 서명·파싱은 순수 CPU 작업이라 이벤트 루프에서 돌려도 블로킹이 아니다.
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
@@ -39,9 +51,11 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:postgresql'
+	// 이메일 인증 통합 테스트용 Redis 컨테이너(전용 모듈 없이 GenericContainer로 띄운다).
 	testImplementation 'org.assertj:assertj-core'
 
 	// 아키텍처 규칙을 CI에서 강제한다. 이것이 빠지면 ADR-0001의 전제가 무너진다.

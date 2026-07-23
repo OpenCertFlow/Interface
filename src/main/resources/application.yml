@@ -28,6 +28,24 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:false}
+
   jackson:
     default-property-inclusion: non_null
     serialization:
@@ -40,6 +58,25 @@ certimakers:
     jdbc-pool-size: 10           # ← spring.datasource.hikari.maximum-pool-size와 동일하게
     queue-capacity: 1000
     ttl-seconds: 60
+
+  auth:
+    jwt:
+      # 운영에서는 반드시 CERTIMAKERS_AUTH_JWT_SECRET로 주입한다. HS256에는 32바이트 이상이 필요하다.
+      secret: ${CERTIMAKERS_AUTH_JWT_SECRET:certimakers-local-development-secret-key-do-not-use-in-production}
+      access-token-ttl-seconds: 1800      # 30분. 짧게 두고 리프레시로 갱신한다
+      refresh-token-ttl-seconds: 1209600  # 14일
+      issuer: certimakers
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
+      redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/api/v1/auth/kakao/callback}
+      token-uri: https://kauth.kakao.com/oauth/token
+      user-info-uri: https://kapi.kakao.com/v2/user/me
+    email:
+      code-ttl-seconds: 300         # 인증 코드 5분
+      reset-token-ttl-seconds: 1800 # 재설정 링크 30분
+      reset-link-base-url: ${PASSWORD_RESET_LINK_BASE_URL:http://localhost:8080/reset-password}
+      from: ${MAIL_FROM:no-reply@certimakers.local}
 
   ai-worker:
     base-url: ${AI_WORKER_URL:http://localhost:8000}
@@ -56,6 +93,12 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    # 메일 헬스 체크는 매번 SMTP에 접속을 시도한다. 시연 환경에서 메일 서버가 없거나 느리면
+    # 헬스 프로브 자체가 실패·지연되어 배포가 죽은 것처럼 보인다. 인증 코드 발송은 실패해도
+    # 서비스 본체(진단)는 계속 동작해야 하므로 헬스 판정에서 뺀다.
+    mail:
+      enabled: false
 
 springdoc:
   swagger-ui:
