@@ -6,6 +6,7 @@ import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
+import com.certimakers.diagnosis.application.port.in.ExportReportPdfQuery;
 import com.certimakers.diagnosis.application.port.in.GetDiagnosisReportQuery;
 import com.certimakers.diagnosis.application.port.in.GetRemediationPlanQuery;
 import com.certimakers.diagnosis.application.port.in.SimulateCommand;
@@ -13,8 +14,12 @@ import com.certimakers.diagnosis.application.port.in.SimulateDiagnosisUseCase;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import jakarta.validation.Valid;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +40,7 @@ public class DiagnosisController {
     private final GetDiagnosisReportQuery getDiagnosisReportQuery;
     private final SimulateDiagnosisUseCase simulateDiagnosisUseCase;
     private final GetRemediationPlanQuery getRemediationPlanQuery;
+    private final ExportReportPdfQuery exportReportPdfQuery;
     private final DiagnosisWebMapper webMapper;
     private final SimulationWebMapper simulationWebMapper;
     private final TimeProvider timeProvider;
@@ -44,6 +50,7 @@ public class DiagnosisController {
             GetDiagnosisReportQuery getDiagnosisReportQuery,
             SimulateDiagnosisUseCase simulateDiagnosisUseCase,
             GetRemediationPlanQuery getRemediationPlanQuery,
+            ExportReportPdfQuery exportReportPdfQuery,
             DiagnosisWebMapper webMapper,
             SimulationWebMapper simulationWebMapper,
             TimeProvider timeProvider) {
@@ -51,6 +58,7 @@ public class DiagnosisController {
         this.getDiagnosisReportQuery = getDiagnosisReportQuery;
         this.simulateDiagnosisUseCase = simulateDiagnosisUseCase;
         this.getRemediationPlanQuery = getRemediationPlanQuery;
+        this.exportReportPdfQuery = exportReportPdfQuery;
         this.webMapper = webMapper;
         this.simulationWebMapper = simulationWebMapper;
         this.timeProvider = timeProvider;
@@ -104,6 +112,24 @@ public class DiagnosisController {
                                 simulationWebMapper.toResponse(id.toString(), plan),
                                 traceId,
                                 timeProvider.now()))));
+    }
+
+    /**
+     * 진단 리포트 PDF 내려받기. 상담 자리에 그대로 들고 갈 수 있는 형태다.
+     *
+     * <p>저장하지 않고 매번 다시 그린다 — 표현이 바뀌어도 최신 형식으로 나온다.
+     */
+    @GetMapping(value = "/{id}/report.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public Mono<ResponseEntity<byte[]>> exportReportPdf(@PathVariable UUID id) {
+        return exportReportPdfQuery.export(id.toString())
+                .map(report -> ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .contentLength(report.content().length)
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                ContentDisposition.attachment()
+                                        .filename(report.fileName(), StandardCharsets.UTF_8)
+                                        .build().toString())
+                        .body(report.content()));
     }
 
     private Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> wrap(
