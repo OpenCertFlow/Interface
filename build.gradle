@@ -22,6 +22,7 @@ ext {
 	springdocVersion = '2.8.6'
 	blockhoundVersion = '1.0.11.RELEASE'
 	jjwtVersion = '0.12.6'
+	openPdfVersion = '1.4.2'
 }
 
 dependencies {
@@ -38,6 +39,10 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:${springdocVersion}"
+
+	// PDF 생성. fonts-extra가 한글 CJK 폰트(Adobe-Korea1)를 제공한다.
+	implementation "com.github.librepdf:openpdf:${openPdfVersion}"
+	implementation "com.github.librepdf:openpdf-fonts-extra:${openPdfVersion}"
 
 	// JWT 발급·검증. 서명·파싱은 순수 CPU 작업이라 이벤트 루프에서 돌려도 블로킹이 아니다.
 	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
@@ -83,3 +88,4 @@ tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs << '-parameters'
 	options.encoding = 'UTF-8'
 }
+
