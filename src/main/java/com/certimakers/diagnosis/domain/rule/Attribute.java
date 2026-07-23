@@ -35,6 +35,41 @@ public enum Attribute {
             return profile.electrical().hasBattery();
         }
     },
+
+    /**
+     * 사용 중 신체에 직접 닿는지. 발열 제품에서 화상 위험 판단의 핵심 입력이다.
+     *
+     * <p>발열 사양이 없는 제품(드라이기 등)은 {@code null}을 반환한다 — {@code false}가 아니다.
+     * "닿지 않는다"와 "발열 제품이 아니라 물을 이유가 없다"는 다른 상태이며, 후자를 false로
+     * 뭉개면 발열 룰이 엉뚱한 제품에 매칭될 수 있다.
+     */
+    DIRECT_BODY_CONTACT(ValueKind.BOOLEAN) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.directBodyContact())
+                    .orElse(null);
+        }
+    },
+
+    /** 온도조절기(과열 방지 장치)를 갖췄는지. 발열 사양이 없으면 null. */
+    HAS_TEMPERATURE_CONTROLLER(ValueKind.BOOLEAN) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.hasTemperatureController())
+                    .orElse(null);
+        }
+    },
+
+    /** 최고 표면온도(℃). 측정하지 않았거나 발열 제품이 아니면 null → 판단 불가로 이어진다. */
+    MAX_SURFACE_TEMPERATURE(ValueKind.INTEGER) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec()
+                    .map(heating -> (Object) heating.maxSurfaceTemperatureCelsius())
+                    .orElse(null);
+        }
+    },
+
     TARGET_USER(ValueKind.TARGET_USER) {
         @Override
         public Object resolve(ProductProfile profile) {

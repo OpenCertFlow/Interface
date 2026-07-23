@@ -1,6 +1,7 @@
 package com.certimakers.diagnosis.domain.model;
 
 import com.certimakers.common.domain.model.Guard;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -12,6 +13,7 @@ import java.util.Set;
  * @param productName    제품명
  * @param productGroup   제품군
  * @param electrical     전기적 사양
+ * @param heating        발열 사양. 발열 제품이 아니면 null
  * @param targetUser     사용 대상
  * @param salesChannel   판매 방식
  * @param materials      주요 재질
@@ -21,6 +23,7 @@ public record ProductProfile(
         String productName,
         ProductGroup productGroup,
         ElectricalSpec electrical,
+        HeatingSpec heating,
         TargetUser targetUser,
         SalesChannel salesChannel,
         Set<MaterialType> materials,
@@ -36,7 +39,29 @@ public record ProductProfile(
         heldDocuments = Set.copyOf(Guard.notNull(heldDocuments, "heldDocuments"));
     }
 
+    /**
+     * 발열 사양이 없는 제품(드라이기 등)을 만든다.
+     *
+     * <p>기존 호출부를 그대로 두기 위한 편의 생성자다 — 발열 개념을 도입하면서 발열과 무관한
+     * 제품군의 코드까지 바꿀 이유는 없다.
+     */
+    public ProductProfile(
+            String productName,
+            ProductGroup productGroup,
+            ElectricalSpec electrical,
+            TargetUser targetUser,
+            SalesChannel salesChannel,
+            Set<MaterialType> materials,
+            Set<DocumentCode> heldDocuments) {
+        this(productName, productGroup, electrical, null,
+                targetUser, salesChannel, materials, heldDocuments);
+    }
+
     public boolean holds(DocumentCode document) {
         return heldDocuments.contains(document);
+    }
+
+    public Optional<HeatingSpec> heatingSpec() {
+        return Optional.ofNullable(heating);
     }
 }
