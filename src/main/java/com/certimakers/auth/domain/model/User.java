@@ -83,6 +83,21 @@ public class User extends AggregateRoot<UserId> {
     }
 
     /**
+     * 권한을 바꾼다. 공지·자료실 작성처럼 관리자만 할 수 있는 일이 있으므로 누군가는 관리자가 되어야
+     * 한다.
+     *
+     * <p>"누가 이 조작을 할 수 있는가"는 이 애그리거트가 아니라 호출부(관리자 전용 API·시작 시
+     * 부트스트랩)가 판단한다. 애그리거트는 자기 상태의 일관성만 책임진다.
+     */
+    public void changeRole(Role newRole) {
+        this.role = Guard.notNull(newRole, "role");
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
+
+    /**
      * 비밀번호를 새 해시로 교체한다. 소셜 계정에는 허용하지 않는다 — 카카오 계정에 비밀번호를 심으면
      * 로그인 경로가 두 갈래가 되어 계정 탈취 표면이 넓어진다.
      */

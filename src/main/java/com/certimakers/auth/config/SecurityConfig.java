@@ -69,10 +69,15 @@ public class SecurityConfig {
                         // 비밀글 가리기는 도메인이 하고, 여기서는 경로만 연다.
                         .pathMatchers(HttpMethod.GET, "/api/v1/boards/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
-                        // 마이페이지·글쓰기·파일 업로드는 인증이 필요하다
+                        // 어떤 문서를 만들 수 있는지는 로그인 전에도 보여 준다
+                        .pathMatchers(HttpMethod.GET, "/api/v1/documents/templates").permitAll()
+                        // 관리자 전용. 권한 판단을 여기 한 곳에만 둔다
+                        .pathMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // 마이페이지·글쓰기·파일 업로드·문서 발급은 인증이 필요하다
                         .pathMatchers("/api/v1/me/**").authenticated()
                         .pathMatchers("/api/v1/boards/**").authenticated()
                         .pathMatchers("/api/v1/files/**").authenticated()
+                        .pathMatchers("/api/v1/documents/**").authenticated()
                         .anyExchange().permitAll())
                 .addFilterAt(jwtFilter, org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION)
                 .exceptionHandling(handling -> handling

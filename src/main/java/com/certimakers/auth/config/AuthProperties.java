@@ -1,16 +1,19 @@
 package com.certimakers.auth.config;
 
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * 인증 설정. {@code certimakers.auth.*}에 바인딩된다.
  *
- * @param jwt   JWT 서명·만료 설정
- * @param kakao 카카오 OAuth 설정
- * @param email 이메일 인증·재설정 설정
+ * @param jwt                  JWT 서명·만료 설정
+ * @param kakao                카카오 OAuth 설정
+ * @param email                이메일 인증·재설정 설정
+ * @param bootstrapAdminEmails 시작 시 관리자로 승격할 계정 이메일. 최초 관리자를 만드는 유일한 통로다
  */
 @ConfigurationProperties(prefix = "certimakers.auth")
-public record AuthProperties(Jwt jwt, Kakao kakao, EmailVerification email) {
+public record AuthProperties(
+        Jwt jwt, Kakao kakao, EmailVerification email, List<String> bootstrapAdminEmails) {
 
     /**
      * @param secret                  HMAC 서명 비밀키(Base64 또는 평문). 최소 32바이트여야 HS256에 안전하다

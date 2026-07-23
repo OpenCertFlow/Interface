@@ -77,6 +77,10 @@ certimakers:
       reset-token-ttl-seconds: 1800 # 재설정 링크 30분
       reset-link-base-url: ${PASSWORD_RESET_LINK_BASE_URL:http://localhost:8080/reset-password}
       from: ${MAIL_FROM:no-reply@certimakers.local}
+    # 시작 시 관리자로 승격할 계정. 최초 관리자를 만드는 유일한 통로이며,
+    # 그 이후 권한 부여는 PATCH /api/v1/admin/users/{id}/role 로 한다.
+    # 쉼표로 구분: CERTIMAKERS_ADMIN_EMAILS=a@x.com,b@x.com
+    bootstrap-admin-emails: ${CERTIMAKERS_ADMIN_EMAILS:}
 
   file:
     # 업로드 파일이 저장되는 루트. 이 밖으로는 어떤 경로로도 쓰지 않는다.

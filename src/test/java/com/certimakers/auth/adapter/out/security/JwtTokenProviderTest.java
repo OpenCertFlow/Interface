@@ -41,7 +41,8 @@ class JwtTokenProviderTest {
         return new AuthProperties(
                 new AuthProperties.Jwt(secret, 1800, 1_209_600, "certimakers"),
                 new AuthProperties.Kakao("id", "secret", "uri", "token", "userinfo"),
-                new AuthProperties.EmailVerification(300, 1800, "http://localhost/reset", "no-reply@x.com"));
+                new AuthProperties.EmailVerification(300, 1800, "http://localhost/reset", "no-reply@x.com"),
+                java.util.List.of());
     }
 
     private static JwtTokenProvider providerAt(Instant now, String secret) {
