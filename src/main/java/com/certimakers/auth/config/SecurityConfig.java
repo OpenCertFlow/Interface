@@ -65,8 +65,14 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/product-groups/**").permitAll()
                         .pathMatchers("/actuator/**").permitAll()
                         .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // 마이페이지는 본인만
+                        // 게시판 열람과 파일 다운로드는 비로그인도 가능하다.
+                        // 비밀글 가리기는 도메인이 하고, 여기서는 경로만 연다.
+                        .pathMatchers(HttpMethod.GET, "/api/v1/boards/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
+                        // 마이페이지·글쓰기·파일 업로드는 인증이 필요하다
                         .pathMatchers("/api/v1/me/**").authenticated()
+                        .pathMatchers("/api/v1/boards/**").authenticated()
+                        .pathMatchers("/api/v1/files/**").authenticated()
                         .anyExchange().permitAll())
                 .addFilterAt(jwtFilter, org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION)
                 .exceptionHandling(handling -> handling
