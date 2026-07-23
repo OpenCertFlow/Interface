@@ -1,0 +1,25 @@
+package com.certimakers.document.adapter.out.issuer;
+
+import com.certimakers.auth.application.port.out.LoadUserPort;
+import com.certimakers.auth.domain.model.UserId;
+import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdapter;
+import com.certimakers.document.application.port.out.LoadIssuerNamePort;
+import java.util.Optional;
+import java.util.UUID;
+
+/** 발급자 표시 이름 조회. 인증 컨텍스트의 조회 포트를 빌려 닉네임만 가져온다. */
+@PersistenceAdapter
+public class IssuerNicknameAdapter implements LoadIssuerNamePort {
+
+    private final LoadUserPort loadUserPort;
+
+    public IssuerNicknameAdapter(LoadUserPort loadUserPort) {
+        this.loadUserPort = loadUserPort;
+    }
+
+    @Override
+    public Optional<String> findNickname(UUID issuerId) {
+        return loadUserPort.findById(UserId.of(issuerId))
+                .map(user -> user.nickname().value());
+    }
+}
