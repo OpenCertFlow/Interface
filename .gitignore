@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# 업로드된 파일 (로컬 저장소)
+/data/uploads/

@@ -78,6 +78,11 @@ certimakers:
       reset-link-base-url: ${PASSWORD_RESET_LINK_BASE_URL:http://localhost:8080/reset-password}
       from: ${MAIL_FROM:no-reply@certimakers.local}
 
+  file:
+    # 업로드 파일이 저장되는 루트. 이 밖으로는 어떤 경로로도 쓰지 않는다.
+    storage-root: ${FILE_STORAGE_ROOT:./data/uploads}
+    max-size-in-bytes: ${FILE_MAX_SIZE_BYTES:20971520} # 20MB
+
   ai-worker:
     base-url: ${AI_WORKER_URL:http://localhost:8000}
     # 응답 시간 예산. 초과 시 폴백한다 — 진단은 실패하지 않는다. docs/design/03-diagnosis-flow.md
