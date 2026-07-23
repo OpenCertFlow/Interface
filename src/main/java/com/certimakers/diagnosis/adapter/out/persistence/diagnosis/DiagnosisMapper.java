@@ -10,6 +10,7 @@ import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import com.certimakers.diagnosis.domain.model.DiagnosisStatus;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ElectricalSpec;
+import com.certimakers.diagnosis.domain.model.HeatingSpec;
 import com.certimakers.diagnosis.domain.model.Evidence;
 import com.certimakers.diagnosis.domain.model.ExpertReviewItem;
 import com.certimakers.diagnosis.domain.model.ExpertReviewReason;
@@ -69,6 +70,8 @@ public class DiagnosisMapper {
 
     private ProductProfileEntity toProfileEntity(ProductProfile profile) {
         ElectricalSpec electrical = profile.electrical();
+        HeatingSpec heating = profile.heating();
+
         return new ProductProfileEntity(
                 profile.productName(),
                 profile.productGroup().name(),
@@ -80,7 +83,10 @@ public class DiagnosisMapper {
                 profile.salesChannel().name(),
                 JsonColumns.writeStringList(profile.materials().stream().map(Enum::name).toList()),
                 JsonColumns.writeStringList(
-                        profile.heldDocuments().stream().map(DocumentCode::value).toList()));
+                        profile.heldDocuments().stream().map(DocumentCode::value).toList()),
+                heating != null ? heating.directBodyContact() : null,
+                heating != null ? heating.hasTemperatureController() : null,
+                heating != null ? heating.maxSurfaceTemperatureCelsius() : null);
     }
 
     private CertificationCandidateEntity toCandidateEntity(CertificationCandidate candidate) {
@@ -150,10 +156,19 @@ public class DiagnosisMapper {
         Set<DocumentCode> heldDocuments = JsonColumns.readStringList(entity.getHeldDocuments()).stream()
                 .map(DocumentCode::of)
                 .collect(Collectors.toUnmodifiableSet());
+        // 발열 사양이 없는 제품이면 null로 되살린다 — false로 채우면 발열 룰이 잘못 매칭된다.
+        HeatingSpec heating = entity.hasHeatingSpec()
+                ? new HeatingSpec(
+                        entity.getDirectBodyContact(),
+                        entity.getHasTemperatureController(),
+                        entity.getMaxSurfaceTemperature())
+                : null;
+
         return new ProductProfile(
                 entity.getProductName(),
                 ProductGroup.valueOf(entity.getProductGroup()),
                 electrical,
+                heating,
                 TargetUser.valueOf(entity.getTargetUser()),
                 SalesChannel.valueOf(entity.getSalesChannel()),
                 materials,

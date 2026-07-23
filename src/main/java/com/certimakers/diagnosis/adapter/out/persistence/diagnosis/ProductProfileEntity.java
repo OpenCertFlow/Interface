@@ -57,13 +57,28 @@ public class ProductProfileEntity {
     @Column(name = "held_documents", nullable = false)
     private String heldDocuments;
 
+    // ── 발열 사양. 발열 제품이 아니면 셋 다 null이다 ──
+    // 세 컬럼이 함께 null이거나 함께 채워진다는 규칙은 DB CHECK 제약이 강제한다(V8).
+
+    @Column(name = "direct_body_contact")
+    private Boolean directBodyContact;
+
+    @Column(name = "has_temperature_controller")
+    private Boolean hasTemperatureController;
+
+    /** 최고 표면온도(℃). 발열 제품이어도 측정하지 않았으면 null — "모른다"는 뜻이다. */
+    @Column(name = "max_surface_temperature")
+    private Integer maxSurfaceTemperature;
+
     protected ProductProfileEntity() {
     }
 
     public ProductProfileEntity(
             String productName, String productGroup, boolean usesElectricity,
             Integer ratedVoltage, Integer powerConsumption, boolean hasBattery,
-            String targetUser, String salesChannel, String materials, String heldDocuments) {
+            String targetUser, String salesChannel, String materials, String heldDocuments,
+            Boolean directBodyContact, Boolean hasTemperatureController,
+            Integer maxSurfaceTemperature) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
@@ -74,6 +89,9 @@ public class ProductProfileEntity {
         this.salesChannel = salesChannel;
         this.materials = materials;
         this.heldDocuments = heldDocuments;
+        this.directBodyContact = directBodyContact;
+        this.hasTemperatureController = hasTemperatureController;
+        this.maxSurfaceTemperature = maxSurfaceTemperature;
     }
 
     void setDiagnosis(DiagnosisEntity diagnosis) {
@@ -118,5 +136,22 @@ public class ProductProfileEntity {
 
     public String getHeldDocuments() {
         return heldDocuments;
+    }
+
+    public Boolean getDirectBodyContact() {
+        return directBodyContact;
+    }
+
+    public Boolean getHasTemperatureController() {
+        return hasTemperatureController;
+    }
+
+    public Integer getMaxSurfaceTemperature() {
+        return maxSurfaceTemperature;
+    }
+
+    /** 발열 사양이 저장되어 있는지. 두 불리언이 모두 있어야 발열 제품으로 본다. */
+    public boolean hasHeatingSpec() {
+        return directBodyContact != null && hasTemperatureController != null;
     }
 }

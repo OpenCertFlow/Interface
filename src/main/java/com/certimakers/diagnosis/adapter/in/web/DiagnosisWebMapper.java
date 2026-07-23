@@ -11,6 +11,7 @@ import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.ScoreVie
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ElectricalSpec;
+import com.certimakers.diagnosis.domain.model.HeatingSpec;
 import com.certimakers.diagnosis.domain.model.MaterialType;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import com.certimakers.diagnosis.domain.model.ProductProfile;
@@ -45,6 +46,7 @@ public class DiagnosisWebMapper {
                 request.productName(),
                 parse(ProductGroup.class, request.productGroup(), "productGroup"),
                 electrical,
+                toHeatingSpec(request),
                 parse(TargetUser.class, request.targetUser(), "targetUser"),
                 parse(SalesChannel.class, request.salesChannel(), "salesChannel"),
                 request.materials().stream()
@@ -53,6 +55,26 @@ public class DiagnosisWebMapper {
                 request.heldDocuments().stream()
                         .map(DocumentCode::of)
                         .collect(Collectors.toUnmodifiableSet()));
+    }
+
+    /**
+     * 발열 사양을 만든다. 관련 입력이 하나도 없으면 발열 제품이 아닌 것으로 보고 null을 준다.
+     *
+     * <p>불리언 두 항목은 발열 제품이라면 답이 있어야 하므로, 누락 시 false로 채우지 않고
+     * 명시적으로 요구한다 — "모른다"를 "아니다"로 바꾸면 화상 위험 판단이 조용히 뒤집힌다.
+     */
+    private HeatingSpec toHeatingSpec(DiagnoseRequest request) {
+        if (!request.hasHeatingInput()) {
+            return null;
+        }
+        if (request.directBodyContact() == null || request.hasTemperatureController() == null) {
+            throw BusinessException.invalid(
+                    "발열 제품은 신체 접촉 여부와 온도조절기 유무를 모두 입력해야 합니다.");
+        }
+        return new HeatingSpec(
+                request.directBodyContact(),
+                request.hasTemperatureController(),
+                request.maxSurfaceTemperatureCelsius());
     }
 
     private <E extends Enum<E>> E parse(Class<E> type, String raw, String field) {
