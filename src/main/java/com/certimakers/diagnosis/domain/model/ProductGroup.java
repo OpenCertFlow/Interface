@@ -96,12 +96,49 @@ public enum ProductGroup {
                 "사용 중 신체에 직접 닿나요?",
                 "방석·요처럼 몸에 닿는 제품은 화상 위험 기준이 달라집니다"));
         fields.add(InputField.bool("hasTemperatureController",
-                "온도조절기(과열 방지 장치)가 있나요?",
+                "온도조절기(온도 단계 조절 장치)가 있나요?",
                 "온도조절기 유무에 따라 요구되는 시험 항목이 달라질 수 있습니다"));
         fields.add(new InputField(
                 "maxSurfaceTemperatureCelsius", "최고 표면온도(℃)",
                 InputFieldType.INTEGER, false, null,
                 "측정값을 모르면 비워 두세요. 전문가 확인 항목으로 안내됩니다", List.of()));
+
+        // 의료적 표현 — 표방하면 의료기기 규제로 넘어가 인증 경로 자체가 달라진다(APP-EC-01).
+        fields.add(InputField.bool("medicalUseClaim",
+                "혈액순환·통증 완화 등 의료적 효능을 표시·광고하나요?",
+                "의료적 효능을 표방하면 전기용품이 아니라 의료기기로 분류될 수 있습니다"));
+
+        // 안전 장치 — 자동 차단·과열 보호(APP-EC-04)
+        fields.add(InputField.bool("autoShutOff",
+                "일정 시간 뒤 자동으로 전원이 꺼지나요?",
+                "장시간 사용 발열 제품의 안전 요건입니다"));
+        fields.add(InputField.bool("overheatProtection",
+                "과열 시 전원을 차단하는 장치가 있나요?",
+                "온도 제한(과열 방지) 장치 유무에 따라 시험 항목이 달라집니다"));
+
+        // 커버·세탁·전기부 분리(APP-EC-05)
+        fields.add(InputField.bool("removableCover",
+                "커버를 분리할 수 있나요?",
+                "세탁·표시사항 요건 판단에 쓰입니다"));
+        fields.add(InputField.bool("washable",
+                "물세탁이 가능한가요?",
+                null));
+        fields.add(InputField.bool("separableElectricParts",
+                "세탁 시 열선·컨트롤러 등 전기부를 분리할 수 있나요?",
+                "전기부를 분리하지 못하는 세탁 가능 제품은 감전 위험 확인이 필요합니다"));
+
+        // 전원·어댑터(APP-EC-02) — 어댑터가 있을 때만 외장·인증을 묻는다
+        fields.add(InputField.bool("hasSeparateAdapter",
+                "내장형이 아니라 별도 전원 어댑터를 쓰나요?",
+                "어댑터 유무·인증에 따라 인증 범위가 달라집니다"));
+        fields.add(InputField.boolWhen("adapterExternallyAttached",
+                "어댑터가 제품과 분리된 외장형인가요?",
+                "hasSeparateAdapter",
+                "동봉형/외장형 구분입니다"));
+        fields.add(InputField.boolWhen("adapterCertified",
+                "어댑터 자체가 KC 등 인증을 받았나요?",
+                "hasSeparateAdapter",
+                "인증받은 어댑터는 인증 범위 판단이 달라집니다"));
         return fields;
     }
 

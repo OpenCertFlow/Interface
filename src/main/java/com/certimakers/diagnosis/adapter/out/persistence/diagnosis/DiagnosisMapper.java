@@ -86,7 +86,16 @@ public class DiagnosisMapper {
                         profile.heldDocuments().stream().map(DocumentCode::value).toList()),
                 heating != null ? heating.directBodyContact() : null,
                 heating != null ? heating.hasTemperatureController() : null,
-                heating != null ? heating.maxSurfaceTemperatureCelsius() : null);
+                heating != null ? heating.maxSurfaceTemperatureCelsius() : null,
+                heating != null ? heating.medicalUseClaim() : null,
+                heating != null ? heating.autoShutOff() : null,
+                heating != null ? heating.overheatProtection() : null,
+                heating != null ? heating.removableCover() : null,
+                heating != null ? heating.washable() : null,
+                heating != null ? heating.separableElectricParts() : null,
+                heating != null ? heating.hasSeparateAdapter() : null,
+                heating != null ? heating.adapterExternallyAttached() : null,
+                heating != null ? heating.adapterCertified() : null);
     }
 
     private CertificationCandidateEntity toCandidateEntity(CertificationCandidate candidate) {
@@ -157,11 +166,22 @@ public class DiagnosisMapper {
                 .map(DocumentCode::of)
                 .collect(Collectors.toUnmodifiableSet());
         // 발열 사양이 없는 제품이면 null로 되살린다 — false로 채우면 발열 룰이 잘못 매칭된다.
+        // 발열 상세 불리언은 발열 제품이면 저장 시 함께 기록된다. 혹시 없으면(비정상 legacy 행)
+        // false로 되살려 언박싱 NPE를 피한다 — 어댑터 세부만 부재를 그대로 유지한다.
         HeatingSpec heating = entity.hasHeatingSpec()
                 ? new HeatingSpec(
                         entity.getDirectBodyContact(),
                         entity.getHasTemperatureController(),
-                        entity.getMaxSurfaceTemperature())
+                        entity.getMaxSurfaceTemperature(),
+                        Boolean.TRUE.equals(entity.getMedicalUseClaim()),
+                        Boolean.TRUE.equals(entity.getAutoShutOff()),
+                        Boolean.TRUE.equals(entity.getOverheatProtection()),
+                        Boolean.TRUE.equals(entity.getRemovableCover()),
+                        Boolean.TRUE.equals(entity.getWashable()),
+                        Boolean.TRUE.equals(entity.getSeparableElectricParts()),
+                        Boolean.TRUE.equals(entity.getHasSeparateAdapter()),
+                        entity.getAdapterExternallyAttached(),
+                        entity.getAdapterCertified())
                 : null;
 
         return new ProductProfile(

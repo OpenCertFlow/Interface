@@ -34,7 +34,34 @@ public record DiagnoseRequest(
         Boolean hasTemperatureController,
 
         /** 최고 표면온도(℃). 모르면 null — 룰이 판단 불가로 처리해 전문가 확인으로 보낸다 */
-        @PositiveOrZero Integer maxSurfaceTemperatureCelsius) {
+        @PositiveOrZero Integer maxSurfaceTemperatureCelsius,
+
+        /** 혈액순환·통증 완화 등 의료적 효능을 표방하는지. 표방하면 의료기기 규제로 넘어간다 */
+        Boolean medicalUseClaim,
+
+        /** 일정 시간 뒤 자동 전원 차단 장치가 있는지 */
+        Boolean autoShutOff,
+
+        /** 과열 시 전원을 차단하는 온도 제한 장치가 있는지 */
+        Boolean overheatProtection,
+
+        /** 커버를 분리할 수 있는지(세탁을 위해) */
+        Boolean removableCover,
+
+        /** 물세탁이 가능한지 */
+        Boolean washable,
+
+        /** 세탁 시 열선·컨트롤러 등 전기부를 분리할 수 있는지 */
+        Boolean separableElectricParts,
+
+        /** 내장형이 아니라 별도 전원 어댑터를 쓰는지 */
+        Boolean hasSeparateAdapter,
+
+        /** 어댑터가 외장형인지(동봉/외장 구분). 어댑터가 없으면 null */
+        Boolean adapterExternallyAttached,
+
+        /** 어댑터 자체가 KC 등 인증을 받았는지. 어댑터가 없으면 null */
+        Boolean adapterCertified) {
 
     public DiagnoseRequest {
         materials = materials != null ? materials : List.of();
@@ -44,13 +71,21 @@ public record DiagnoseRequest(
     /**
      * 발열 사양을 하나라도 보냈는지.
      *
-     * <p>세 항목이 모두 없으면 발열 제품이 아닌 것으로 보고 {@code HeatingSpec}을 만들지 않는다.
+     * <p>발열 관련 항목이 모두 없으면 발열 제품이 아닌 것으로 보고 {@code HeatingSpec}을 만들지 않는다.
      * 발열 사양이 없는 것과 "닿지 않는다"는 다른 상태이며, 후자로 뭉개면 발열 룰이 엉뚱한 제품에
-     * 매칭될 수 있다.
+     * 매칭될 수 있다. 신체 접촉·온도조절기 유무만으로 판단한다 — 나머지 세부 항목은 이 둘이 있을 때만
+     * 의미가 있고, {@link DiagnosisWebMapper}가 함께 요구한다.
      */
     public boolean hasHeatingInput() {
         return directBodyContact != null
                 || hasTemperatureController != null
-                || maxSurfaceTemperatureCelsius != null;
+                || maxSurfaceTemperatureCelsius != null
+                || medicalUseClaim != null
+                || autoShutOff != null
+                || overheatProtection != null
+                || removableCover != null
+                || washable != null
+                || separableElectricParts != null
+                || hasSeparateAdapter != null;
     }
 }

@@ -18,6 +18,7 @@ import com.certimakers.diagnosis.domain.model.ProductProfile;
 import com.certimakers.diagnosis.domain.model.SalesChannel;
 import com.certimakers.diagnosis.domain.model.TargetUser;
 import com.certimakers.diagnosis.domain.rule.AllOf;
+import com.certimakers.diagnosis.domain.rule.Attribute;
 import com.certimakers.diagnosis.domain.rule.AttributeMatch;
 import com.certimakers.diagnosis.domain.rule.FlagExpertReview;
 import com.certimakers.diagnosis.domain.rule.Rule;
@@ -43,14 +44,21 @@ class HeatingRuleEvaluationTest {
 
     // ── 픽스처 ────────────────────────────────────────────────────
 
-    /** 220V 전기방석. 신체에 닿고 온도조절기가 있으며 표면온도를 측정했다. */
+    /**
+     * 220V 전기방석. 신체에 닿고 표면온도를 측정했으며, 나머지 상세는 안전 요건을 갖춘 표준 구성이다
+     * (의료적 표현 없음, 자동 차단·과열 보호 있음, 커버·세탁·전기부 분리 가능, 별도 어댑터 없음).
+     * 각 테스트는 검증 대상 속성만 바꿔 확인한다.
+     */
     private static ProductProfile heatingPad(
             boolean hasController, Integer surfaceTemperature) {
         return new ProductProfile(
                 "보온용 전기방석",
                 ProductGroup.ELECTRIC_HEATING_PAD,
                 new ElectricalSpec(true, 220, 60, false),
-                new HeatingSpec(true, hasController, surfaceTemperature),
+                new HeatingSpec(
+                        true, hasController, surfaceTemperature,
+                        false, true, true, true, true, true,
+                        false, null, null),
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.TEXTILE),
@@ -214,6 +222,59 @@ class HeatingRuleEvaluationTest {
             assertThat(evaluator.evaluate(heatingPad(true, 40), hotSurface).expertReviewItems())
                     .extracting(item -> item.question())
                     .noneMatch(question -> question.contains("표면온도가 높습니다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("발열 상세 속성(의료 표현·어댑터)이 룰 조건에서 동작한다")
+    class HeatingDetailAttributes {
+
+        /** 의료적 효능을 표방하는 전기방석. 나머지는 표준 안전 구성. */
+        private ProductProfile medicalClaimPad(boolean medicalClaim) {
+            return new ProductProfile(
+                    "찜질 전기방석",
+                    ProductGroup.ELECTRIC_HEATING_PAD,
+                    new ElectricalSpec(true, 220, 60, false),
+                    new HeatingSpec(
+                            true, true, 45,
+                            medicalClaim, true, true, true, true, true,
+                            false, null, null),
+                    TargetUser.GENERAL,
+                    SalesChannel.ONLINE,
+                    Set.of(MaterialType.TEXTILE),
+                    Set.of());
+        }
+
+        @Test
+        @DisplayName("의료적 효능을 표방하면 규제 영역 확인 항목이 뜬다")
+        void 의료적_표현은_확인으로_보낸다() {
+            RuleSet ruleSet = ruleSetOf(new Rule(
+                    RuleCode.of("R-EH-003"), 5,
+                    AttributeMatch.of(Attribute.MEDICAL_USE_CLAIM, EQ, true),
+                    List.of(new FlagExpertReview(
+                            "의료기기로 분류될 수 있습니다.", ExpertReviewReason.NO_EVIDENCE))));
+
+            assertThat(evaluator.evaluate(medicalClaimPad(true), ruleSet).expertReviewItems())
+                    .extracting(item -> item.question())
+                    .anyMatch(question -> question.contains("의료기기"));
+            assertThat(evaluator.evaluate(medicalClaimPad(false), ruleSet).expertReviewItems())
+                    .extracting(item -> item.question())
+                    .noneMatch(question -> question.contains("의료기기"));
+        }
+
+        @Test
+        @DisplayName("어댑터가 없으면 어댑터 인증 룰은 매칭되지 않는다 — null을 false로 뭉개지 않는다")
+        void 어댑터가_없으면_어댑터_룰은_매칭되지_않는다() {
+            // hasSeparateAdapter=false → ADAPTER_CERTIFIED는 null이다. "미인증(false)"과 다르다.
+            RuleSet ruleSet = ruleSetOf(new Rule(
+                    RuleCode.of("R-EH-030"), 40,
+                    AttributeMatch.of(Attribute.ADAPTER_CERTIFIED, EQ, false),
+                    List.of(new FlagExpertReview(
+                            "어댑터 인증을 확인해 주세요.", ExpertReviewReason.NO_EVIDENCE))));
+
+            assertThat(evaluator.evaluate(medicalClaimPad(false), ruleSet).expertReviewItems())
+                    .extracting(item -> item.question())
+                    .noneMatch(question -> question.contains("어댑터 인증"));
         }
     }
 

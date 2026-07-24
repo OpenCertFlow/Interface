@@ -67,14 +67,47 @@ public class DiagnosisWebMapper {
         if (!request.hasHeatingInput()) {
             return null;
         }
-        if (request.directBodyContact() == null || request.hasTemperatureController() == null) {
-            throw BusinessException.invalid(
-                    "발열 제품은 신체 접촉 여부와 온도조절기 유무를 모두 입력해야 합니다.");
+        // 발열 제품이라면 안전·세탁 관련 항목은 답이 있어야 한다. 누락 시 false로 채우지 않고 명시적으로
+        // 요구한다 — "모른다"를 "아니다"로 바꾸면 화상·감전 위험 판단이 조용히 뒤집힌다.
+        requireBoolean(request.directBodyContact(), "신체 접촉 여부");
+        requireBoolean(request.hasTemperatureController(), "온도조절기 유무");
+        requireBoolean(request.medicalUseClaim(), "의료적 표현 여부");
+        requireBoolean(request.autoShutOff(), "자동 전원 차단 여부");
+        requireBoolean(request.overheatProtection(), "과열 방지 여부");
+        requireBoolean(request.removableCover(), "커버 분리 가능 여부");
+        requireBoolean(request.washable(), "세탁 가능 여부");
+        requireBoolean(request.separableElectricParts(), "전기부 분리 가능 여부");
+        requireBoolean(request.hasSeparateAdapter(), "별도 어댑터 사용 여부");
+
+        // 어댑터 세부 항목은 어댑터가 있을 때만 요구한다. 없으면 null이어야 HeatingSpec 불변식을 지킨다.
+        Boolean adapterExternallyAttached = null;
+        Boolean adapterCertified = null;
+        if (Boolean.TRUE.equals(request.hasSeparateAdapter())) {
+            requireBoolean(request.adapterExternallyAttached(), "어댑터 외장 여부");
+            requireBoolean(request.adapterCertified(), "어댑터 인증 여부");
+            adapterExternallyAttached = request.adapterExternallyAttached();
+            adapterCertified = request.adapterCertified();
         }
+
         return new HeatingSpec(
                 request.directBodyContact(),
                 request.hasTemperatureController(),
-                request.maxSurfaceTemperatureCelsius());
+                request.maxSurfaceTemperatureCelsius(),
+                request.medicalUseClaim(),
+                request.autoShutOff(),
+                request.overheatProtection(),
+                request.removableCover(),
+                request.washable(),
+                request.separableElectricParts(),
+                request.hasSeparateAdapter(),
+                adapterExternallyAttached,
+                adapterCertified);
+    }
+
+    private void requireBoolean(Boolean value, String label) {
+        if (value == null) {
+            throw BusinessException.invalid("발열 제품은 %s을(를) 입력해야 합니다.".formatted(label));
+        }
     }
 
     private <E extends Enum<E>> E parse(Class<E> type, String raw, String field) {

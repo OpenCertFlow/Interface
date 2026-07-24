@@ -78,6 +78,14 @@ class TwoProductGroupIntegrationTest {
         request.put("directBodyContact", true);
         request.put("hasTemperatureController", hasController);
         request.put("maxSurfaceTemperatureCelsius", surfaceTemperature);
+        // 발열 상세(F-APP-014~018) — 안전 요건을 갖춘 표준 구성. 별도 어댑터는 없다.
+        request.put("medicalUseClaim", false);
+        request.put("autoShutOff", true);
+        request.put("overheatProtection", true);
+        request.put("removableCover", true);
+        request.put("washable", true);
+        request.put("separableElectricParts", true);
+        request.put("hasSeparateAdapter", false);
         return request;
     }
 

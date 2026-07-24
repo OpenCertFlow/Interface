@@ -70,6 +70,36 @@ public class ProductProfileEntity {
     @Column(name = "max_surface_temperature")
     private Integer maxSurfaceTemperature;
 
+    // ── 발열 제품 상세(기능정의서 F-APP-014~018). 발열 제품이 아니면 모두 null이다 ──
+    // 어댑터 세부(external·certified)는 별도 어댑터가 없으면 null이다 — 도메인 HeatingSpec이 강제한다.
+
+    @Column(name = "medical_use_claim")
+    private Boolean medicalUseClaim;
+
+    @Column(name = "auto_shut_off")
+    private Boolean autoShutOff;
+
+    @Column(name = "overheat_protection")
+    private Boolean overheatProtection;
+
+    @Column(name = "removable_cover")
+    private Boolean removableCover;
+
+    @Column(name = "washable")
+    private Boolean washable;
+
+    @Column(name = "separable_electric_parts")
+    private Boolean separableElectricParts;
+
+    @Column(name = "has_separate_adapter")
+    private Boolean hasSeparateAdapter;
+
+    @Column(name = "adapter_externally_attached")
+    private Boolean adapterExternallyAttached;
+
+    @Column(name = "adapter_certified")
+    private Boolean adapterCertified;
+
     protected ProductProfileEntity() {
     }
 
@@ -78,7 +108,10 @@ public class ProductProfileEntity {
             Integer ratedVoltage, Integer powerConsumption, boolean hasBattery,
             String targetUser, String salesChannel, String materials, String heldDocuments,
             Boolean directBodyContact, Boolean hasTemperatureController,
-            Integer maxSurfaceTemperature) {
+            Integer maxSurfaceTemperature,
+            Boolean medicalUseClaim, Boolean autoShutOff, Boolean overheatProtection,
+            Boolean removableCover, Boolean washable, Boolean separableElectricParts,
+            Boolean hasSeparateAdapter, Boolean adapterExternallyAttached, Boolean adapterCertified) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
@@ -92,6 +125,15 @@ public class ProductProfileEntity {
         this.directBodyContact = directBodyContact;
         this.hasTemperatureController = hasTemperatureController;
         this.maxSurfaceTemperature = maxSurfaceTemperature;
+        this.medicalUseClaim = medicalUseClaim;
+        this.autoShutOff = autoShutOff;
+        this.overheatProtection = overheatProtection;
+        this.removableCover = removableCover;
+        this.washable = washable;
+        this.separableElectricParts = separableElectricParts;
+        this.hasSeparateAdapter = hasSeparateAdapter;
+        this.adapterExternallyAttached = adapterExternallyAttached;
+        this.adapterCertified = adapterCertified;
     }
 
     void setDiagnosis(DiagnosisEntity diagnosis) {
@@ -148,6 +190,42 @@ public class ProductProfileEntity {
 
     public Integer getMaxSurfaceTemperature() {
         return maxSurfaceTemperature;
+    }
+
+    public Boolean getMedicalUseClaim() {
+        return medicalUseClaim;
+    }
+
+    public Boolean getAutoShutOff() {
+        return autoShutOff;
+    }
+
+    public Boolean getOverheatProtection() {
+        return overheatProtection;
+    }
+
+    public Boolean getRemovableCover() {
+        return removableCover;
+    }
+
+    public Boolean getWashable() {
+        return washable;
+    }
+
+    public Boolean getSeparableElectricParts() {
+        return separableElectricParts;
+    }
+
+    public Boolean getHasSeparateAdapter() {
+        return hasSeparateAdapter;
+    }
+
+    public Boolean getAdapterExternallyAttached() {
+        return adapterExternallyAttached;
+    }
+
+    public Boolean getAdapterCertified() {
+        return adapterCertified;
     }
 
     /** 발열 사양이 저장되어 있는지. 두 불리언이 모두 있어야 발열 제품으로 본다. */
