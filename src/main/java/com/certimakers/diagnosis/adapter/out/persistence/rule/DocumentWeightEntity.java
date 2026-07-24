@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** {@code document_weight} 테이블 매핑. 준비도 점수 가중치 기준표. */
 @Entity
 @Table(name = "document_weight")
 public class DocumentWeightEntity {
@@ -14,17 +13,44 @@ public class DocumentWeightEntity {
     @Column(name = "document_code")
     private String documentCode;
 
+    @Column(name = "display_name", nullable = false)
+    private String displayName;
+
+    @Column(nullable = false)
+    private String requirement;
+
     @Column(nullable = false)
     private int weight;
 
+    @Column
+    private String note;
+
     protected DocumentWeightEntity() {
+    }
+
+    // 가중치·비고만 조정한다. 코드·표시명·요구 강도는 서류의 정체성이라 바꾸지 않는다.
+    public void adjust(int weight, String note) {
+        this.weight = weight;
+        this.note = note;
     }
 
     public String getDocumentCode() {
         return documentCode;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getRequirement() {
+        return requirement;
+    }
+
     public int getWeight() {
         return weight;
+    }
+
+    public String getNote() {
+        return note;
     }
 }
