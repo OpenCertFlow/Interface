@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  개인정보 마스킹 로깅(F-BE-015). Spring Boot 기본 설정을 포함하되, 콘솔 메시지에 마스킹 컨버터를
+  적용한다. 이메일·휴대폰·주민번호가 실수로 로그에 실려도 원문이 남지 않는다.
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <conversionRule conversionWord="maskedMsg"
+                    converterClass="com.certimakers.common.adapter.out.logging.MaskingMessageConverter"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%15.15t] %-40.40logger{39} : %maskedMsg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
