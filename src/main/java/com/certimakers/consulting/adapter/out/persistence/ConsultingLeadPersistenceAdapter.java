@@ -56,6 +56,15 @@ public class ConsultingLeadPersistenceAdapter
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ConsultingLead> findByOwner(String ownerUserId, int limit) {
+        return repository
+                .findByOwnerUserIdOrderByCreatedAtDesc(ownerUserId, PageRequest.of(0, limit)).stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void update(ConsultingLead lead) {
         ConsultingLeadEntity entity = repository.findById(lead.id().value())

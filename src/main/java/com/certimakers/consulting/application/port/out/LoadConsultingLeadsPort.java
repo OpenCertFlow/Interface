@@ -11,4 +11,6 @@ public interface LoadConsultingLeadsPort {
     List<ConsultingLead> findLeads(String statusFilter, int limit);
 
     Optional<ConsultingLead> findLead(ConsultingLeadId id);
+
+    List<ConsultingLead> findByOwner(String ownerUserId, int limit);
 }

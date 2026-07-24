@@ -31,10 +31,12 @@ class ConsultingLeadTest {
     void 동의하면_접수() {
         ConsentRecord consent = new ConsentRecord(true, true, true, "v1");
 
-        ConsultingLead lead = ConsultingLead.submit(id(), diagnosis(), contact(), "상담 원해요", consent, NOW);
+        ConsultingLead lead = ConsultingLead.submit(
+                id(), diagnosis(), contact(), "상담 원해요", consent, "owner-1", NOW);
 
         assertThat(lead.status()).isEqualTo(LeadStatus.SUBMITTED);
         assertThat(lead.message()).contains("상담 원해요");
+        assertThat(lead.ownerUserId()).contains("owner-1");
     }
 
     @Test
@@ -42,7 +44,7 @@ class ConsultingLeadTest {
     void 동의없으면_거부() {
         ConsentRecord noConsent = new ConsentRecord(false, false, false, "v1");
 
-        assertThatThrownBy(() -> ConsultingLead.submit(id(), diagnosis(), contact(), null, noConsent, NOW))
+        assertThatThrownBy(() -> ConsultingLead.submit(id(), diagnosis(), contact(), null, noConsent, null, NOW))
                 .isInstanceOfSatisfying(BusinessException.class, e ->
                         assertThat(e.errorCode()).isEqualTo(ConsultingErrorCode.PRIVACY_CONSENT_REQUIRED));
     }
@@ -62,7 +64,7 @@ class ConsultingLeadTest {
         ContactInfo noEmail = new ContactInfo("홍길동", "010-1234-5678", null);
         ConsentRecord consent = new ConsentRecord(true, false, true, "v1");
 
-        ConsultingLead lead = ConsultingLead.submit(id(), diagnosis(), noEmail, null, consent, NOW);
+        ConsultingLead lead = ConsultingLead.submit(id(), diagnosis(), noEmail, null, consent, null, NOW);
 
         assertThat(lead.contact().hasEmail()).isFalse();
         assertThat(lead.contact().maskedEmail()).isNull();

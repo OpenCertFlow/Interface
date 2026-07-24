@@ -21,6 +21,7 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
     private final ContactInfo contact;
     private final String message;
     private final ConsentRecord consent;
+    private final String ownerUserId;
     private final Instant createdAt;
     private LeadStatus status;
     private String assignedConsultantId;
@@ -28,13 +29,14 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
 
     private ConsultingLead(
             ConsultingLeadId id, DiagnosisReference diagnosis, ContactInfo contact,
-            String message, ConsentRecord consent, LeadStatus status,
+            String message, ConsentRecord consent, String ownerUserId, LeadStatus status,
             String assignedConsultantId, String internalMemo, Instant createdAt) {
         this.id = Guard.notNull(id, "id");
         this.diagnosis = Guard.notNull(diagnosis, "diagnosis");
         this.contact = Guard.notNull(contact, "contact");
         this.message = message;
         this.consent = Guard.notNull(consent, "consent");
+        this.ownerUserId = ownerUserId;
         this.status = Guard.notNull(status, "status");
         this.assignedConsultantId = assignedConsultantId;
         this.internalMemo = internalMemo;
@@ -49,22 +51,22 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
      */
     public static ConsultingLead submit(
             ConsultingLeadId id, DiagnosisReference diagnosis, ContactInfo contact,
-            String message, ConsentRecord consent, Instant createdAt) {
+            String message, ConsentRecord consent, String ownerUserId, Instant createdAt) {
         if (!consent.allowsProcessing()) {
             throw new BusinessException(ConsultingErrorCode.PRIVACY_CONSENT_REQUIRED);
         }
         return new ConsultingLead(
-                id, diagnosis, contact, normalizeMessage(message), consent, LeadStatus.SUBMITTED,
-                null, null, createdAt);
+                id, diagnosis, contact, normalizeMessage(message), consent, ownerUserId,
+                LeadStatus.SUBMITTED, null, null, createdAt);
     }
 
     /** 저장된 상태에서 되살린다(영속성 재구성 전용). */
     public static ConsultingLead reconstitute(
             ConsultingLeadId id, DiagnosisReference diagnosis, ContactInfo contact,
-            String message, ConsentRecord consent, LeadStatus status,
+            String message, ConsentRecord consent, String ownerUserId, LeadStatus status,
             String assignedConsultantId, String internalMemo, Instant createdAt) {
         return new ConsultingLead(
-                id, diagnosis, contact, message, consent, status,
+                id, diagnosis, contact, message, consent, ownerUserId, status,
                 assignedConsultantId, internalMemo, createdAt);
     }
 
@@ -135,6 +137,10 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
 
     public LeadStatus status() {
         return status;
+    }
+
+    public Optional<String> ownerUserId() {
+        return Optional.ofNullable(ownerUserId);
     }
 
     public Optional<String> assignedConsultantId() {

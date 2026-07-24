@@ -31,6 +31,7 @@ public class ConsultingLeadMapper {
                 encryptor.encrypt(contact.phone()),                       // 암호화
                 contact.hasEmail() ? encryptor.encrypt(contact.email()) : null, // 암호화
                 lead.message().orElse(null),
+                lead.ownerUserId().orElse(null),
                 lead.status().name(),
                 lead.createdAt());
 
@@ -62,6 +63,7 @@ public class ConsultingLeadMapper {
                 contact,
                 entity.getMessage(),
                 consent,
+                entity.getOwnerUserId(),
                 LeadStatus.valueOf(entity.getStatus()),
                 entity.getAssignedConsultantId(),
                 entity.getInternalMemo(),

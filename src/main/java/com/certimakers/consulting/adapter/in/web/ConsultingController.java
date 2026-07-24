@@ -11,8 +11,10 @@ import com.certimakers.consulting.domain.model.ConsultingLead;
 import com.certimakers.consulting.domain.model.ContactInfo;
 import com.certimakers.consulting.domain.model.DiagnosisReference;
 import jakarta.validation.Valid;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,12 +37,13 @@ public class ConsultingController {
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<ConsultingLeadResponse>>> request(
             @Valid @RequestBody RequestConsultingRequest request) {
-        RequestConsultingCommand command = toCommand(request);
-        return requestConsultingUseCase.request(command)
+        // 접수는 비로그인도 가능하다(공개). 로그인 상태면 그 사용자를 소유자로 연결해 알림 수신자로 삼는다.
+        return currentUserId()
+                .flatMap(ownerId -> requestConsultingUseCase.request(toCommand(request, ownerId.orElse(null))))
                 .flatMap(this::wrapCreated);
     }
 
-    private RequestConsultingCommand toCommand(RequestConsultingRequest request) {
+    private RequestConsultingCommand toCommand(RequestConsultingRequest request, String ownerUserId) {
         return new RequestConsultingCommand(
                 DiagnosisReference.of(request.diagnosisId()),
                 new ContactInfo(request.contactName(), request.contactPhone(), request.contactEmail()),
@@ -49,7 +52,14 @@ public class ConsultingController {
                         request.privacyConsent(),
                         request.sensitiveInfoConsent(),
                         request.serviceLimitAcknowledged(),
-                        request.consentVersion()));
+                        request.consentVersion()),
+                ownerUserId);
+    }
+
+    private Mono<Optional<String>> currentUserId() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> Optional.of(context.getAuthentication().getName()))
+                .defaultIfEmpty(Optional.empty());
     }
 
     private Mono<ResponseEntity<ApiResponse<ConsultingLeadResponse>>> wrapCreated(ConsultingLead lead) {

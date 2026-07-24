@@ -36,6 +36,9 @@ public class ConsultingLeadEntity {
     @Column
     private String message;
 
+    @Column(name = "owner_user_id")
+    private String ownerUserId;
+
     @Column(nullable = false)
     private String status;
 
@@ -57,13 +60,15 @@ public class ConsultingLeadEntity {
 
     public ConsultingLeadEntity(
             UUID id, UUID diagnosisId, String contactName, String contactPhone,
-            String contactEmail, String message, String status, Instant createdAt) {
+            String contactEmail, String message, String ownerUserId, String status,
+            Instant createdAt) {
         this.id = id;
         this.diagnosisId = diagnosisId;
         this.contactName = contactName;
         this.contactPhone = contactPhone;
         this.contactEmail = contactEmail;
         this.message = message;
+        this.ownerUserId = ownerUserId;
         this.status = status;
         this.createdAt = createdAt;
     }
@@ -110,6 +115,10 @@ public class ConsultingLeadEntity {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getOwnerUserId() {
+        return ownerUserId;
     }
 
     public String getStatus() {

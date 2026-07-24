@@ -10,4 +10,6 @@ public interface ConsultingLeadJpaRepository extends JpaRepository<ConsultingLea
     List<ConsultingLeadEntity> findByOrderByCreatedAtDesc(Pageable pageable);
 
     List<ConsultingLeadEntity> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
+
+    List<ConsultingLeadEntity> findByOwnerUserIdOrderByCreatedAtDesc(String ownerUserId, Pageable pageable);
 }

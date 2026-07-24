@@ -219,4 +219,32 @@ class ConsultingWorkflowIntegrationTest {
                 .exchange()
                 .expectStatus().isCreated();
     }
+
+    @Test
+    @DisplayName("로그인 상태로 접수하면 내 상담으로 조회된다 — 소유자 연결(F-APP-041)")
+    void 로그인_접수는_내_상담으로_조회된다() {
+        String userId = UUID.randomUUID().toString();
+        String userToken = tokenFor(Role.USER, userId);
+        String diagnosisId = createDiagnosis();
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("diagnosisId", diagnosisId);
+        request.put("contactName", "김소공");
+        request.put("contactPhone", "010-1111-2222");
+        request.put("privacyConsent", true);
+        request.put("sensitiveInfoConsent", false);
+        request.put("serviceLimitAcknowledged", true);
+        request.put("consentVersion", "v1");
+        webTestClient.post().uri("/api/v1/consulting-leads")
+                .header("Authorization", "Bearer " + userToken)
+                .bodyValue(request)
+                .exchange().expectStatus().isCreated();
+
+        JsonNode mine = webTestClient.get().uri("/api/v1/me/consulting-leads")
+                .header("Authorization", "Bearer " + userToken)
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+
+        assertThat(mine.at("/data")).anyMatch(l -> l.get("diagnosisId").asText().equals(diagnosisId));
+    }
 }

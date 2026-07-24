@@ -61,6 +61,7 @@ public class RequestConsultingService implements RequestConsultingUseCase {
                 command.contact(),
                 command.message(),
                 command.consent(),
+                command.ownerUserId(),
                 timeProvider.now());
     }
 }
