@@ -85,6 +85,21 @@ class AdminRuleSetIntegrationTest {
     }
 
     @Test
+    @DisplayName("RAG 품질 검증: 관리자가 임의 조건으로 근거 검색 결과를 확인한다 (F-WADM-015)")
+    void rag_품질_검증() {
+        JsonNode result = post("/api/v1/admin/rag-check",
+                Map.of("productGroup", "SMALL_APPLIANCE", "sections", List.of("DOCUMENTS")), 200);
+        assertThat(result.at("/data").has("count")).isTrue();
+        assertThat(result.at("/data").has("degraded")).isTrue();
+        assertThat(result.at("/data").has("evidences")).isTrue();
+
+        webTestClient.post().uri("/api/v1/admin/rag-check")
+                .bodyValue(Map.of("productGroup", "SMALL_APPLIANCE"))
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
     @DisplayName("잘못된 effects는 검증에서 걸러지고, 올바른 룰은 통과한다")
     void 룰_정의를_검증한다() {
         String badEffects = "[{\"type\":\"nope\"}]";
