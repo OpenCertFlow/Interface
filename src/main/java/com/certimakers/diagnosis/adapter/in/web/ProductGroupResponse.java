@@ -1,7 +1,7 @@
 package com.certimakers.diagnosis.adapter.in.web;
 
-import com.certimakers.diagnosis.domain.model.InputField;
-import com.certimakers.diagnosis.domain.model.ProductGroup;
+import com.certimakers.diagnosis.application.port.in.GetProductGroupSchemaUseCase.FieldView;
+import com.certimakers.diagnosis.application.port.in.GetProductGroupSchemaUseCase.ProductGroupSchemaView;
 import java.util.List;
 
 /**
@@ -9,26 +9,20 @@ import java.util.List;
  *
  * <p>제품군마다 묻는 항목이 다르다(전기방석은 표면온도를 묻고 드라이기는 묻지 않는다). 그 차이를
  * 앱에 하드코딩하면 제품군을 추가할 때마다 앱을 고쳐야 하고, 서버 룰이 기대하는 입력과 화면이
- * 어긋날 수 있다.
+ * 어긋날 수 있다. 유효 스키마(enum 기본 + 관리자 오버라이드)는 유스케이스가 만든다.
  */
 public record ProductGroupResponse(
         String code,
         String displayName,
         String description,
-        List<FieldView> fields) {
+        List<FieldViewResponse> fields) {
 
-    public static List<ProductGroupResponse> all() {
-        return java.util.Arrays.stream(ProductGroup.values())
-                .map(ProductGroupResponse::from)
-                .toList();
-    }
-
-    public static ProductGroupResponse from(ProductGroup group) {
+    public static ProductGroupResponse from(ProductGroupSchemaView view) {
         return new ProductGroupResponse(
-                group.name(),
-                group.displayName(),
-                group.description(),
-                group.inputFields().stream().map(FieldView::from).toList());
+                view.code(),
+                view.displayName(),
+                view.description(),
+                view.fields().stream().map(FieldViewResponse::from).toList());
     }
 
     /**
@@ -38,7 +32,7 @@ public record ProductGroupResponse(
      *                  (예: {@code ratedVoltage}는 {@code usesElectricity}에 의존)
      * @param options   SINGLE_SELECT·MULTI_SELECT일 때의 보기. 그 외에는 빈 목록
      */
-    public record FieldView(
+    public record FieldViewResponse(
             String code,
             String label,
             String type,
@@ -47,11 +41,11 @@ public record ProductGroupResponse(
             String helpText,
             List<OptionView> options) {
 
-        static FieldView from(InputField field) {
-            return new FieldView(
+        static FieldViewResponse from(FieldView field) {
+            return new FieldViewResponse(
                     field.code(),
                     field.label(),
-                    field.type().name(),
+                    field.type(),
                     field.required(),
                     field.dependsOn(),
                     field.helpText(),

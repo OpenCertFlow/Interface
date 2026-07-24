@@ -4,6 +4,7 @@ import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
+import com.certimakers.diagnosis.application.port.in.GetProductGroupSchemaUseCase;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,22 +16,27 @@ import reactor.core.publisher.Mono;
  *
  * <p>진단을 시작하기 전에 호출하는 화면 구성용 정보이므로 인증 없이 연다.
  *
- * <p>유스케이스를 거치지 않고 도메인 enum을 바로 읽는다. 조회할 상태도, 내릴 판단도 없는
- * <b>정적 정의</b>라 유스케이스 계층을 두면 위임만 하는 껍데기가 하나 늘 뿐이다.
+ * <p>enum 기본 스키마에 관리자 프레젠테이션 오버라이드(F-WADM-006~008)를 얹은 <b>유효 스키마</b>를
+ * 내려보낸다. 오버라이드가 없으면 결과는 enum과 동일하다.
  */
 @WebAdapter
 @RequestMapping("/api/v1/product-groups")
 public class ProductGroupController {
 
+    private final GetProductGroupSchemaUseCase getProductGroupSchemaUseCase;
     private final TimeProvider timeProvider;
 
-    public ProductGroupController(TimeProvider timeProvider) {
+    public ProductGroupController(
+            GetProductGroupSchemaUseCase getProductGroupSchemaUseCase, TimeProvider timeProvider) {
+        this.getProductGroupSchemaUseCase = getProductGroupSchemaUseCase;
         this.timeProvider = timeProvider;
     }
 
     @GetMapping
     public Mono<ResponseEntity<ApiResponse<List<ProductGroupResponse>>>> productGroups() {
-        return TraceId.current().map(traceId -> ResponseEntity.ok(
-                ApiResponse.success(ProductGroupResponse.all(), traceId, timeProvider.now())));
+        return getProductGroupSchemaUseCase.getAll()
+                .map(schemas -> schemas.stream().map(ProductGroupResponse::from).toList())
+                .flatMap(body -> TraceId.current().map(traceId ->
+                        ResponseEntity.ok(ApiResponse.success(body, traceId, timeProvider.now()))));
     }
 }
