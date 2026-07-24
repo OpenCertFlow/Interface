@@ -18,4 +18,6 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
     List<UserEntity> findByOrderByCreatedAtDesc(Pageable pageable);
 
     List<UserEntity> findByRoleOrderByCreatedAtDesc(String role, Pageable pageable);
+
+    long countByRole(String role);
 }

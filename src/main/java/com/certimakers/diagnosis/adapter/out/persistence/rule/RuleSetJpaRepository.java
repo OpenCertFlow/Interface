@@ -24,4 +24,6 @@ public interface RuleSetJpaRepository extends JpaRepository<RuleSetEntity, UUID>
     /** 제품군의 현재 최대 버전. 없으면 비어 있음 → 다음 버전은 1. */
     @Query("select max(r.version) from RuleSetEntity r where r.productGroup = :productGroup")
     Optional<Integer> findMaxVersion(String productGroup);
+
+    long countByActiveIsTrue();
 }
