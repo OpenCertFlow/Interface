@@ -4,6 +4,8 @@ import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
+import com.certimakers.consulting.application.port.in.ConsultingMessageUseCase;
+import com.certimakers.consulting.application.port.in.ConsultingMessageUseCase.MessageView;
 import com.certimakers.consulting.application.port.in.ManageConsultingUseCase;
 import com.certimakers.consulting.application.port.in.ManageConsultingUseCase.LeadDetail;
 import com.certimakers.consulting.application.port.in.ManageConsultingUseCase.LeadSummary;
@@ -33,11 +35,14 @@ import reactor.core.publisher.Mono;
 public class ConsultingManagementController {
 
     private final ManageConsultingUseCase manageConsultingUseCase;
+    private final ConsultingMessageUseCase consultingMessageUseCase;
     private final TimeProvider timeProvider;
 
     public ConsultingManagementController(
-            ManageConsultingUseCase manageConsultingUseCase, TimeProvider timeProvider) {
+            ManageConsultingUseCase manageConsultingUseCase,
+            ConsultingMessageUseCase consultingMessageUseCase, TimeProvider timeProvider) {
         this.manageConsultingUseCase = manageConsultingUseCase;
+        this.consultingMessageUseCase = consultingMessageUseCase;
         this.timeProvider = timeProvider;
     }
 
@@ -74,10 +79,31 @@ public class ConsultingManagementController {
                 .flatMap(body -> wrap(body, HttpStatus.OK));
     }
 
+    @GetMapping("/{id}/messages")
+    public Mono<ResponseEntity<ApiResponse<List<MessageView>>>> messages(@PathVariable String id) {
+        return consultingMessageUseCase.list(id).flatMap(body -> wrap(body, HttpStatus.OK));
+    }
+
+    /** 추가정보 요청(INFO_REQUEST)·공개 안내(REPLY)·내부 메모(NOTE)를 남긴다. */
+    @PostMapping("/{id}/messages")
+    public Mono<ResponseEntity<ApiResponse<List<MessageView>>>> postMessage(
+            @PathVariable String id, @Valid @RequestBody MessageRequest request) {
+        return currentUserId()
+                .flatMap(authorId ->
+                        consultingMessageUseCase.post(id, authorId, request.kind(), request.body()))
+                .then(consultingMessageUseCase.list(id))
+                .flatMap(body -> wrap(body, HttpStatus.CREATED));
+    }
+
     public record StatusRequest(@NotBlank(message = "상태 값이 필요합니다.") String status) {
     }
 
     public record MemoRequest(String memo) {
+    }
+
+    public record MessageRequest(
+            @NotBlank(message = "메시지 종류가 필요합니다.") String kind,
+            @NotBlank(message = "메시지 내용이 필요합니다.") String body) {
     }
 
     private Mono<String> currentUserId() {

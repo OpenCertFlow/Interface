@@ -185,4 +185,38 @@ class ConsultingWorkflowIntegrationTest {
                 .exchange()
                 .expectStatus().isOk();
     }
+
+    @Test
+    @DisplayName("컨설턴트 메시지: 공개 메시지는 소공인이 리드 id로 보고, 내부 메모는 숨겨진다")
+    void 상담_메시지_스레드() {
+        submitLead(createDiagnosis());
+        String leadId = firstLeadId();
+
+        postMessage(leadId, "INFO_REQUEST", "회로도를 보내주세요");
+        postMessage(leadId, "NOTE", "내부 메모: 등급 확인 필요");
+
+        // 컨설턴트는 전체(공개 1 + 내부 1)를 본다.
+        JsonNode all = webTestClient.get().uri("/api/v1/consulting/leads/{id}/messages", leadId)
+                .header("Authorization", "Bearer " + consultantToken())
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+        assertThat(all.at("/data").size()).isEqualTo(2);
+
+        // 소공인은 리드 id로 공개 메시지만 본다(내부 메모 제외).
+        JsonNode publicMessages = webTestClient.get()
+                .uri("/api/v1/consulting-leads/{id}/messages", leadId)
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+        assertThat(publicMessages.at("/data").size()).isEqualTo(1);
+        assertThat(publicMessages.at("/data").get(0).get("kind").asText()).isEqualTo("INFO_REQUEST");
+        assertThat(publicMessages.at("/data").get(0).get("body").asText()).contains("회로도");
+    }
+
+    private void postMessage(String leadId, String kind, String body) {
+        webTestClient.post().uri("/api/v1/consulting/leads/{id}/messages", leadId)
+                .header("Authorization", "Bearer " + consultantToken())
+                .bodyValue(Map.of("kind", kind, "body", body))
+                .exchange()
+                .expectStatus().isCreated();
+    }
 }
