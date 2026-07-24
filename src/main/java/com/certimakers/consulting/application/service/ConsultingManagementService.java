@@ -10,6 +10,8 @@ import com.certimakers.consulting.domain.error.ConsultingErrorCode;
 import com.certimakers.consulting.domain.model.ConsultingLead;
 import com.certimakers.consulting.domain.model.ConsultingLeadId;
 import com.certimakers.consulting.domain.model.LeadStatus;
+import com.certimakers.notification.application.port.in.RecordNotificationUseCase;
+import com.certimakers.notification.application.port.in.RecordNotificationUseCase.RecordCommand;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -24,13 +26,15 @@ public class ConsultingManagementService implements ManageConsultingUseCase {
 
     private final LoadConsultingLeadsPort loadPort;
     private final UpdateConsultingLeadPort updatePort;
+    private final RecordNotificationUseCase notificationUseCase;
     private final BlockingBridge blockingBridge;
 
     public ConsultingManagementService(
             LoadConsultingLeadsPort loadPort, UpdateConsultingLeadPort updatePort,
-            BlockingBridge blockingBridge) {
+            RecordNotificationUseCase notificationUseCase, BlockingBridge blockingBridge) {
         this.loadPort = loadPort;
         this.updatePort = updatePort;
+        this.notificationUseCase = notificationUseCase;
         this.blockingBridge = blockingBridge;
     }
 
@@ -55,21 +59,29 @@ public class ConsultingManagementService implements ManageConsultingUseCase {
 
     @Override
     public Mono<LeadDetail> assign(String leadId, String consultantId) {
-        return mutate(leadId, lead -> lead.assignTo(consultantId));
+        return mutate(leadId, lead -> lead.assignTo(consultantId))
+                .flatMap(lead -> notifyOwner(lead, "CONSULTING_ASSIGNED",
+                        "상담 담당이 배정되었습니다",
+                        "담당 컨설턴트가 배정되어 곧 연락드릴 예정입니다.")
+                        .thenReturn(toDetail(lead)));
     }
 
     @Override
     public Mono<LeadDetail> changeStatus(String leadId, String status) {
         LeadStatus target = parseStatus(status);
-        return mutate(leadId, lead -> lead.transitionTo(target));
+        return mutate(leadId, lead -> lead.transitionTo(target))
+                .flatMap(lead -> notifyOwner(lead, "CONSULTING_STATUS",
+                        "상담 상태가 변경되었습니다",
+                        "상담 상태가 '%s'(으)로 변경되었습니다.".formatted(lead.status().name()))
+                        .thenReturn(toDetail(lead)));
     }
 
     @Override
     public Mono<LeadDetail> updateMemo(String leadId, String memo) {
-        return mutate(leadId, lead -> lead.updateInternalMemo(memo));
+        return mutate(leadId, lead -> lead.updateInternalMemo(memo)).map(this::toDetail);
     }
 
-    private Mono<LeadDetail> mutate(String leadId, Consumer<ConsultingLead> change) {
+    private Mono<ConsultingLead> mutate(String leadId, Consumer<ConsultingLead> change) {
         ConsultingLeadId id = parseId(leadId);
         return blockingBridge.mono(() -> {
             ConsultingLead lead = loadPort.findLead(id)
@@ -77,7 +89,15 @@ public class ConsultingManagementService implements ManageConsultingUseCase {
             change.accept(lead);
             updatePort.update(lead);
             return lead;
-        }).map(this::toDetail);
+        });
+    }
+
+    /** 소유자(로그인 접수자)에게 알림을 보낸다. 익명 리드면 아무 일도 하지 않는다. 실패는 삼킨다. */
+    private Mono<Void> notifyOwner(ConsultingLead lead, String kind, String title, String body) {
+        return lead.ownerUserId()
+                .map(owner -> notificationUseCase.record(new RecordCommand(
+                        owner, kind, title, body, "CONSULTING_LEAD", lead.id().value().toString())))
+                .orElseGet(Mono::empty);
     }
 
     private LeadStatus parseStatus(String raw) {

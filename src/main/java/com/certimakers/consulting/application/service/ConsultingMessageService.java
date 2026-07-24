@@ -9,9 +9,12 @@ import com.certimakers.consulting.application.port.in.ConsultingMessageUseCase;
 import com.certimakers.consulting.application.port.out.ConsultingMessagePort;
 import com.certimakers.consulting.application.port.out.LoadConsultingLeadsPort;
 import com.certimakers.consulting.domain.error.ConsultingErrorCode;
+import com.certimakers.consulting.domain.model.ConsultingLead;
 import com.certimakers.consulting.domain.model.ConsultingLeadId;
 import com.certimakers.consulting.domain.model.ConsultingMessage;
 import com.certimakers.consulting.domain.model.MessageKind;
+import com.certimakers.notification.application.port.in.RecordNotificationUseCase;
+import com.certimakers.notification.application.port.in.RecordNotificationUseCase.RecordCommand;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -23,15 +26,18 @@ public class ConsultingMessageService implements ConsultingMessageUseCase {
 
     private final ConsultingMessagePort messagePort;
     private final LoadConsultingLeadsPort loadPort;
+    private final RecordNotificationUseCase notificationUseCase;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
 
     public ConsultingMessageService(
             ConsultingMessagePort messagePort, LoadConsultingLeadsPort loadPort,
-            BlockingBridge blockingBridge, IdGenerator idGenerator, TimeProvider timeProvider) {
+            RecordNotificationUseCase notificationUseCase, BlockingBridge blockingBridge,
+            IdGenerator idGenerator, TimeProvider timeProvider) {
         this.messagePort = messagePort;
         this.loadPort = loadPort;
+        this.notificationUseCase = notificationUseCase;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -44,14 +50,26 @@ public class ConsultingMessageService implements ConsultingMessageUseCase {
         if (body == null || body.isBlank()) {
             throw BusinessException.invalid("메시지 내용이 필요합니다.");
         }
-        return blockingBridge.run(() -> {
-            if (loadPort.findLead(ConsultingLeadId.of(lead)).isEmpty()) {
-                throw new BusinessException(ConsultingErrorCode.LEAD_NOT_FOUND);
-            }
+        return blockingBridge.mono(() -> {
+            ConsultingLead target = loadPort.findLead(ConsultingLeadId.of(lead))
+                    .orElseThrow(() -> new BusinessException(ConsultingErrorCode.LEAD_NOT_FOUND));
             messagePort.append(new ConsultingMessage(
                     idGenerator.nextId(), lead, authorId, messageKind, body.strip(),
                     timeProvider.now()));
-        });
+            return target;
+        }).flatMap(target -> notifyOwnerIfPublic(target, messageKind, body.strip()));
+    }
+
+    /** 공개 메시지(추가정보 요청·안내)면 소유자에게 알린다. 익명 리드·내부 메모는 알리지 않는다. */
+    private Mono<Void> notifyOwnerIfPublic(ConsultingLead lead, MessageKind kind, String body) {
+        if (!kind.isPublic() || lead.ownerUserId().isEmpty()) {
+            return Mono.empty();
+        }
+        String title = kind == MessageKind.INFO_REQUEST ? "추가 정보 요청이 도착했습니다"
+                : "상담 안내가 도착했습니다";
+        return notificationUseCase.record(new RecordCommand(
+                lead.ownerUserId().get(), "CONSULTING_MESSAGE", title, body,
+                "CONSULTING_LEAD", lead.id().value().toString()));
     }
 
     @Override

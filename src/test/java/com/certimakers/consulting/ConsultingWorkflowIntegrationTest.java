@@ -223,10 +223,43 @@ class ConsultingWorkflowIntegrationTest {
     @Test
     @DisplayName("로그인 상태로 접수하면 내 상담으로 조회된다 — 소유자 연결(F-APP-041)")
     void 로그인_접수는_내_상담으로_조회된다() {
-        String userId = UUID.randomUUID().toString();
-        String userToken = tokenFor(Role.USER, userId);
+        String userToken = tokenFor(Role.USER, UUID.randomUUID().toString());
         String diagnosisId = createDiagnosis();
+        submitAs(userToken, diagnosisId);
 
+        JsonNode mine = myLeads(userToken);
+        assertThat(mine.at("/data")).anyMatch(l -> l.get("diagnosisId").asText().equals(diagnosisId));
+    }
+
+    @Test
+    @DisplayName("컨설턴트가 처리하면 소유자에게 알림이 발행된다(F-BE-013) — 익명 리드는 알림 없음")
+    void 상담_처리시_소유자에게_알림() {
+        String userToken = tokenFor(Role.USER, UUID.randomUUID().toString());
+        submitAs(userToken, createDiagnosis());
+        String leadId = myLeads(userToken).at("/data").get(0).get("id").asText();
+
+        // 컨설턴트가 배정 + 공개 메시지 → 소유자에게 알림 2건.
+        webTestClient.post().uri("/api/v1/consulting/leads/{id}/assign", leadId)
+                .header("Authorization", "Bearer " + consultantToken())
+                .exchange().expectStatus().isOk();
+        postMessage(leadId, "INFO_REQUEST", "회로도를 보내주세요");
+
+        JsonNode notifications = webTestClient.get().uri("/api/v1/me/notifications")
+                .header("Authorization", "Bearer " + userToken)
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+        assertThat(notifications.at("/data").size()).isGreaterThanOrEqualTo(2);
+        assertThat(notifications.at("/data").toString())
+                .contains("CONSULTING_ASSIGNED", "CONSULTING_MESSAGE");
+
+        // 읽음 처리.
+        String notificationId = notifications.at("/data").get(0).get("id").asText();
+        webTestClient.patch().uri("/api/v1/me/notifications/{id}/read", notificationId)
+                .header("Authorization", "Bearer " + userToken)
+                .exchange().expectStatus().isOk();
+    }
+
+    private void submitAs(String token, String diagnosisId) {
         Map<String, Object> request = new HashMap<>();
         request.put("diagnosisId", diagnosisId);
         request.put("contactName", "김소공");
@@ -236,15 +269,15 @@ class ConsultingWorkflowIntegrationTest {
         request.put("serviceLimitAcknowledged", true);
         request.put("consentVersion", "v1");
         webTestClient.post().uri("/api/v1/consulting-leads")
-                .header("Authorization", "Bearer " + userToken)
+                .header("Authorization", "Bearer " + token)
                 .bodyValue(request)
                 .exchange().expectStatus().isCreated();
+    }
 
-        JsonNode mine = webTestClient.get().uri("/api/v1/me/consulting-leads")
-                .header("Authorization", "Bearer " + userToken)
+    private JsonNode myLeads(String token) {
+        return webTestClient.get().uri("/api/v1/me/consulting-leads")
+                .header("Authorization", "Bearer " + token)
                 .exchange().expectStatus().isOk()
                 .expectBody(JsonNode.class).returnResult().getResponseBody();
-
-        assertThat(mine.at("/data")).anyMatch(l -> l.get("diagnosisId").asText().equals(diagnosisId));
     }
 }
