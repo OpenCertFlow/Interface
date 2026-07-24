@@ -1,18 +1,23 @@
 package com.certimakers.auth.adapter.in.web;
 
 import com.certimakers.auth.application.port.in.ManageUserRoleUseCase;
+import com.certimakers.auth.application.port.in.QueryUsersUseCase;
+import com.certimakers.auth.application.port.in.QueryUsersUseCase.UserSummary;
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 /**
@@ -26,12 +31,26 @@ import reactor.core.publisher.Mono;
 public class AdminUserController {
 
     private final ManageUserRoleUseCase manageUserRoleUseCase;
+    private final QueryUsersUseCase queryUsersUseCase;
     private final TimeProvider timeProvider;
 
     public AdminUserController(
-            ManageUserRoleUseCase manageUserRoleUseCase, TimeProvider timeProvider) {
+            ManageUserRoleUseCase manageUserRoleUseCase, QueryUsersUseCase queryUsersUseCase,
+            TimeProvider timeProvider) {
         this.manageUserRoleUseCase = manageUserRoleUseCase;
+        this.queryUsersUseCase = queryUsersUseCase;
         this.timeProvider = timeProvider;
+    }
+
+    @GetMapping
+    public Mono<ResponseEntity<ApiResponse<List<UserSummary>>>> list(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false, defaultValue = "50") int limit) {
+
+        return queryUsersUseCase.list(role, limit)
+                .flatMap(body -> TraceId.current().map(traceId -> ResponseEntity
+                        .status(HttpStatus.OK)
+                        .body(ApiResponse.success(body, traceId, timeProvider.now()))));
     }
 
     @PatchMapping("/{userId}/role")
