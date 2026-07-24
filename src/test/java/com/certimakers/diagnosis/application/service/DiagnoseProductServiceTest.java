@@ -14,6 +14,7 @@ import com.certimakers.diagnosis.application.port.out.LoadRuleSetPort;
 import com.certimakers.diagnosis.application.port.out.LoadScoreRubricPort;
 import com.certimakers.diagnosis.application.port.out.NarrateReportPort;
 import com.certimakers.diagnosis.application.port.out.SaveDiagnosisPort;
+import com.certimakers.diagnosis.application.port.out.AiFallbackSwitchPort;
 import com.certimakers.diagnosis.application.port.out.SearchEvidencePort;
 import com.certimakers.diagnosis.domain.error.DiagnosisErrorCode;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
@@ -82,13 +83,27 @@ class DiagnoseProductServiceTest {
         return diagnosis;
     };
 
+    /** 폴백 스위치는 꺼짐(정상: RAG·LLM 호출). F-WADM-020 토글은 별도 검증한다. */
+    private final AiFallbackSwitchPort fallbackOff = new AiFallbackSwitchPort() {
+        @Override public boolean isEvidenceDisabled() {
+            return false;
+        }
+        @Override public boolean isNarrationDisabled() {
+            return false;
+        }
+        @Override public void setEvidenceDisabled(boolean disabled) {
+        }
+        @Override public void setNarrationDisabled(boolean disabled) {
+        }
+    };
+
     private DiagnoseProductService service(
             LoadRuleSetPort loadRuleSet,
             SearchEvidencePort search,
             NarrateReportPort narrate,
             SaveDiagnosisPort save) {
         return new DiagnoseProductService(
-                loadRuleSet, rubricDefaults, search, narrate, save,
+                loadRuleSet, rubricDefaults, search, narrate, save, fallbackOff,
                 blockingBridge, idGenerator, timeProvider, policy);
     }
 

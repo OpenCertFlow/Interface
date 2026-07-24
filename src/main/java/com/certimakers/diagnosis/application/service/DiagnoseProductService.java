@@ -8,6 +8,7 @@ import com.certimakers.common.domain.port.TimeProvider;
 import com.certimakers.diagnosis.application.DiagnosisPolicy;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
+import com.certimakers.diagnosis.application.port.out.AiFallbackSwitchPort;
 import com.certimakers.diagnosis.application.port.out.EvidenceQuery;
 import com.certimakers.diagnosis.application.port.out.LoadRuleSetPort;
 import com.certimakers.diagnosis.application.port.out.LoadScoreRubricPort;
@@ -57,6 +58,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
     private final SearchEvidencePort searchEvidencePort;
     private final NarrateReportPort narrateReportPort;
     private final SaveDiagnosisPort saveDiagnosisPort;
+    private final AiFallbackSwitchPort aiFallbackSwitch;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
@@ -68,6 +70,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
             SearchEvidencePort searchEvidencePort,
             NarrateReportPort narrateReportPort,
             SaveDiagnosisPort saveDiagnosisPort,
+            AiFallbackSwitchPort aiFallbackSwitch,
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider,
@@ -77,6 +80,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         this.searchEvidencePort = searchEvidencePort;
         this.narrateReportPort = narrateReportPort;
         this.saveDiagnosisPort = saveDiagnosisPort;
+        this.aiFallbackSwitch = aiFallbackSwitch;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -123,6 +127,11 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         if (diagnosis.candidates().isEmpty()) {
             return Mono.just(diagnosis);
         }
+        // 관리자가 폴백을 켜면 RAG를 호출하지 않고 곧바로 근거 없이 진행한다(타임아웃 대기 회피).
+        if (aiFallbackSwitch.isEvidenceDisabled()) {
+            diagnosis.markEvidenceDegraded();
+            return Mono.just(diagnosis);
+        }
         return searchEvidencePort.search(EvidenceQuery.from(diagnosis))
                 .timeout(policy.searchTimeout())
                 .doOnNext(diagnosis::attachEvidences)
@@ -137,6 +146,11 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
 
     /** ④ 문장화. 실패·타임아웃이면 템플릿 문장으로 대체한다. */
     private Mono<Diagnosis> attachNarration(Diagnosis diagnosis) {
+        // 폴백이 켜져 있으면 LLM을 호출하지 않고 템플릿 문장으로 대체한다.
+        if (aiFallbackSwitch.isNarrationDisabled()) {
+            diagnosis.attachNarration(templateNarrator.narrate(diagnosis));
+            return Mono.just(diagnosis);
+        }
         return narrateReportPort.narrate(NarrationRequest.from(diagnosis))
                 .timeout(policy.narrateTimeout())
                 .doOnNext(diagnosis::attachNarration)
