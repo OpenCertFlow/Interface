@@ -45,8 +45,30 @@ public class RuleEntity {
     protected RuleEntity() {
     }
 
+    /**
+     * 새 룰을 만든다(관리자 API 경로). {@code condition}·{@code effects}는 이미 검증된 JSON 문자열이며,
+     * 진단 시 {@link RuleJsonCodec}이 도메인 트리로 되돌린다. 룰셋 연관은 {@link #assignRuleSet}이 건다.
+     */
+    public RuleEntity(UUID id, String ruleCode, int priority, String condition, String effects,
+                      String description) {
+        this.id = id;
+        this.ruleCode = ruleCode;
+        this.priority = priority;
+        this.condition = condition;
+        this.effects = effects;
+        this.description = description;
+    }
+
+    void assignRuleSet(RuleSetEntity ruleSet) {
+        this.ruleSet = ruleSet;
+    }
+
     public String getRuleCode() {
         return ruleCode;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public int getPriority() {
