@@ -63,6 +63,8 @@ public class ConsultingLeadMapper {
                 entity.getMessage(),
                 consent,
                 LeadStatus.valueOf(entity.getStatus()),
+                entity.getAssignedConsultantId(),
+                entity.getInternalMemo(),
                 entity.getCreatedAt());
     }
 }

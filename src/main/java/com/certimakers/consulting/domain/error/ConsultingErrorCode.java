@@ -13,7 +13,13 @@ public enum ConsultingErrorCode implements ErrorCode {
     DIAGNOSIS_NOT_FOUND("CM-CONS-002", "연결할 진단 결과를 찾을 수 없습니다.", ErrorType.NOT_FOUND),
 
     /** 리드 저장 실패. */
-    LEAD_SAVE_FAILED("CM-CONS-003", "상담 신청 저장에 실패했습니다.", ErrorType.INTERNAL);
+    LEAD_SAVE_FAILED("CM-CONS-003", "상담 신청 저장에 실패했습니다.", ErrorType.INTERNAL),
+
+    /** 상담을 찾을 수 없다. */
+    LEAD_NOT_FOUND("CM-CONS-004", "상담 신청을 찾을 수 없습니다.", ErrorType.NOT_FOUND),
+
+    /** 허용되지 않은 상태 전이를 시도했다. */
+    INVALID_STATUS_TRANSITION("CM-CONS-005", "상담 상태를 그렇게 바꿀 수 없습니다.", ErrorType.VALIDATION);
 
     private final String code;
     private final String defaultMessage;

@@ -1,16 +1,27 @@
 package com.certimakers.consulting.adapter.out.persistence;
 
 import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdapter;
+import com.certimakers.common.domain.error.BusinessException;
+import com.certimakers.consulting.application.port.out.LoadConsultingLeadsPort;
 import com.certimakers.consulting.application.port.out.SaveConsultingLeadPort;
+import com.certimakers.consulting.application.port.out.UpdateConsultingLeadPort;
+import com.certimakers.consulting.domain.error.ConsultingErrorCode;
 import com.certimakers.consulting.domain.model.ConsultingLead;
+import com.certimakers.consulting.domain.model.ConsultingLeadId;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * {@link SaveConsultingLeadPort} 구현. 리드와 동의 로그를 한 트랜잭션에 함께 저장한다.
- * 연락처 암호화는 매퍼가 수행한다.
+ * 컨설팅 리드 저장·조회·워크플로 갱신. 연락처 암·복호화는 매퍼가 수행한다.
+ *
+ * <p>저장(save)은 리드·동의를 함께 넣는 접수 경로, 갱신(update)은 기존 행의 워크플로 컬럼만 바꾸는
+ * 컨설턴트 경로다 — 갱신 시 동의를 다시 만들지 않도록 분리했다.
  */
 @PersistenceAdapter
-public class ConsultingLeadPersistenceAdapter implements SaveConsultingLeadPort {
+public class ConsultingLeadPersistenceAdapter
+        implements SaveConsultingLeadPort, LoadConsultingLeadsPort, UpdateConsultingLeadPort {
 
     private final ConsultingLeadJpaRepository repository;
     private final ConsultingLeadMapper mapper;
@@ -26,5 +37,33 @@ public class ConsultingLeadPersistenceAdapter implements SaveConsultingLeadPort 
     public ConsultingLead save(ConsultingLead lead) {
         repository.save(mapper.toEntity(lead));
         return lead;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ConsultingLead> findLeads(String statusFilter, int limit) {
+        PageRequest page = PageRequest.of(0, limit);
+        List<ConsultingLeadEntity> entities = statusFilter == null || statusFilter.isBlank()
+                ? repository.findByOrderByCreatedAtDesc(page)
+                : repository.findByStatusOrderByCreatedAtDesc(statusFilter, page);
+        return entities.stream().map(mapper::toDomain).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ConsultingLead> findLead(ConsultingLeadId id) {
+        return repository.findById(id.value()).map(mapper::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public void update(ConsultingLead lead) {
+        ConsultingLeadEntity entity = repository.findById(lead.id().value())
+                .orElseThrow(() -> new BusinessException(ConsultingErrorCode.LEAD_NOT_FOUND));
+        entity.applyWorkflow(
+                lead.status().name(),
+                lead.assignedConsultantId().orElse(null),
+                lead.internalMemo().orElse(null));
+        repository.save(entity);
     }
 }

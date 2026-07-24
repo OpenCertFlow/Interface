@@ -39,6 +39,12 @@ public class ConsultingLeadEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "assigned_consultant_id")
+    private String assignedConsultantId;
+
+    @Column(name = "internal_memo")
+    private String internalMemo;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -60,6 +66,21 @@ public class ConsultingLeadEntity {
         this.message = message;
         this.status = status;
         this.createdAt = createdAt;
+    }
+
+    /** 워크플로 변경(상태·담당·메모)을 반영한다. 연락처·동의는 건드리지 않는다. */
+    public void applyWorkflow(String status, String assignedConsultantId, String internalMemo) {
+        this.status = status;
+        this.assignedConsultantId = assignedConsultantId;
+        this.internalMemo = internalMemo;
+    }
+
+    public String getAssignedConsultantId() {
+        return assignedConsultantId;
+    }
+
+    public String getInternalMemo() {
+        return internalMemo;
     }
 
     public void attachConsent(ConsentLogEntity consent) {

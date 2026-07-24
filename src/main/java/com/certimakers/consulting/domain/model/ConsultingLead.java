@@ -23,16 +23,21 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
     private final ConsentRecord consent;
     private final Instant createdAt;
     private LeadStatus status;
+    private String assignedConsultantId;
+    private String internalMemo;
 
     private ConsultingLead(
             ConsultingLeadId id, DiagnosisReference diagnosis, ContactInfo contact,
-            String message, ConsentRecord consent, LeadStatus status, Instant createdAt) {
+            String message, ConsentRecord consent, LeadStatus status,
+            String assignedConsultantId, String internalMemo, Instant createdAt) {
         this.id = Guard.notNull(id, "id");
         this.diagnosis = Guard.notNull(diagnosis, "diagnosis");
         this.contact = Guard.notNull(contact, "contact");
         this.message = message;
         this.consent = Guard.notNull(consent, "consent");
         this.status = Guard.notNull(status, "status");
+        this.assignedConsultantId = assignedConsultantId;
+        this.internalMemo = internalMemo;
         this.createdAt = Guard.notNull(createdAt, "createdAt");
     }
 
@@ -49,14 +54,58 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
             throw new BusinessException(ConsultingErrorCode.PRIVACY_CONSENT_REQUIRED);
         }
         return new ConsultingLead(
-                id, diagnosis, contact, normalizeMessage(message), consent, LeadStatus.SUBMITTED, createdAt);
+                id, diagnosis, contact, normalizeMessage(message), consent, LeadStatus.SUBMITTED,
+                null, null, createdAt);
     }
 
     /** 저장된 상태에서 되살린다(영속성 재구성 전용). */
     public static ConsultingLead reconstitute(
             ConsultingLeadId id, DiagnosisReference diagnosis, ContactInfo contact,
-            String message, ConsentRecord consent, LeadStatus status, Instant createdAt) {
-        return new ConsultingLead(id, diagnosis, contact, message, consent, status, createdAt);
+            String message, ConsentRecord consent, LeadStatus status,
+            String assignedConsultantId, String internalMemo, Instant createdAt) {
+        return new ConsultingLead(
+                id, diagnosis, contact, message, consent, status,
+                assignedConsultantId, internalMemo, createdAt);
+    }
+
+    /** 담당 컨설턴트를 배정한다. 접수 상태면 배정 상태로 넘어가고, 이미 진행 중이면 담당만 바꾼다. */
+    public void assignTo(String consultantId) {
+        Guard.hasText(consultantId, "consultantId");
+        requireNotTerminal();
+        this.assignedConsultantId = consultantId;
+        if (status == LeadStatus.SUBMITTED) {
+            this.status = LeadStatus.ASSIGNED;
+        }
+    }
+
+    /** 상태를 전이한다. 허용되지 않은 전이는 거부한다. */
+    public void transitionTo(LeadStatus next) {
+        Guard.notNull(next, "status");
+        if (status == next) {
+            return;
+        }
+        if (!status.canTransitionTo(next)) {
+            throw new BusinessException(
+                    ConsultingErrorCode.INVALID_STATUS_TRANSITION,
+                    "%s에서 %s로 바꿀 수 없습니다.".formatted(status, next));
+        }
+        if (next == LeadStatus.IN_PROGRESS && assignedConsultantId == null) {
+            throw new BusinessException(
+                    ConsultingErrorCode.INVALID_STATUS_TRANSITION, "담당 배정 후 진행할 수 있습니다.");
+        }
+        this.status = next;
+    }
+
+    /** 컨설턴트 내부 메모를 남긴다. 사용자에게 공개되지 않는다. */
+    public void updateInternalMemo(String memo) {
+        this.internalMemo = (memo == null || memo.isBlank()) ? null : memo.trim();
+    }
+
+    private void requireNotTerminal() {
+        if (status.isTerminal()) {
+            throw new BusinessException(
+                    ConsultingErrorCode.INVALID_STATUS_TRANSITION, "종료된 상담은 변경할 수 없습니다.");
+        }
     }
 
     private static String normalizeMessage(String message) {
@@ -86,6 +135,14 @@ public class ConsultingLead extends AggregateRoot<ConsultingLeadId> {
 
     public LeadStatus status() {
         return status;
+    }
+
+    public Optional<String> assignedConsultantId() {
+        return Optional.ofNullable(assignedConsultantId);
+    }
+
+    public Optional<String> internalMemo() {
+        return Optional.ofNullable(internalMemo);
     }
 
     public Instant createdAt() {

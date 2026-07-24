@@ -1,7 +1,13 @@
 package com.certimakers.consulting.adapter.out.persistence;
 
+import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ConsultingLeadJpaRepository extends JpaRepository<ConsultingLeadEntity, UUID> {
+
+    List<ConsultingLeadEntity> findByOrderByCreatedAtDesc(Pageable pageable);
+
+    List<ConsultingLeadEntity> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
 }
