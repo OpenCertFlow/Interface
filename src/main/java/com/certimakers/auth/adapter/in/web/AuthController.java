@@ -1,6 +1,7 @@
 package com.certimakers.auth.adapter.in.web;
 
 import com.certimakers.auth.application.port.in.EmailVerificationUseCase;
+import com.certimakers.auth.application.port.in.GoogleLoginUseCase;
 import com.certimakers.auth.application.port.in.KakaoLoginUseCase;
 import com.certimakers.auth.application.port.in.LoginUseCase;
 import com.certimakers.auth.application.port.in.PasswordResetUseCase;
@@ -30,6 +31,7 @@ public class AuthController {
     private final SignUpUseCase signUpUseCase;
     private final LoginUseCase loginUseCase;
     private final KakaoLoginUseCase kakaoLoginUseCase;
+    private final GoogleLoginUseCase googleLoginUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
     private final EmailVerificationUseCase emailVerificationUseCase;
     private final PasswordResetUseCase passwordResetUseCase;
@@ -39,6 +41,7 @@ public class AuthController {
             SignUpUseCase signUpUseCase,
             LoginUseCase loginUseCase,
             KakaoLoginUseCase kakaoLoginUseCase,
+            GoogleLoginUseCase googleLoginUseCase,
             RefreshTokenUseCase refreshTokenUseCase,
             EmailVerificationUseCase emailVerificationUseCase,
             PasswordResetUseCase passwordResetUseCase,
@@ -46,6 +49,7 @@ public class AuthController {
         this.signUpUseCase = signUpUseCase;
         this.loginUseCase = loginUseCase;
         this.kakaoLoginUseCase = kakaoLoginUseCase;
+        this.googleLoginUseCase = googleLoginUseCase;
         this.refreshTokenUseCase = refreshTokenUseCase;
         this.emailVerificationUseCase = emailVerificationUseCase;
         this.passwordResetUseCase = passwordResetUseCase;
@@ -78,6 +82,16 @@ public class AuthController {
             @Valid @RequestBody AuthRequests.KakaoLogin request) {
 
         return kakaoLoginUseCase.login(new KakaoLoginUseCase.KakaoLoginCommand(request.code()))
+                .map(AuthResponses.Tokens::from)
+                .flatMap(body -> wrap(body, HttpStatus.OK));
+    }
+
+    /** 구글 로그인. 앱이 받은 인가 코드를 그대로 넘긴다. 신규 사용자면 이 호출로 가입까지 끝난다. */
+    @PostMapping("/google")
+    public Mono<ResponseEntity<ApiResponse<AuthResponses.Tokens>>> googleLogin(
+            @Valid @RequestBody AuthRequests.GoogleLogin request) {
+
+        return googleLoginUseCase.login(new GoogleLoginUseCase.GoogleLoginCommand(request.code()))
                 .map(AuthResponses.Tokens::from)
                 .flatMap(body -> wrap(body, HttpStatus.OK));
     }

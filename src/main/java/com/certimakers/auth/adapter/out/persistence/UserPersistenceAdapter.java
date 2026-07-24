@@ -48,6 +48,13 @@ public class UserPersistenceAdapter implements SaveUserPort, LoadUserPort {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<User> findByGoogleId(String googleId) {
+        return repository.findByProviderAndProviderId(AuthProvider.GOOGLE.name(), googleId)
+                .map(UserMapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean existsByEmail(Email email) {
         return repository.existsByEmail(email.value());
     }

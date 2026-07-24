@@ -8,12 +8,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param jwt                  JWT 서명·만료 설정
  * @param kakao                카카오 OAuth 설정
+ * @param google               구글 OAuth 설정
  * @param email                이메일 인증·재설정 설정
  * @param bootstrapAdminEmails 시작 시 관리자로 승격할 계정 이메일. 최초 관리자를 만드는 유일한 통로다
  */
 @ConfigurationProperties(prefix = "certimakers.auth")
 public record AuthProperties(
-        Jwt jwt, Kakao kakao, EmailVerification email, List<String> bootstrapAdminEmails) {
+        Jwt jwt, Kakao kakao, Google google, EmailVerification email,
+        List<String> bootstrapAdminEmails) {
 
     /**
      * @param secret                  HMAC 서명 비밀키(Base64 또는 평문). 최소 32바이트여야 HS256에 안전하다
@@ -36,6 +38,23 @@ public record AuthProperties(
      * @param userInfoUri  사용자 정보 조회 엔드포인트
      */
     public record Kakao(
+            String clientId,
+            String clientSecret,
+            String redirectUri,
+            String tokenUri,
+            String userInfoUri) {
+    }
+
+    /**
+     * 구글 OAuth 설정. 카카오와 달리 {@code clientSecret}이 필수다.
+     *
+     * @param clientId     구글 OAuth 클라이언트 ID
+     * @param clientSecret 구글 OAuth 클라이언트 시크릿
+     * @param redirectUri  인가 코드를 받을 리다이렉트 URI
+     * @param tokenUri     액세스 토큰 발급 엔드포인트
+     * @param userInfoUri  사용자 정보(OIDC userinfo) 조회 엔드포인트
+     */
+    public record Google(
             String clientId,
             String clientSecret,
             String redirectUri,

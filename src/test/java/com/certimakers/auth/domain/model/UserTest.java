@@ -31,6 +31,11 @@ class UserTest {
                 newId(), Email.of("kakao@example.com"), Nickname.of("카카오"), "123456789", NOW);
     }
 
+    private static User googleUser() {
+        return User.registerGoogle(
+                newId(), Email.of("google@example.com"), Nickname.of("구글"), "google-sub-abc", NOW);
+    }
+
     @Nested
     @DisplayName("가입 시 초기 상태")
     class Registration {
@@ -56,6 +61,17 @@ class UserTest {
             assertThat(user.emailVerified()).isTrue();
             assertThat(user.passwordHash()).isEmpty();
             assertThat(user.providerId()).contains("123456789");
+        }
+
+        @Test
+        @DisplayName("구글 가입도 이미 검증된 이메일이므로 인증 완료·비밀번호 없음으로 시작한다")
+        void 구글_가입은_인증완료로_시작한다() {
+            User user = googleUser();
+
+            assertThat(user.provider()).isEqualTo(AuthProvider.GOOGLE);
+            assertThat(user.emailVerified()).isTrue();
+            assertThat(user.passwordHash()).isEmpty();
+            assertThat(user.providerId()).contains("google-sub-abc");
         }
     }
 

@@ -41,6 +41,11 @@ public final class AuthRequests {
             String code) {
     }
 
+    public record GoogleLogin(
+            @NotBlank(message = "인가 코드가 필요합니다.")
+            String code) {
+    }
+
     public record Refresh(
             @NotBlank(message = "리프레시 토큰이 필요합니다.")
             String refreshToken) {

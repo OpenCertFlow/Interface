@@ -31,7 +31,10 @@ public enum AuthErrorCode implements ErrorCode {
     INVALID_REFRESH_TOKEN("CM-AUTH-008", "다시 로그인해 주세요.", ErrorType.VALIDATION),
 
     /** 카카오 인증 서버 연동에 실패했다. */
-    KAKAO_AUTH_FAILED("CM-AUTH-009", "카카오 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE);
+    KAKAO_AUTH_FAILED("CM-AUTH-009", "카카오 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE),
+
+    /** 구글 인증 서버 연동에 실패했다. */
+    GOOGLE_AUTH_FAILED("CM-AUTH-010", "구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE);
 
     private final String code;
     private final String defaultMessage;

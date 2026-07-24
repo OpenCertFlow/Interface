@@ -64,6 +64,18 @@ public class User extends AggregateRoot<UserId> {
                 AuthProvider.KAKAO, kakaoId, true, createdAt);
     }
 
+    /**
+     * 구글 프로필로 새 소셜 계정을 만든다. 구글이 이미 이메일을 검증했으므로 인증 완료 상태로
+     * 시작한다({@code kakao}와 같은 규약).
+     */
+    public static User registerGoogle(
+            UserId id, Email email, Nickname nickname, String googleId, Instant createdAt) {
+        Guard.hasText(googleId, "googleId");
+        return new User(
+                id, email, null, nickname, Role.USER,
+                AuthProvider.GOOGLE, googleId, true, createdAt);
+    }
+
     /** 저장된 상태에서 되살린다(영속성 재구성 전용). 전이 규칙을 거치지 않는다. */
     public static User reconstitute(
             UserId id, Email email, PasswordHash passwordHash, Nickname nickname, Role role,
