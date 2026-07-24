@@ -2,6 +2,7 @@ package com.certimakers.auth.adapter.in.web;
 
 import com.certimakers.auth.application.port.in.LogoutUseCase;
 import com.certimakers.auth.application.port.in.MyProfileUseCase;
+import com.certimakers.auth.application.port.in.WithdrawAccountUseCase;
 import com.certimakers.auth.domain.error.AuthErrorCode;
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
@@ -31,14 +32,17 @@ public class MeController {
 
     private final MyProfileUseCase myProfileUseCase;
     private final LogoutUseCase logoutUseCase;
+    private final WithdrawAccountUseCase withdrawAccountUseCase;
     private final TimeProvider timeProvider;
 
     public MeController(
             MyProfileUseCase myProfileUseCase,
             LogoutUseCase logoutUseCase,
+            WithdrawAccountUseCase withdrawAccountUseCase,
             TimeProvider timeProvider) {
         this.myProfileUseCase = myProfileUseCase;
         this.logoutUseCase = logoutUseCase;
+        this.withdrawAccountUseCase = withdrawAccountUseCase;
         this.timeProvider = timeProvider;
     }
 
@@ -81,6 +85,14 @@ public class MeController {
     public Mono<ResponseEntity<ApiResponse<Void>>> logout(Mono<Principal> principal) {
         return currentUserId(principal)
                 .flatMap(logoutUseCase::logout)
+                .then(wrap(null, HttpStatus.NO_CONTENT));
+    }
+
+    /** 계정 탈퇴(F-AUTH-018). 계정을 삭제하고 세션을 폐기한다. 인증 주체 본인만 자신을 지운다. */
+    @DeleteMapping
+    public Mono<ResponseEntity<ApiResponse<Void>>> withdraw(Mono<Principal> principal) {
+        return currentUserId(principal)
+                .flatMap(withdrawAccountUseCase::withdraw)
                 .then(wrap(null, HttpStatus.NO_CONTENT));
     }
 

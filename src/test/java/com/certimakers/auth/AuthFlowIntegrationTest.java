@@ -93,6 +93,24 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    @DisplayName("계정 탈퇴 후에는 다시 로그인할 수 없다 (F-AUTH-018)")
+    void 계정_탈퇴() {
+        String email = uniqueEmail("withdraw-flow");
+        String accessToken = loginAndGetAccessToken(signUp(email, "탈퇴예정"));
+
+        webTestClient.delete().uri("/api/v1/me")
+                .header("Authorization", "Bearer " + accessToken)
+                .exchange()
+                .expectStatus().isNoContent();
+
+        // 계정이 사라졌으므로 재로그인은 실패한다.
+        webTestClient.post().uri("/api/v1/auth/login")
+                .bodyValue(Map.of("email", email, "password", PASSWORD))
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
+
+    @Test
     @DisplayName("회원가입 → 로그인 → 마이페이지 조회까지 한 흐름으로 동작한다")
     void 회원가입_로그인_마이페이지_전체흐름() {
         String email = uniqueEmail("flow");

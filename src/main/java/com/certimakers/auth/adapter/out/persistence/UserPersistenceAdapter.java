@@ -1,5 +1,6 @@
 package com.certimakers.auth.adapter.out.persistence;
 
+import com.certimakers.auth.application.port.out.DeleteUserPort;
 import com.certimakers.auth.application.port.out.LoadUserPort;
 import com.certimakers.auth.application.port.out.SaveUserPort;
 import com.certimakers.auth.application.port.out.UserAdminQueryPort;
@@ -15,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** {@link SaveUserPort}·{@link LoadUserPort}·{@link UserAdminQueryPort}의 JPA 구현. 메서드는 블로킹이다. */
 @PersistenceAdapter
-public class UserPersistenceAdapter implements SaveUserPort, LoadUserPort, UserAdminQueryPort {
+public class UserPersistenceAdapter
+        implements SaveUserPort, LoadUserPort, UserAdminQueryPort, DeleteUserPort {
 
     private final UserJpaRepository repository;
 
@@ -60,6 +62,12 @@ public class UserPersistenceAdapter implements SaveUserPort, LoadUserPort, UserA
     @Transactional(readOnly = true)
     public boolean existsByEmail(Email email) {
         return repository.existsByEmail(email.value());
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(UserId id) {
+        repository.deleteById(id.value());
     }
 
     @Override
