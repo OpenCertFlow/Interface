@@ -280,4 +280,21 @@ class ConsultingWorkflowIntegrationTest {
                 .exchange().expectStatus().isOk()
                 .expectBody(JsonNode.class).returnResult().getResponseBody();
     }
+
+    @Test
+    @DisplayName("컨설턴트는 룰셋(근거·Rule)을 조회할 수 있고, 일반 사용자는 못 한다 (F-WCON-004)")
+    void 컨설턴트_룰셋_조회() {
+        JsonNode ruleSets = webTestClient.get().uri("/api/v1/rule-sets")
+                .header("Authorization", "Bearer " + consultantToken())
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+        assertThat(ruleSets.at("/data").size()).isGreaterThanOrEqualTo(1);
+
+        webTestClient.get().uri("/api/v1/rule-sets")
+                .header("Authorization", "Bearer " + tokenFor(Role.USER, UUID.randomUUID().toString()))
+                .exchange().expectStatus().isForbidden();
+
+        webTestClient.get().uri("/api/v1/rule-sets")
+                .exchange().expectStatus().isUnauthorized();
+    }
 }

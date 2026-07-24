@@ -75,6 +75,8 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // 컨설턴트 상담 처리. 컨설턴트와 관리자가 쓴다(소공인 접수는 /consulting-leads로 공개)
                         .pathMatchers("/api/v1/consulting/**").hasAnyRole("CONSULTANT", "ADMIN")
+                        // 룰셋 조회(근거·Rule 상세). 편집은 /admin/rule-sets(ADMIN), 조회는 컨설턴트도 가능
+                        .pathMatchers(HttpMethod.GET, "/api/v1/rule-sets/**").hasAnyRole("CONSULTANT", "ADMIN")
                         // 마이페이지·글쓰기·파일 업로드·문서 발급은 인증이 필요하다
                         .pathMatchers("/api/v1/me/**").authenticated()
                         .pathMatchers("/api/v1/boards/**").authenticated()
