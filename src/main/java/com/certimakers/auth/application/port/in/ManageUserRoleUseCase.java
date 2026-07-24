@@ -16,7 +16,7 @@ public interface ManageUserRoleUseCase {
 
     /**
      * @param targetUserId 권한을 바꿀 사용자
-     * @param role         USER 또는 ADMIN
+     * @param role         USER·CONSULTANT·ADMIN 중 하나
      */
     record ChangeRoleCommand(String targetUserId, String role) {
     }

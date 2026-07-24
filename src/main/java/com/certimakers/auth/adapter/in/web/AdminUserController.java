@@ -66,7 +66,7 @@ public class AdminUserController {
                         .body(ApiResponse.success(body, traceId, timeProvider.now()))));
     }
 
-    /** @param role USER 또는 ADMIN */
+    /** @param role USER·CONSULTANT·ADMIN 중 하나. 컨설턴트 승인은 CONSULTANT로 승격하는 것이다(F-WADM-003) */
     public record ChangeRoleRequest(
             @NotBlank(message = "권한 값이 필요합니다.")
             String role) {

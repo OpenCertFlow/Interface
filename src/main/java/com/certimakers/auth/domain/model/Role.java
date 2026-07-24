@@ -10,6 +10,7 @@ package com.certimakers.auth.domain.model;
 public enum Role {
 
     USER,
+    CONSULTANT,
     ADMIN;
 
     public String authority() {

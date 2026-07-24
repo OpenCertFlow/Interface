@@ -55,11 +55,13 @@ class AdminUserListIntegrationTest {
         return tokenProvider.issue(admin).accessToken();
     }
 
-    private void signUp(String tag) {
-        webTestClient.post().uri("/api/v1/auth/signup")
+    private String signUp(String tag) {
+        return webTestClient.post().uri("/api/v1/auth/signup")
                 .bodyValue(Map.of("email", tag + "@example.com", "password", "password1234", "nickname", tag))
                 .exchange()
-                .expectStatus().isCreated();
+                .expectStatus().isCreated()
+                .expectBody(JsonNode.class).returnResult().getResponseBody()
+                .at("/data/userId").asText();
     }
 
     @Test
@@ -105,5 +107,25 @@ class AdminUserListIntegrationTest {
                 .header("Authorization", "Bearer " + adminToken())
                 .exchange()
                 .expectStatus().isBadRequest();
+    }
+
+    @Test
+    @DisplayName("관리자가 사용자를 CONSULTANT로 승격한다 — 컨설턴트 승인(F-WADM-003)")
+    void 컨설턴트로_승격한다() {
+        String userId = signUp("becomeconsultant");
+
+        webTestClient.patch().uri("/api/v1/admin/users/{id}/role", userId)
+                .header("Authorization", "Bearer " + adminToken())
+                .bodyValue(Map.of("role", "CONSULTANT"))
+                .exchange()
+                .expectStatus().isOk();
+
+        JsonNode consultants = webTestClient.get().uri("/api/v1/admin/users?role=CONSULTANT")
+                .header("Authorization", "Bearer " + adminToken())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+
+        assertThat(consultants.at("/data")).anyMatch(u -> u.get("id").asText().equals(userId));
     }
 }
