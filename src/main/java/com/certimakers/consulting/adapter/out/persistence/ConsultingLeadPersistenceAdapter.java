@@ -3,11 +3,14 @@ package com.certimakers.consulting.adapter.out.persistence;
 import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdapter;
 import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.consulting.application.port.out.LoadConsultingLeadsPort;
+import com.certimakers.consulting.application.port.out.PurgeLeadsPort;
 import com.certimakers.consulting.application.port.out.SaveConsultingLeadPort;
 import com.certimakers.consulting.application.port.out.UpdateConsultingLeadPort;
 import com.certimakers.consulting.domain.error.ConsultingErrorCode;
 import com.certimakers.consulting.domain.model.ConsultingLead;
 import com.certimakers.consulting.domain.model.ConsultingLeadId;
+import com.certimakers.consulting.domain.model.LeadStatus;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
@@ -21,7 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @PersistenceAdapter
 public class ConsultingLeadPersistenceAdapter
-        implements SaveConsultingLeadPort, LoadConsultingLeadsPort, UpdateConsultingLeadPort {
+        implements SaveConsultingLeadPort, LoadConsultingLeadsPort, UpdateConsultingLeadPort,
+        PurgeLeadsPort {
+
+    /** 파기 대상이 되는 종착 상태. 진행 중 리드는 보관한다. */
+    private static final List<String> TERMINAL_STATUSES =
+            List.of(LeadStatus.COMPLETED.name(), LeadStatus.CANCELLED.name());
 
     private final ConsultingLeadJpaRepository repository;
     private final ConsultingLeadMapper mapper;
@@ -74,5 +82,11 @@ public class ConsultingLeadPersistenceAdapter
                 lead.assignedConsultantId().orElse(null),
                 lead.internalMemo().orElse(null));
         repository.save(entity);
+    }
+
+    @Override
+    @Transactional
+    public long deleteTerminalOlderThan(Instant threshold) {
+        return repository.deleteByStatusInAndCreatedAtBefore(TERMINAL_STATUSES, threshold);
     }
 }
