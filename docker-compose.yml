@@ -1,4 +1,30 @@
 services:
+  backend:
+    # 이 저장소의 Dockerfile로 빌드한다. 인프라(K8s) 배포는 Infra/ 저장소가 담당하고,
+    # 이 compose는 로컬 풀스택 실행용이다.
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: certimakers-backend
+    environment:
+      # 컨테이너 네트워크에서는 호스트가 서비스명이다(localhost 아님).
+      DB_URL: jdbc:postgresql://postgres:5432/certimakers
+      DB_USERNAME: certimakers
+      DB_PASSWORD: certimakers
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # AI 워커가 없어도 진단은 성립한다(DegradedFlags 폴백) — 하드 의존하지 않는다.
+      AI_WORKER_URL: http://ai-worker:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
   postgres:
     image: postgres:16-alpine
     container_name: certimakers-postgres
