@@ -3,6 +3,7 @@ package com.certimakers.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -69,9 +70,12 @@ class AuthFlowIntegrationTest {
         return tag + "@example.com";
     }
 
+    private static final List<String> REQUIRED_TERMS = List.of("SERVICE", "PRIVACY");
+
     private String signUp(String email, String nickname) {
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", email, "password", PASSWORD, "nickname", nickname))
+                .bodyValue(Map.of("email", email, "password", PASSWORD, "nickname", nickname,
+                        "agreedTermKeys", REQUIRED_TERMS))
                 .exchange()
                 .expectStatus().isCreated();
         return email;
@@ -90,6 +94,30 @@ class AuthFlowIntegrationTest {
 
     private String signUpAndLogin(String tag, String nickname) {
         return loginAndGetAccessToken(signUp(uniqueEmail(tag), nickname));
+    }
+
+    @Test
+    @DisplayName("약관 조회 후 필수 약관에 동의하지 않으면 가입이 거부된다 (F-AUTH-008)")
+    void 약관_동의() {
+        // 공개 약관 조회 — 필수 약관(SERVICE·PRIVACY)이 포함된다.
+        JsonNode terms = webTestClient.get().uri("/api/v1/terms")
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+        assertThat(terms.at("/data").toString()).contains("SERVICE", "PRIVACY");
+
+        // 필수 약관 없이 가입 → 400.
+        webTestClient.post().uri("/api/v1/auth/signup")
+                .bodyValue(Map.of("email", "noterms@example.com", "password", PASSWORD, "nickname", "무동의",
+                        "agreedTermKeys", List.of("MARKETING")))
+                .exchange()
+                .expectStatus().isBadRequest();
+
+        // 필수 약관 동의 → 가입 성공.
+        webTestClient.post().uri("/api/v1/auth/signup")
+                .bodyValue(Map.of("email", "withterms@example.com", "password", PASSWORD, "nickname", "동의",
+                        "agreedTermKeys", REQUIRED_TERMS))
+                .exchange()
+                .expectStatus().isCreated();
     }
 
     @Test
@@ -153,12 +181,14 @@ class AuthFlowIntegrationTest {
     @DisplayName("같은 이메일로 두 번 가입할 수 없다")
     void 같은_이메일로_두_번_가입할_수_없다() {
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", "dup@example.com", "password", PASSWORD, "nickname", "중복"))
+                .bodyValue(Map.of("email", "dup@example.com", "password", PASSWORD, "nickname", "중복",
+                        "agreedTermKeys", REQUIRED_TERMS))
                 .exchange()
                 .expectStatus().isCreated();
 
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", "dup@example.com", "password", PASSWORD, "nickname", "중복2"))
+                .bodyValue(Map.of("email", "dup@example.com", "password", PASSWORD, "nickname", "중복2",
+                        "agreedTermKeys", REQUIRED_TERMS))
                 .exchange()
                 .expectStatus().isEqualTo(409)
                 .expectBody()
@@ -169,7 +199,8 @@ class AuthFlowIntegrationTest {
     @DisplayName("비밀번호가 틀리면 이메일 존재 여부를 알려주지 않고 같은 오류로 답한다")
     void 잘못된_자격증명은_동일한_오류를_준다() {
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", "creds@example.com", "password", PASSWORD, "nickname", "자격"))
+                .bodyValue(Map.of("email", "creds@example.com", "password", PASSWORD, "nickname", "자격",
+                        "agreedTermKeys", REQUIRED_TERMS))
                 .exchange()
                 .expectStatus().isCreated();
 
@@ -205,7 +236,8 @@ class AuthFlowIntegrationTest {
     @DisplayName("리프레시 토큰으로 새 액세스 토큰을 받는다")
     void 리프레시_토큰으로_재발급받는다() {
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", "refresh@example.com", "password", PASSWORD, "nickname", "리프레시"))
+                .bodyValue(Map.of("email", "refresh@example.com", "password", PASSWORD, "nickname", "리프레시",
+                        "agreedTermKeys", REQUIRED_TERMS))
                 .exchange()
                 .expectStatus().isCreated();
 

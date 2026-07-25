@@ -62,7 +62,8 @@ class DocumentFlowIntegrationTest {
 
     private String signUpAndLogin(String tag) {
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", tag + "@example.com", "password", PASSWORD, "nickname", tag))
+                .bodyValue(Map.of("email", tag + "@example.com", "password", PASSWORD, "nickname", tag,
+                        "agreedTermKeys", java.util.List.of("SERVICE", "PRIVACY")))
                 .exchange()
                 .expectStatus().isCreated();
 

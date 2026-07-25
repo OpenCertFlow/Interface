@@ -11,6 +11,7 @@ import com.certimakers.auth.domain.model.User;
 import com.certimakers.auth.domain.model.UserId;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -67,7 +68,8 @@ class AdminDashboardIntegrationTest {
     @DisplayName("대시보드가 여러 컨텍스트의 집계를 한 응답으로 돌려준다")
     void 대시보드_집계를_돌려준다() {
         webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", "dash@example.com", "password", "password1234", "nickname", "dash"))
+                .bodyValue(Map.of("email", "dash@example.com", "password", "password1234", "nickname", "dash",
+                        "agreedTermKeys", List.of("SERVICE", "PRIVACY")))
                 .exchange()
                 .expectStatus().isCreated();
 

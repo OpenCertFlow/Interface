@@ -62,7 +62,8 @@ public class AuthController {
 
         return signUpUseCase.signUp(
                         new SignUpUseCase.SignUpCommand(
-                                request.email(), request.password(), request.nickname()))
+                                request.email(), request.password(), request.nickname(),
+                                request.agreedTermKeys()))
                 .map(userId -> new AuthResponses.SignedUp(userId.value().toString()))
                 .flatMap(body -> wrap(body, HttpStatus.CREATED));
     }

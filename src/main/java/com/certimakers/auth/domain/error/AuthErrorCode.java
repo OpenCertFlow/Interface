@@ -34,7 +34,10 @@ public enum AuthErrorCode implements ErrorCode {
     KAKAO_AUTH_FAILED("CM-AUTH-009", "카카오 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE),
 
     /** 구글 인증 서버 연동에 실패했다. */
-    GOOGLE_AUTH_FAILED("CM-AUTH-010", "구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE);
+    GOOGLE_AUTH_FAILED("CM-AUTH-010", "구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE),
+
+    /** 필수 약관에 동의하지 않고 가입을 시도했다. */
+    TERMS_NOT_AGREED("CM-AUTH-011", "필수 약관에 동의해야 가입할 수 있습니다.", ErrorType.VALIDATION);
 
     private final String code;
     private final String defaultMessage;

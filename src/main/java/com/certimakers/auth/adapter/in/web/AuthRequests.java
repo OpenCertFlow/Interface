@@ -25,7 +25,10 @@ public final class AuthRequests {
             String password,
 
             @NotBlank(message = "닉네임을 입력해 주세요.")
-            String nickname) {
+            String nickname,
+
+            /** 동의한 약관 키. 필수 약관이 모두 포함되어야 가입된다(F-AUTH-008). */
+            java.util.List<String> agreedTermKeys) {
     }
 
     public record Login(

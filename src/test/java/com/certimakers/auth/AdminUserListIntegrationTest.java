@@ -11,6 +11,7 @@ import com.certimakers.auth.domain.model.User;
 import com.certimakers.auth.domain.model.UserId;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +58,8 @@ class AdminUserListIntegrationTest {
 
     private String signUp(String tag) {
         return webTestClient.post().uri("/api/v1/auth/signup")
-                .bodyValue(Map.of("email", tag + "@example.com", "password", "password1234", "nickname", tag))
+                .bodyValue(Map.of("email", tag + "@example.com", "password", "password1234", "nickname", tag,
+                        "agreedTermKeys", List.of("SERVICE", "PRIVACY")))
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(JsonNode.class).returnResult().getResponseBody()

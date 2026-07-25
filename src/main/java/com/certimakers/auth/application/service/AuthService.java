@@ -8,6 +8,9 @@ import com.certimakers.auth.application.port.out.LoadUserPort;
 import com.certimakers.auth.application.port.out.PasswordEncoderPort;
 import com.certimakers.auth.application.port.out.RefreshTokenStorePort;
 import com.certimakers.auth.application.port.out.SaveUserPort;
+import com.certimakers.auth.application.port.out.TermsPort;
+import com.certimakers.auth.application.port.out.TermsPort.AgreedTerm;
+import com.certimakers.auth.application.port.out.TermsPort.Term;
 import com.certimakers.auth.application.port.out.TokenProviderPort;
 import com.certimakers.auth.application.port.out.TokenProviderPort.AuthenticatedUser;
 import com.certimakers.auth.application.port.out.TokenProviderPort.IssuedTokens;
@@ -22,6 +25,8 @@ import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.common.domain.port.IdGenerator;
 import com.certimakers.common.domain.port.TimeProvider;
+import java.util.List;
+import java.util.Set;
 import reactor.core.publisher.Mono;
 
 /**
@@ -38,6 +43,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
     private final PasswordEncoderPort passwordEncoder;
     private final TokenProviderPort tokenProvider;
     private final RefreshTokenStorePort refreshTokenStore;
+    private final TermsPort termsPort;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
@@ -48,6 +54,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
             PasswordEncoderPort passwordEncoder,
             TokenProviderPort tokenProvider,
             RefreshTokenStorePort refreshTokenStore,
+            TermsPort termsPort,
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider) {
@@ -56,6 +63,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.refreshTokenStore = refreshTokenStore;
+        this.termsPort = termsPort;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -65,15 +73,33 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
     public Mono<UserId> signUp(SignUpCommand command) {
         Email email = Email.of(command.email());
         Nickname nickname = Nickname.of(command.nickname());
+        Set<String> agreedKeys = Set.copyOf(command.agreedTermKeys());
 
         return blockingBridge.mono(() -> {
             if (loadUserPort.existsByEmail(email)) {
                 throw new BusinessException(AuthErrorCode.EMAIL_ALREADY_REGISTERED);
             }
+            // 필수 약관에 모두 동의했는지 확인한다(F-AUTH-008). 하나라도 빠지면 가입을 막는다.
+            List<Term> activeTerms = termsPort.loadActive();
+            boolean allRequiredAgreed = activeTerms.stream()
+                    .filter(Term::required)
+                    .allMatch(term -> agreedKeys.contains(term.termKey()));
+            if (!allRequiredAgreed) {
+                throw new BusinessException(AuthErrorCode.TERMS_NOT_AGREED);
+            }
+
             PasswordHash hash = passwordEncoder.encode(command.rawPassword());
             User user = User.registerLocal(
                     UserId.of(idGenerator.nextId()), email, hash, nickname, timeProvider.now());
-            return saveUserPort.save(user).id();
+            UserId savedId = saveUserPort.save(user).id();
+
+            // 동의한 약관(필수+선택 중 동의한 것)을 기록한다.
+            List<AgreedTerm> agreements = activeTerms.stream()
+                    .filter(term -> agreedKeys.contains(term.termKey()))
+                    .map(term -> new AgreedTerm(term.termKey(), term.version()))
+                    .toList();
+            termsPort.saveAgreements(savedId.value(), agreements, timeProvider.now());
+            return savedId;
         });
     }
 
