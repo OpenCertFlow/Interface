@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +48,7 @@ class DiagnoseProductServiceTest {
     private Scheduler scheduler;
     private BlockingBridge blockingBridge;
     private final IdGenerator idGenerator =
-            () -> UUID.fromString("018f0000-0000-7000-8000-000000000001");
+            () -> 1L;
     private final TimeProvider timeProvider =
             new com.certimakers.common.adapter.out.system.SystemTimeProvider(
                     Clock.fixed(Instant.parse("2026-07-11T00:00:00Z"), ZoneOffset.UTC));
@@ -221,7 +220,7 @@ class DiagnoseProductServiceTest {
     }
 
     @Test
-    @DisplayName("생성된 진단 ID는 IdGenerator에서 온다 — 도메인이 UUID를 직접 만들지 않는다")
+    @DisplayName("생성된 진단 ID는 IdGenerator에서 온다 — 도메인이 Long를 직접 만들지 않는다")
     void 진단ID는_포트에서_온다() {
         DiagnoseProductService service = service(
                 ruleSetFound(),
@@ -231,7 +230,7 @@ class DiagnoseProductServiceTest {
 
         StepVerifier.create(service.diagnose(dryerCommand()))
                 .assertNext(diagnosis -> assertThat(diagnosis.id().value())
-                        .isEqualTo(UUID.fromString("018f0000-0000-7000-8000-000000000001")))
+                        .isEqualTo(1L))
                 .verifyComplete();
     }
 }

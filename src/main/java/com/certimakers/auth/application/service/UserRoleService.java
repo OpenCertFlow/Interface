@@ -12,7 +12,6 @@ import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /** 사용자 권한 변경 오케스트레이션. 조회·저장이 JPA라 BlockingBridge로 감싼다. */
@@ -58,7 +57,7 @@ public class UserRoleService implements ManageUserRoleUseCase {
 
     private UserId parseId(String raw) {
         try {
-            return UserId.of(UUID.fromString(raw));
+            return UserId.of(Long.parseLong(raw));
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
         }

@@ -5,14 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "notification")
 public class NotificationEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "recipient_user_id", nullable = false)
     private String recipientUserId;
@@ -42,7 +41,7 @@ public class NotificationEntity {
     }
 
     public NotificationEntity(
-            UUID id, String recipientUserId, String kind, String title, String body,
+            Long id, String recipientUserId, String kind, String title, String body,
             String refType, String refId, Instant createdAt) {
         this.id = id;
         this.recipientUserId = recipientUserId;
@@ -59,7 +58,7 @@ public class NotificationEntity {
         this.read = true;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

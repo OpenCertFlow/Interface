@@ -15,7 +15,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +28,7 @@ class DiagnosisTest {
     private Diagnosis evaluatedDryer() {
         ProductProfile dryer = ProductProfileFixtures.hairDryer(Set.of(RuleSetFixtures.TEST_REPORT));
         Diagnosis diagnosis =
-                Diagnosis.request(DiagnosisId.of(UUID.randomUUID()), dryer, NOW);
+                Diagnosis.request(DiagnosisId.of(com.certimakers.support.TestIds.next()), dryer, NOW);
 
         RuleEvaluationResult ruleResult =
                 ruleEvaluator.evaluate(dryer, RuleSetFixtures.smallApplianceV1());
@@ -44,7 +43,7 @@ class DiagnosisTest {
     @DisplayName("요청 상태로 시작한다")
     void 요청_상태로_시작() {
         Diagnosis diagnosis = Diagnosis.request(
-                DiagnosisId.of(UUID.randomUUID()),
+                DiagnosisId.of(com.certimakers.support.TestIds.next()),
                 ProductProfileFixtures.hairDryer(Set.of()),
                 NOW);
 
@@ -66,7 +65,7 @@ class DiagnosisTest {
     @DisplayName("RULE_EVALUATED 전에는 근거를 첨부할 수 없다 (불변식 4)")
     void 평가전_근거첨부_불가() {
         Diagnosis diagnosis = Diagnosis.request(
-                DiagnosisId.of(UUID.randomUUID()),
+                DiagnosisId.of(com.certimakers.support.TestIds.next()),
                 ProductProfileFixtures.hairDryer(Set.of()),
                 NOW);
 

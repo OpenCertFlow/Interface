@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -85,7 +84,7 @@ public class DocumentService implements DocumentUseCase {
     }
 
     private Mono<IssuedResult> record(
-            FormValues values, IssuerRef issuer, UUID fileId, Instant issuedAt) {
+            FormValues values, IssuerRef issuer, Long fileId, Instant issuedAt) {
 
         IssuedDocument document = IssuedDocument.issue(
                 DocumentId.of(idGenerator.nextId()), values, issuer, fileId, issuedAt);
@@ -144,7 +143,7 @@ public class DocumentService implements DocumentUseCase {
 
     private DocumentId parseId(String rawId) {
         try {
-            return DocumentId.of(UUID.fromString(rawId));
+            return DocumentId.of(Long.parseLong(rawId));
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(DocumentErrorCode.ISSUED_DOCUMENT_NOT_FOUND);
         }

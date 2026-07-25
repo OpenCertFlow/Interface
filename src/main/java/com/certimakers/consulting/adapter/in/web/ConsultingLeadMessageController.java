@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /**
- * 소공인의 상담 공개 메시지 조회(F-WCON-009 소비 측). 리드 id(UUID)를 접근키로 쓴다 — 공개
+ * 소공인의 상담 공개 메시지 조회(F-WCON-009 소비 측). 리드 id(Long)를 접근키로 쓴다 — 공개
  * 메시지(추가정보 요청·안내)만 보이고 내부 메모·작성자는 제외한다. 접수 경로와 같은 공개 path다.
  */
 @WebAdapter

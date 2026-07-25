@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * {@code board_post} 테이블 매핑.
@@ -19,13 +18,13 @@ import java.util.UUID;
 public class PostEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "board_type", nullable = false)
     private String boardType;
 
     @Column(name = "author_id", nullable = false)
-    private UUID authorId;
+    private Long authorId;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -37,7 +36,7 @@ public class PostEntity {
     private boolean secret;
 
     @Column(name = "attachment_ids")
-    private String attachmentIds; // 쉼표로 이어 붙인 UUID 목록. 없으면 null
+    private String attachmentIds; // 쉼표로 이어 붙인 Long 목록. 없으면 null
 
     @Column(name = "view_count", nullable = false)
     private long viewCount;
@@ -52,7 +51,7 @@ public class PostEntity {
     }
 
     public PostEntity(
-            UUID id, String boardType, UUID authorId, String title, String body, boolean secret,
+            Long id, String boardType, Long authorId, String title, String body, boolean secret,
             String attachmentIds, long viewCount, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.boardType = boardType;
@@ -66,7 +65,7 @@ public class PostEntity {
         this.updatedAt = updatedAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
@@ -74,7 +73,7 @@ public class PostEntity {
         return boardType;
     }
 
-    public UUID getAuthorId() {
+    public Long getAuthorId() {
         return authorId;
     }
 

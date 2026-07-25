@@ -20,7 +20,6 @@ import com.certimakers.file.domain.model.OriginalFileName;
 import com.certimakers.file.domain.model.OwnerRef;
 import com.certimakers.file.domain.model.StorageKey;
 import com.certimakers.file.domain.model.StoredFile;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -73,21 +72,25 @@ public class FileService implements UploadFileUseCase, DownloadFileQuery, Delete
         OriginalFileName originalName = OriginalFileName.of(command.originalFileName());
         ContentType contentType = ContentType.of(command.contentType());
         OwnerRef owner = OwnerRef.of(command.ownerId());
-
-        FileId fileId = FileId.of(idGenerator.nextId());
         var now = timeProvider.now();
-        StorageKey key = StorageKey.create(timeProvider.today(), fileId, originalName);
 
-        return storage.write(key, command.content())
-                .flatMap(written -> {
-                    if (written > maxSizeInBytes) {
-                        // 용량 초과분은 이미 디스크에 쓰였다. 남겨 두면 저장소만 차지한다.
-                        return storage.delete(key)
-                                .then(Mono.error(new BusinessException(FileErrorCode.FILE_TOO_LARGE)));
-                    }
-                    StoredFile file = StoredFile.register(
-                            fileId, originalName, contentType, written, key, owner, now);
-                    return persist(file, key);
+        // 식별자 생성은 전역 시퀀스에서 nextval을 당겨 오는 블로킹 JDBC라, 이벤트 루프가 아니라
+        // 블로킹 스케줄러에서 얻어야 한다(BlockHound가 이벤트 루프 위 호출을 잡는다).
+        return blockingBridge.mono(() -> FileId.of(idGenerator.nextId()))
+                .flatMap(fileId -> {
+                    StorageKey key = StorageKey.create(timeProvider.today(), fileId, originalName);
+                    return storage.write(key, command.content())
+                            .flatMap(written -> {
+                                if (written > maxSizeInBytes) {
+                                    // 용량 초과분은 이미 디스크에 쓰였다. 남겨 두면 저장소만 차지한다.
+                                    return storage.delete(key)
+                                            .then(Mono.error(
+                                                    new BusinessException(FileErrorCode.FILE_TOO_LARGE)));
+                                }
+                                StoredFile file = StoredFile.register(
+                                        fileId, originalName, contentType, written, key, owner, now);
+                                return persist(file, key);
+                            });
                 });
     }
 
@@ -131,7 +134,7 @@ public class FileService implements UploadFileUseCase, DownloadFileQuery, Delete
     /** 형식이 잘못된 식별자는 404로 다룬다 — 존재하지 않는 것과 사용자 입장에서 같다. */
     private FileId parseId(String rawId) {
         try {
-            return FileId.of(UUID.fromString(rawId));
+            return FileId.of(Long.parseLong(rawId));
         } catch (IllegalArgumentException e) {
             throw new BusinessException(FileErrorCode.FILE_NOT_FOUND);
         }

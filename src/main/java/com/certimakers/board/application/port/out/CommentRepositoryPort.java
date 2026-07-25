@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /** 댓글 저장·조회. 블로킹이므로 호출자는 BlockingBridge로 감싼다. */
 public interface CommentRepositoryPort {
@@ -25,7 +24,7 @@ public interface CommentRepositoryPort {
      * <p>목록 화면에서 글마다 댓글을 조회하면 N+1이 되고, 개수만 필요한데 본문까지 읽어 온다.
      * 댓글이 없는 글은 결과 맵에서 빠지므로 호출자가 0으로 채운다.
      */
-    Map<UUID, Integer> countByPostIds(Collection<PostId> postIds);
+    Map<Long, Integer> countByPostIds(Collection<PostId> postIds);
 
     void deleteById(CommentId id);
 

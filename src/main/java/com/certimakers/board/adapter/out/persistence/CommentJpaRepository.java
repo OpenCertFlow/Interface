@@ -2,15 +2,14 @@ package com.certimakers.board.adapter.out.persistence;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /** {@code board_comment} 스프링 데이터 리포지토리. */
-public interface CommentJpaRepository extends JpaRepository<CommentEntity, UUID> {
+public interface CommentJpaRepository extends JpaRepository<CommentEntity, Long> {
 
-    List<CommentEntity> findByPostIdOrderByCreatedAtAsc(UUID postId);
+    List<CommentEntity> findByPostIdOrderByCreatedAtAsc(Long postId);
 
     /**
      * 여러 글의 댓글 수를 한 번의 질의로 센다.
@@ -23,7 +22,7 @@ public interface CommentJpaRepository extends JpaRepository<CommentEntity, UUID>
             WHERE c.postId IN :postIds
             GROUP BY c.postId
             """)
-    List<Object[]> countGroupedByPostId(@Param("postIds") Collection<UUID> postIds);
+    List<Object[]> countGroupedByPostId(@Param("postIds") Collection<Long> postIds);
 
-    void deleteByPostId(UUID postId);
+    void deleteByPostId(Long postId);
 }

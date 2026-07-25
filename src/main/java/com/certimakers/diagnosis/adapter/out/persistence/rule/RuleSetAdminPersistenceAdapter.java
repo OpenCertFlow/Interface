@@ -7,7 +7,6 @@ import com.certimakers.diagnosis.application.port.out.RuleSetAdminPort;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -43,7 +42,7 @@ public class RuleSetAdminPersistenceAdapter implements RuleSetAdminPort {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<RuleSetDetail> findDetail(UUID ruleSetId) {
+    public Optional<RuleSetDetail> findDetail(Long ruleSetId) {
         return repository.findWithRulesById(ruleSetId).map(entity -> new RuleSetDetail(
                 entity.getId(), entity.getProductGroup(), entity.getVersion(),
                 entity.isActive(), entity.getActivatedAt(),
@@ -63,7 +62,7 @@ public class RuleSetAdminPersistenceAdapter implements RuleSetAdminPort {
 
     @Override
     @Transactional
-    public UUID saveDraft(NewRuleSet ruleSet) {
+    public Long saveDraft(NewRuleSet ruleSet) {
         RuleSetEntity entity = new RuleSetEntity(
                 idGenerator.nextId(), ruleSet.version(), ruleSet.productGroup().name());
         for (NewRule rule : ruleSet.rules()) {
@@ -76,7 +75,7 @@ public class RuleSetAdminPersistenceAdapter implements RuleSetAdminPort {
 
     @Override
     @Transactional
-    public boolean activate(UUID ruleSetId) {
+    public boolean activate(Long ruleSetId) {
         Optional<RuleSetEntity> target = repository.findById(ruleSetId);
         if (target.isEmpty()) {
             return false;

@@ -5,17 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "user_terms_agreement")
 public class UserTermsAgreementEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private Long userId;
 
     @Column(name = "term_key", nullable = false)
     private String termKey;
@@ -30,7 +29,7 @@ public class UserTermsAgreementEntity {
     }
 
     public UserTermsAgreementEntity(
-            UUID id, UUID userId, String termKey, String termVersion, Instant agreedAt) {
+            Long id, Long userId, String termKey, String termVersion, Instant agreedAt) {
         this.id = id;
         this.userId = userId;
         this.termKey = termKey;

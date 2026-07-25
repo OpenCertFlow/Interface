@@ -12,7 +12,6 @@ import com.certimakers.auth.domain.model.UserId;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +48,7 @@ class ReportPhraseIntegrationTest {
 
     private String adminToken() {
         User admin = User.reconstitute(
-                UserId.of(UUID.randomUUID()), Email.of("admin@certimakers.local"), null,
+                UserId.of(com.certimakers.support.TestIds.next()), Email.of("admin@certimakers.local"), null,
                 Nickname.of("관리자"), Role.ADMIN, AuthProvider.LOCAL, null, true,
                 Instant.parse("2026-08-10T00:00:00Z"));
         return tokenProvider.issue(admin).accessToken();

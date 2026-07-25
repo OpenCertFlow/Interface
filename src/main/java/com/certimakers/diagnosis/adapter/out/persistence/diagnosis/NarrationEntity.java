@@ -7,7 +7,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -18,7 +17,7 @@ public class NarrationEntity {
 
     @Id
     @Column(name = "diagnosis_id")
-    private UUID diagnosisId;
+    private Long diagnosisId;
 
     @OneToOne
     @MapsId

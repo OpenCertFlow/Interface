@@ -5,7 +5,6 @@ import com.certimakers.common.domain.model.AggregateRoot;
 import com.certimakers.common.domain.model.Guard;
 import com.certimakers.document.domain.error.DocumentErrorCode;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * 발급된 문서 한 건. 어떤 양식을, 어떤 값으로, 누가, 언제 발급했는지를 남긴다.
@@ -22,12 +21,12 @@ public class IssuedDocument extends AggregateRoot<DocumentId> {
     private final DocumentTemplate template;
     private final FormValues values;
     private final IssuerRef issuer;
-    private final UUID fileId;
+    private final Long fileId;
     private final Instant issuedAt;
 
     private IssuedDocument(
             DocumentId id, DocumentTemplate template, FormValues values,
-            IssuerRef issuer, UUID fileId, Instant issuedAt) {
+            IssuerRef issuer, Long fileId, Instant issuedAt) {
         this.id = Guard.notNull(id, "id");
         this.template = Guard.notNull(template, "template");
         this.values = Guard.notNull(values, "values");
@@ -37,14 +36,14 @@ public class IssuedDocument extends AggregateRoot<DocumentId> {
     }
 
     public static IssuedDocument issue(
-            DocumentId id, FormValues values, IssuerRef issuer, UUID fileId, Instant issuedAt) {
+            DocumentId id, FormValues values, IssuerRef issuer, Long fileId, Instant issuedAt) {
         return new IssuedDocument(id, values.template(), values, issuer, fileId, issuedAt);
     }
 
     /** 저장된 상태에서 되살린다(영속성 재구성 전용). */
     public static IssuedDocument reconstitute(
             DocumentId id, DocumentTemplate template, FormValues values,
-            IssuerRef issuer, UUID fileId, Instant issuedAt) {
+            IssuerRef issuer, Long fileId, Instant issuedAt) {
         return new IssuedDocument(id, template, values, issuer, fileId, issuedAt);
     }
 
@@ -80,7 +79,7 @@ public class IssuedDocument extends AggregateRoot<DocumentId> {
         return issuer;
     }
 
-    public UUID fileId() {
+    public Long fileId() {
         return fileId;
     }
 

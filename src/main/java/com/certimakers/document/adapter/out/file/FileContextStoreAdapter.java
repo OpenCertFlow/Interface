@@ -2,7 +2,6 @@ package com.certimakers.document.adapter.out.file;
 
 import com.certimakers.document.application.port.out.StoreGeneratedFilePort;
 import com.certimakers.file.application.port.in.UploadFileUseCase;
-import java.util.UUID;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,7 @@ public class FileContextStoreAdapter implements StoreGeneratedFilePort {
     }
 
     @Override
-    public Mono<UUID> store(String fileName, byte[] content, String ownerId) {
+    public Mono<Long> store(String fileName, byte[] content, String ownerId) {
         Flux<DataBuffer> body = Flux.just(bufferFactory.wrap(content));
 
         return uploadFileUseCase.upload(new UploadFileUseCase.UploadCommand(

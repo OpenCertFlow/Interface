@@ -2,12 +2,11 @@ package com.certimakers.auth.adapter.out.persistence;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /** {@code app_user} 스프링 데이터 리포지토리. */
-public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
+public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByEmail(String email);
 

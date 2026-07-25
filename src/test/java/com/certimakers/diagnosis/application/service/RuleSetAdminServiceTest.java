@@ -14,7 +14,6 @@ import com.certimakers.diagnosis.application.port.out.RuleDefinitionValidatorPor
 import com.certimakers.diagnosis.application.port.out.RuleDefinitionValidatorPort.Issue;
 import com.certimakers.diagnosis.application.port.out.RuleSetAdminPort;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,7 +52,7 @@ class RuleSetAdminServiceTest {
     void 검증_통과시_초안을_저장한다() {
         when(validator.validate(any())).thenReturn(List.of());
         when(adminPort.nextVersion(any())).thenReturn(3);
-        UUID newId = UUID.randomUUID();
+        Long newId = com.certimakers.support.TestIds.next();
         when(adminPort.saveDraft(any())).thenReturn(newId);
 
         StepVerifier.create(service.createDraft(
@@ -94,7 +93,7 @@ class RuleSetAdminServiceTest {
     @Test
     @DisplayName("존재하지 않는 룰셋을 활성화하면 오류를 낸다")
     void 없는_룰셋_활성화는_오류다() {
-        UUID id = UUID.randomUUID();
+        Long id = com.certimakers.support.TestIds.next();
         when(adminPort.activate(id)).thenReturn(false);
 
         StepVerifier.create(service.activate(id))

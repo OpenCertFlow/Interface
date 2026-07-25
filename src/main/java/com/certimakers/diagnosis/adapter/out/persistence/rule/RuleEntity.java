@@ -6,7 +6,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -19,7 +18,7 @@ import org.hibernate.type.SqlTypes;
 public class RuleEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "rule_set_id", nullable = false)
@@ -49,7 +48,7 @@ public class RuleEntity {
      * 새 룰을 만든다(관리자 API 경로). {@code condition}·{@code effects}는 이미 검증된 JSON 문자열이며,
      * 진단 시 {@link RuleJsonCodec}이 도메인 트리로 되돌린다. 룰셋 연관은 {@link #assignRuleSet}이 건다.
      */
-    public RuleEntity(UUID id, String ruleCode, int priority, String condition, String effects,
+    public RuleEntity(Long id, String ruleCode, int priority, String condition, String effects,
                       String description) {
         this.id = id;
         this.ruleCode = ruleCode;

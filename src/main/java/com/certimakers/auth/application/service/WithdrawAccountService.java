@@ -9,7 +9,6 @@ import com.certimakers.auth.domain.model.UserId;
 import com.certimakers.common.application.annotation.UseCase;
 import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /** 계정 탈퇴. 사용자를 삭제한 뒤 리프레시 토큰을 폐기해 이후 재발급을 막는다. */
@@ -44,7 +43,7 @@ public class WithdrawAccountService implements WithdrawAccountUseCase {
 
     private UserId parseId(String raw) {
         try {
-            return UserId.of(UUID.fromString(raw));
+            return UserId.of(Long.parseLong(raw));
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(AuthErrorCode.USER_NOT_FOUND);
         }

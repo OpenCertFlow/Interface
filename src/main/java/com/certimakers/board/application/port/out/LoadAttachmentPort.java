@@ -2,7 +2,6 @@ package com.certimakers.board.application.port.out;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 첨부 파일 정보 조회. 파일 컨텍스트를 향한 아웃바운드 포트다.
@@ -14,7 +13,7 @@ import java.util.UUID;
 public interface LoadAttachmentPort {
 
     /** 존재하는 첨부만 돌려준다. 지워진 파일 식별자는 결과에서 조용히 빠진다. */
-    List<AttachmentInfo> findAll(Collection<UUID> fileIds);
+    List<AttachmentInfo> findAll(Collection<Long> fileIds);
 
     /**
      * @param downloadUrl 클라이언트가 그대로 쓸 수 있는 다운로드 경로

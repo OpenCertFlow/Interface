@@ -4,8 +4,8 @@
 -- 내부 메모(NOTE)는 컨설턴트에게만 보인다.
 
 CREATE TABLE consulting_message (
-    id         uuid PRIMARY KEY,
-    lead_id    uuid NOT NULL REFERENCES consulting_lead (id) ON DELETE CASCADE,
+    id         bigint PRIMARY KEY,
+    lead_id    bigint NOT NULL REFERENCES consulting_lead (id) ON DELETE CASCADE,
     author_id  varchar(40),
     kind       varchar(20)  NOT NULL,
     body       text         NOT NULL,

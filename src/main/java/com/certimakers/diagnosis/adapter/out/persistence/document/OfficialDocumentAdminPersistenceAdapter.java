@@ -5,7 +5,6 @@ import com.certimakers.common.domain.port.IdGenerator;
 import com.certimakers.diagnosis.application.port.out.OfficialDocumentAdminPort;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 @PersistenceAdapter
@@ -30,13 +29,13 @@ public class OfficialDocumentAdminPersistenceAdapter implements OfficialDocument
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<DocumentRow> findById(UUID id) {
+    public Optional<DocumentRow> findById(Long id) {
         return repository.findById(id).map(this::toRow);
     }
 
     @Override
     @Transactional
-    public UUID register(DocumentData data) {
+    public Long register(DocumentData data) {
         OfficialDocumentEntity entity = new OfficialDocumentEntity(
                 idGenerator.nextId(), data.title(), data.issuer(), data.publishedAt(),
                 data.verifiedAt(), data.productGroup(), data.certificationType(),
@@ -46,7 +45,7 @@ public class OfficialDocumentAdminPersistenceAdapter implements OfficialDocument
 
     @Override
     @Transactional
-    public boolean update(UUID id, DocumentData data) {
+    public boolean update(Long id, DocumentData data) {
         return repository.findById(id)
                 .map(entity -> {
                     entity.update(

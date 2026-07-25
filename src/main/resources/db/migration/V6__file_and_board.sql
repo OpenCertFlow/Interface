@@ -5,12 +5,12 @@
 -- 참조 무결성 대신 조회 시점에 '없는 첨부는 목록에서 제외'하는 방식으로 다룬다.
 
 CREATE TABLE stored_file (
-    id            UUID         PRIMARY KEY,
+    id            BIGINT         PRIMARY KEY,
     original_name VARCHAR(255) NOT NULL,
     content_type  VARCHAR(255) NOT NULL,
     size_in_bytes BIGINT       NOT NULL,
     storage_key   VARCHAR(255) NOT NULL,
-    owner_id      UUID         NOT NULL,
+    owner_id      BIGINT         NOT NULL,
     created_at    TIMESTAMPTZ  NOT NULL,
 
     CONSTRAINT uk_stored_file_storage_key UNIQUE (storage_key),
@@ -23,9 +23,9 @@ COMMENT ON TABLE  stored_file             IS '업로드된 파일의 메타데�
 COMMENT ON COLUMN stored_file.storage_key IS '저장소 내 위치. 서버가 생성하며 사용자 입력이 섞이지 않는다';
 
 CREATE TABLE board_post (
-    id             UUID         PRIMARY KEY,
+    id             BIGINT         PRIMARY KEY,
     board_type     VARCHAR(20)  NOT NULL,
-    author_id      UUID         NOT NULL,
+    author_id      BIGINT         NOT NULL,
     title          VARCHAR(200) NOT NULL,
     body           TEXT         NOT NULL,
     secret         BOOLEAN      NOT NULL DEFAULT FALSE,
@@ -46,9 +46,9 @@ COMMENT ON TABLE  board_post                IS '게시글. 게시판 종류별 �
 COMMENT ON COLUMN board_post.attachment_ids IS '첨부 파일 식별자를 쉼표로 이어 붙인 값. 최대 5개';
 
 CREATE TABLE board_comment (
-    id         UUID        PRIMARY KEY,
-    post_id    UUID        NOT NULL,
-    author_id  UUID        NOT NULL,
+    id         BIGINT        PRIMARY KEY,
+    post_id    BIGINT        NOT NULL,
+    author_id  BIGINT        NOT NULL,
     body       TEXT        NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,

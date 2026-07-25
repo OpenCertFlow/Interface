@@ -5,14 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "audit_log")
 public class AuditLogEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(nullable = false)
     private String actor;
@@ -32,7 +31,7 @@ public class AuditLogEntity {
     protected AuditLogEntity() {
     }
 
-    public AuditLogEntity(UUID id, String actor, String httpMethod, String requestPath,
+    public AuditLogEntity(Long id, String actor, String httpMethod, String requestPath,
                           Integer statusCode, Instant occurredAt) {
         this.id = id;
         this.actor = actor;
@@ -42,7 +41,7 @@ public class AuditLogEntity {
         this.occurredAt = occurredAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

@@ -13,7 +13,6 @@ import com.certimakers.consulting.domain.model.LeadStatus;
 import com.certimakers.notification.application.port.in.RecordNotificationUseCase;
 import com.certimakers.notification.application.port.in.RecordNotificationUseCase.RecordCommand;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 import reactor.core.publisher.Mono;
 
@@ -117,7 +116,7 @@ public class ConsultingManagementService implements ManageConsultingUseCase {
 
     private ConsultingLeadId parseId(String raw) {
         try {
-            return ConsultingLeadId.of(UUID.fromString(raw));
+            return ConsultingLeadId.of(Long.parseLong(raw));
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(ConsultingErrorCode.LEAD_NOT_FOUND);
         }

@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 /** {@link CommentRepositoryPort}의 JPA 구현. 메서드는 블로킹이다. */
@@ -47,15 +46,15 @@ public class CommentPersistenceAdapter implements CommentRepositoryPort {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<UUID, Integer> countByPostIds(Collection<PostId> postIds) {
+    public Map<Long, Integer> countByPostIds(Collection<PostId> postIds) {
         if (postIds.isEmpty()) {
             return Map.of();
         }
-        List<UUID> raw = postIds.stream().map(PostId::value).toList();
+        List<Long> raw = postIds.stream().map(PostId::value).toList();
 
-        Map<UUID, Integer> counts = new HashMap<>();
+        Map<Long, Integer> counts = new HashMap<>();
         for (Object[] row : repository.countGroupedByPostId(raw)) {
-            counts.put((UUID) row[0], ((Number) row[1]).intValue());
+            counts.put((Long) row[0], ((Number) row[1]).intValue());
         }
         return counts;
     }

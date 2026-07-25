@@ -10,7 +10,6 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /** {@code rule_set} 테이블 매핑. 도메인 RuleSet과 별개다(ADR-0001). */
 @Entity
@@ -18,7 +17,7 @@ import java.util.UUID;
 public class RuleSetEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(nullable = false)
     private int version;
@@ -45,7 +44,7 @@ public class RuleSetEntity {
      * 새 비활성 룰셋 초안을 만든다(관리자 API 경로). 활성화는 {@link #activate(Instant)}로 별도로 한다 —
      * 저장과 배포를 분리해, 검증되지 않은 룰셋이 곧바로 진단에 쓰이지 않게 한다.
      */
-    public RuleSetEntity(UUID id, int version, String productGroup) {
+    public RuleSetEntity(Long id, int version, String productGroup) {
         this.id = id;
         this.version = version;
         this.productGroup = productGroup;
@@ -70,7 +69,7 @@ public class RuleSetEntity {
         this.activatedAt = null;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

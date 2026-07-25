@@ -4,7 +4,7 @@
 -- password_hash는 소셜 계정(카카오)이면 NULL이고, provider_id는 로컬 계정이면 NULL이다.
 
 CREATE TABLE app_user (
-    id             UUID         PRIMARY KEY,
+    id             BIGINT         PRIMARY KEY,
     email          VARCHAR(254) NOT NULL,
     password_hash  VARCHAR(100),
     nickname       VARCHAR(20)  NOT NULL,

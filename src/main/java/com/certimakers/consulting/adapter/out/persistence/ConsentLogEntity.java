@@ -8,9 +8,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * {@code consent_log} 테이블 매핑. 리드와 1:1이지만 자체 {@code id} PK를 가진다(ERD).
@@ -21,15 +21,16 @@ import java.util.UUID;
 public class ConsentLogEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "globalIdSeq")
+    @SequenceGenerator(name = "globalIdSeq", sequenceName = "global_id_seq", allocationSize = 1)
+    private Long id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "consulting_lead_id", nullable = false)
     private ConsultingLeadEntity lead;
 
     @Column(name = "diagnosis_id", nullable = false)
-    private UUID diagnosisId;
+    private Long diagnosisId;
 
     @Column(name = "privacy_consent", nullable = false)
     private boolean privacyConsent;
@@ -50,7 +51,7 @@ public class ConsentLogEntity {
     }
 
     public ConsentLogEntity(
-            UUID diagnosisId, boolean privacyConsent, boolean sensitiveInfoConsent,
+            Long diagnosisId, boolean privacyConsent, boolean sensitiveInfoConsent,
             boolean serviceLimitAcknowledged, String consentVersion, Instant consentedAt) {
         this.diagnosisId = diagnosisId;
         this.privacyConsent = privacyConsent;

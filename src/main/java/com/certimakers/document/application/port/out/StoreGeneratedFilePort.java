@@ -1,6 +1,5 @@
 package com.certimakers.document.application.port.out;
 
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -12,5 +11,5 @@ import reactor.core.publisher.Mono;
 public interface StoreGeneratedFilePort {
 
     /** @return 저장된 파일의 식별자 */
-    Mono<UUID> store(String fileName, byte[] content, String ownerId);
+    Mono<Long> store(String fileName, byte[] content, String ownerId);
 }

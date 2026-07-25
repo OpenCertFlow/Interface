@@ -5,17 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "consulting_message")
 public class ConsultingMessageEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "lead_id", nullable = false)
-    private UUID leadId;
+    private Long leadId;
 
     @Column(name = "author_id")
     private String authorId;
@@ -33,7 +32,7 @@ public class ConsultingMessageEntity {
     }
 
     public ConsultingMessageEntity(
-            UUID id, UUID leadId, String authorId, String kind, String body, Instant createdAt) {
+            Long id, Long leadId, String authorId, String kind, String body, Instant createdAt) {
         this.id = id;
         this.leadId = leadId;
         this.authorId = authorId;
@@ -42,11 +41,11 @@ public class ConsultingMessageEntity {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public UUID getLeadId() {
+    public Long getLeadId() {
         return leadId;
     }
 

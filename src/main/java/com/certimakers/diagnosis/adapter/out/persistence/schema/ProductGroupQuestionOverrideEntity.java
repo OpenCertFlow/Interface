@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -19,7 +18,7 @@ import org.hibernate.type.SqlTypes;
 public class ProductGroupQuestionOverrideEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "product_group", nullable = false)
     private String productGroup;
@@ -49,7 +48,7 @@ public class ProductGroupQuestionOverrideEntity {
     protected ProductGroupQuestionOverrideEntity() {
     }
 
-    public ProductGroupQuestionOverrideEntity(UUID id, String productGroup, String code) {
+    public ProductGroupQuestionOverrideEntity(Long id, String productGroup, String code) {
         this.id = id;
         this.productGroup = productGroup;
         this.code = code;
@@ -65,7 +64,7 @@ public class ProductGroupQuestionOverrideEntity {
         this.optionsJson = optionsJson;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

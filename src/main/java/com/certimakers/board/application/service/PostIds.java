@@ -4,7 +4,6 @@ import com.certimakers.board.domain.error.BoardErrorCode;
 import com.certimakers.board.domain.model.CommentId;
 import com.certimakers.board.domain.model.PostId;
 import com.certimakers.common.domain.error.BusinessException;
-import java.util.UUID;
 
 /**
  * 게시글·댓글 식별자 파싱.
@@ -25,9 +24,9 @@ final class PostIds {
         return CommentId.of(toUuid(raw, BoardErrorCode.COMMENT_NOT_FOUND));
     }
 
-    private static UUID toUuid(String raw, BoardErrorCode notFound) {
+    private static Long toUuid(String raw, BoardErrorCode notFound) {
         try {
-            return UUID.fromString(raw);
+            return Long.parseLong(raw);
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(notFound);
         }

@@ -6,7 +6,6 @@ import com.certimakers.common.adapter.out.crypto.TextEncryptor;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,14 +90,14 @@ class ConsultingFlowIntegrationTest {
         // DB에는 평문이 없고, 복호화하면 원문이 나온다
         String storedPhone = jdbcTemplate.queryForObject(
                 "SELECT contact_phone FROM consulting_lead WHERE id = ?", String.class,
-                UUID.fromString(leadId));
+                Long.parseLong(leadId));
         assertThat(storedPhone).isNotEqualTo("010-1234-5678");           // 평문 아님
         assertThat(textEncryptor.decrypt(storedPhone)).isEqualTo("010-1234-5678"); // 복호화 가능
 
         // 동의 로그가 함께 저장됐다
         Integer consentCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM consent_log WHERE consulting_lead_id = ?", Integer.class,
-                UUID.fromString(leadId));
+                Long.parseLong(leadId));
         assertThat(consentCount).isEqualTo(1);
     }
 
@@ -120,7 +119,7 @@ class ConsultingFlowIntegrationTest {
     @DisplayName("존재하지 않는 진단에 상담을 붙이면 404")
     void 없는진단_404() {
         Map<String, Object> lead = Map.of(
-                "diagnosisId", UUID.randomUUID().toString(),
+                "diagnosisId", com.certimakers.support.TestIds.nextString(),
                 "contactName", "홍길동", "contactPhone", "010-1234-5678",
                 "privacyConsent", true, "sensitiveInfoConsent", false,
                 "serviceLimitAcknowledged", true, "consentVersion", "v1");

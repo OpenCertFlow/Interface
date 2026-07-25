@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * {@code diagnosis} 테이블 매핑 — 애그리거트 루트 엔티티.
@@ -24,13 +23,13 @@ import java.util.UUID;
 public class DiagnosisEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(nullable = false)
     private String status;
 
     @Column(name = "rule_set_id")
-    private UUID ruleSetId;
+    private Long ruleSetId;
 
     @Column(name = "rule_set_version")
     private Integer ruleSetVersion;
@@ -84,7 +83,7 @@ public class DiagnosisEntity {
     }
 
     public DiagnosisEntity(
-            UUID id, String status, UUID ruleSetId, Integer ruleSetVersion, Integer readinessScore,
+            Long id, String status, Long ruleSetId, Integer ruleSetVersion, Integer readinessScore,
             boolean scoreApplicable, int earnedWeight, int totalWeight,
             boolean degradedEvidence, boolean degradedNarration, Instant createdAt, Instant updatedAt) {
         this.id = id;
@@ -139,7 +138,7 @@ public class DiagnosisEntity {
         this.evidences = items;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
@@ -147,7 +146,7 @@ public class DiagnosisEntity {
         return status;
     }
 
-    public UUID getRuleSetId() {
+    public Long getRuleSetId() {
         return ruleSetId;
     }
 

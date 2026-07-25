@@ -4,7 +4,6 @@ import com.certimakers.diagnosis.domain.model.ProductGroup;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * 관리자 룰셋 조회·저장·배포 아웃바운드 포트. 블로킹(JPA)이므로 호출자는 {@code BlockingBridge}로 감싼다.
@@ -19,27 +18,27 @@ public interface RuleSetAdminPort {
     List<RuleSetSummary> findAllSummaries();
 
     /** 룰셋 상세(룰의 저장 JSON 포함). 없으면 비어 있음. */
-    Optional<RuleSetDetail> findDetail(UUID ruleSetId);
+    Optional<RuleSetDetail> findDetail(Long ruleSetId);
 
     /** 제품군의 다음 버전 번호. 기존 최대 버전 + 1, 없으면 1. */
     int nextVersion(ProductGroup productGroup);
 
     /** 새 비활성 룰셋을 저장하고 생성된 id를 돌려준다. */
-    UUID saveDraft(NewRuleSet ruleSet);
+    Long saveDraft(NewRuleSet ruleSet);
 
     /**
      * 룰셋을 활성화한다. 같은 제품군의 기존 활성 룰셋을 먼저 비활성화한 뒤 대상을 활성화한다.
      * 대상이 없으면 false.
      */
-    boolean activate(UUID ruleSetId);
+    boolean activate(Long ruleSetId);
 
     // ── DTO ──────────────────────────────────────────────────────
 
-    record RuleSetSummary(UUID id, String productGroup, int version, boolean active,
+    record RuleSetSummary(Long id, String productGroup, int version, boolean active,
                           Instant activatedAt, int ruleCount) {
     }
 
-    record RuleSetDetail(UUID id, String productGroup, int version, boolean active,
+    record RuleSetDetail(Long id, String productGroup, int version, boolean active,
                          Instant activatedAt, List<StoredRule> rules) {
     }
 

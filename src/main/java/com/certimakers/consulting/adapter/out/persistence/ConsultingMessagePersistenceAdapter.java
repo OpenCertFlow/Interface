@@ -5,7 +5,6 @@ import com.certimakers.consulting.application.port.out.ConsultingMessagePort;
 import com.certimakers.consulting.domain.model.ConsultingMessage;
 import com.certimakers.consulting.domain.model.MessageKind;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 @PersistenceAdapter
@@ -27,7 +26,7 @@ public class ConsultingMessagePersistenceAdapter implements ConsultingMessagePor
 
     @Override
     @Transactional(readOnly = true)
-    public List<ConsultingMessage> findByLead(UUID leadId) {
+    public List<ConsultingMessage> findByLead(Long leadId) {
         return repository.findByLeadIdOrderByCreatedAtAsc(leadId).stream()
                 .map(e -> new ConsultingMessage(
                         e.getId(), e.getLeadId(), e.getAuthorId(),

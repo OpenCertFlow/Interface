@@ -8,7 +8,7 @@
 -- 없으면 기존 동작과 완전히 동일하다 — 시드가 필요 없고, 조회가 비는 일도 없다.
 
 CREATE TABLE product_group_question_override (
-    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id            bigint PRIMARY KEY,
     product_group varchar(40) NOT NULL,
     code          varchar(60) NOT NULL,
     label         varchar(200),

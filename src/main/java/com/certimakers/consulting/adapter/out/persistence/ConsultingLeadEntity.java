@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * {@code consulting_lead} 테이블 매핑. {@code contactPhone}·{@code contactEmail}은 <b>암호화된</b>
@@ -19,10 +18,10 @@ import java.util.UUID;
 public class ConsultingLeadEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "diagnosis_id", nullable = false)
-    private UUID diagnosisId;
+    private Long diagnosisId;
 
     @Column(name = "contact_name", nullable = false)
     private String contactName;
@@ -59,7 +58,7 @@ public class ConsultingLeadEntity {
     }
 
     public ConsultingLeadEntity(
-            UUID id, UUID diagnosisId, String contactName, String contactPhone,
+            Long id, Long diagnosisId, String contactName, String contactPhone,
             String contactEmail, String message, String ownerUserId, String status,
             Instant createdAt) {
         this.id = id;
@@ -93,11 +92,11 @@ public class ConsultingLeadEntity {
         this.consent = consent;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public UUID getDiagnosisId() {
+    public Long getDiagnosisId() {
         return diagnosisId;
     }
 

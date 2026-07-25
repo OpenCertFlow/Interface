@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * {@code issued_document} 테이블 매핑.
@@ -18,7 +17,7 @@ import java.util.UUID;
 public class IssuedDocumentEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "template_code", nullable = false)
     private String templateCode;
@@ -27,10 +26,10 @@ public class IssuedDocumentEntity {
     private String valuesJson;
 
     @Column(name = "issuer_id", nullable = false)
-    private UUID issuerId;
+    private Long issuerId;
 
     @Column(name = "file_id", nullable = false)
-    private UUID fileId;
+    private Long fileId;
 
     @Column(name = "issued_at", nullable = false)
     private Instant issuedAt;
@@ -39,8 +38,8 @@ public class IssuedDocumentEntity {
     }
 
     public IssuedDocumentEntity(
-            UUID id, String templateCode, String valuesJson,
-            UUID issuerId, UUID fileId, Instant issuedAt) {
+            Long id, String templateCode, String valuesJson,
+            Long issuerId, Long fileId, Instant issuedAt) {
         this.id = id;
         this.templateCode = templateCode;
         this.valuesJson = valuesJson;
@@ -49,7 +48,7 @@ public class IssuedDocumentEntity {
         this.issuedAt = issuedAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
@@ -61,11 +60,11 @@ public class IssuedDocumentEntity {
         return valuesJson;
     }
 
-    public UUID getIssuerId() {
+    public Long getIssuerId() {
         return issuerId;
     }
 
-    public UUID getFileId() {
+    public Long getFileId() {
         return fileId;
     }
 

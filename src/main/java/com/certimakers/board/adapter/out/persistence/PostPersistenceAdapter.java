@@ -10,7 +10,6 @@ import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdap
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,7 +65,7 @@ public class PostPersistenceAdapter implements PostRepositoryPort {
         String attachments = post.attachmentFileIds().isEmpty()
                 ? null
                 : post.attachmentFileIds().stream()
-                        .map(UUID::toString)
+                        .map(String::valueOf)
                         .collect(Collectors.joining(ATTACHMENT_DELIMITER));
 
         return new PostEntity(
@@ -95,14 +94,14 @@ public class PostPersistenceAdapter implements PostRepositoryPort {
                 entity.getUpdatedAt());
     }
 
-    private static List<UUID> parseAttachments(String raw) {
+    private static List<Long> parseAttachments(String raw) {
         if (raw == null || raw.isBlank()) {
             return List.of();
         }
         return Arrays.stream(raw.split(ATTACHMENT_DELIMITER))
                 .map(String::strip)
                 .filter(value -> !value.isEmpty())
-                .map(UUID::fromString)
+                .map(Long::parseLong)
                 .toList();
     }
 }

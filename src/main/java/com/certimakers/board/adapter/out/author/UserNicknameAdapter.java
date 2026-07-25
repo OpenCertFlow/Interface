@@ -7,7 +7,6 @@ import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdap
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * {@link LoadAuthorNamePort}의 구현. 인증 컨텍스트의 조회 포트를 빌려 닉네임만 가져온다.
@@ -29,9 +28,9 @@ public class UserNicknameAdapter implements LoadAuthorNamePort {
     }
 
     @Override
-    public Map<UUID, String> findNicknames(Collection<UUID> authorIds) {
-        Map<UUID, String> result = new LinkedHashMap<>();
-        for (UUID authorId : authorIds) {
+    public Map<Long, String> findNicknames(Collection<Long> authorIds) {
+        Map<Long, String> result = new LinkedHashMap<>();
+        for (Long authorId : authorIds) {
             loadUserPort.findById(UserId.of(authorId))
                     .ifPresent(user -> result.put(authorId, user.nickname().value()));
         }

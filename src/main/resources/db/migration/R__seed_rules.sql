@@ -6,11 +6,11 @@
 DELETE FROM rule_set WHERE product_group = 'SMALL_APPLIANCE' AND version = 1;
 
 INSERT INTO rule_set (id, version, product_group, active, activated_at)
-VALUES ('00000000-0000-0000-0000-000000000001', 1, 'SMALL_APPLIANCE', true, now());
+VALUES (1, 1, 'SMALL_APPLIANCE', true, now());
 
 -- R-SA-001: 전기 사용 + 정격전압 > 50V → 안전확인 후보 + 필수/권장 서류
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000001', 'R-SA-001', 10,
+(1, 'R-SA-001', 10,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
      {"type":"attr","attribute":"RATED_VOLTAGE","operator":"GT","value":50}
@@ -26,7 +26,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 
 -- R-SA-002: 전기 사용 + 정격전압 > 50V → 표시·라벨링 확인 + 안전표시 견본
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000001', 'R-SA-002', 20,
+(1, 'R-SA-002', 20,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
      {"type":"attr","attribute":"RATED_VOLTAGE","operator":"GT","value":50}
@@ -40,7 +40,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 
 -- R-SA-010: 어린이용 → 어린이제품 안전인증 후보
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000001', 'R-SA-010', 10,
+(1, 'R-SA-010', 10,
  '{"type":"attr","attribute":"TARGET_USER","operator":"EQ","value":"CHILD"}',
  '[
      {"type":"addCandidate","schemeCode":"KC_CHILD_SAFETY_CERT","certificationType":"SAFETY_CERT"}
@@ -49,7 +49,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 
 -- R-SA-090: 전기 사용인데 정격전압 정보 없음 → 판단 불가, 전문가 확인
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000001', 'R-SA-090', 90,
+(1, 'R-SA-090', 90,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
      {"type":"attr","attribute":"RATED_VOLTAGE","operator":"EQ","value":null},

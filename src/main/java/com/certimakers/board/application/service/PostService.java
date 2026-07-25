@@ -15,7 +15,6 @@ import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.common.domain.port.IdGenerator;
 import com.certimakers.common.domain.port.TimeProvider;
 import java.util.List;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -52,7 +51,7 @@ public class PostService implements PostUseCase {
         BoardType boardType = BoardTypes.parse(command.boardType());
         AuthorRef author = requireAuthor(command.requester());
         PostContent content = PostContent.of(command.title(), command.body());
-        List<UUID> attachments = toUuids(command.attachmentFileIds());
+        List<Long> attachments = toUuids(command.attachmentFileIds());
 
         return blockingBridge.mono(() -> {
             Post post = Post.write(
@@ -72,7 +71,7 @@ public class PostService implements PostUseCase {
     public Mono<Post> edit(EditPostCommand command) {
         AuthorRef editor = requireAuthor(command.requester());
         PostContent content = PostContent.of(command.title(), command.body());
-        List<UUID> attachments = toUuids(command.attachmentFileIds());
+        List<Long> attachments = toUuids(command.attachmentFileIds());
         PostId postId = PostIds.parse(command.postId());
 
         return blockingBridge.mono(() -> {
@@ -110,12 +109,12 @@ public class PostService implements PostUseCase {
         return AuthorRef.of(requester.userId());
     }
 
-    private List<UUID> toUuids(List<String> rawIds) {
+    private List<Long> toUuids(List<String> rawIds) {
         if (rawIds == null || rawIds.isEmpty()) {
             return List.of();
         }
         try {
-            return rawIds.stream().map(UUID::fromString).toList();
+            return rawIds.stream().map(Long::parseLong).toList();
         } catch (IllegalArgumentException e) {
             throw BusinessException.invalid("첨부 파일 식별자 형식이 올바르지 않습니다.");
         }

@@ -6,7 +6,6 @@ import com.certimakers.file.application.port.out.LoadFilePort;
 import com.certimakers.file.domain.model.FileId;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * {@link LoadAttachmentPort}의 구현. 파일 컨텍스트의 조회 포트를 빌려 첨부 정보를 가져온다.
@@ -27,7 +26,7 @@ public class StoredFileAttachmentAdapter implements LoadAttachmentPort {
     }
 
     @Override
-    public List<AttachmentInfo> findAll(Collection<UUID> fileIds) {
+    public List<AttachmentInfo> findAll(Collection<Long> fileIds) {
         if (fileIds.isEmpty()) {
             return List.of();
         }

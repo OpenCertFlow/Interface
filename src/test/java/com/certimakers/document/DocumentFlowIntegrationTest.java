@@ -224,7 +224,7 @@ class DocumentFlowIntegrationTest {
     @DisplayName("존재하지 않는 진단의 PDF는 404")
     void 없는_진단의_PDF는_404() {
         webTestClient.get()
-                .uri("/api/v1/diagnoses/{id}/report.pdf", "00000000-0000-0000-0000-000000000000")
+                .uri("/api/v1/diagnoses/{id}/report.pdf", "999999999")
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -235,7 +235,7 @@ class DocumentFlowIntegrationTest {
         String token = signUpAndLogin("notadmin");
 
         webTestClient.patch()
-                .uri("/api/v1/admin/users/{id}/role", "00000000-0000-0000-0000-000000000000")
+                .uri("/api/v1/admin/users/{id}/role", "999999999")
                 .header("Authorization", "Bearer " + token)
                 .bodyValue(Map.of("role", "ADMIN"))
                 .exchange()

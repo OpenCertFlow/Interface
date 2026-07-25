@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.certimakers.auth.domain.error.AuthErrorCode;
 import com.certimakers.common.domain.error.BusinessException;
 import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,7 @@ class UserTest {
     private static final Instant NOW = Instant.parse("2026-08-10T12:00:00Z");
 
     private static UserId newId() {
-        return UserId.of(UUID.randomUUID());
+        return UserId.of(com.certimakers.support.TestIds.next());
     }
 
     private static User localUser() {

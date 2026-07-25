@@ -2,7 +2,6 @@ package com.certimakers.board.application.port.out;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * 작성자 표시 이름 조회. 인증 컨텍스트를 향한 아웃바운드 포트다.
@@ -17,5 +16,5 @@ import java.util.UUID;
 public interface LoadAuthorNamePort {
 
     /** 식별자 → 표시 이름. 탈퇴 등으로 찾지 못한 식별자는 결과 맵에서 빠진다. */
-    Map<UUID, String> findNicknames(Collection<UUID> authorIds);
+    Map<Long, String> findNicknames(Collection<Long> authorIds);
 }

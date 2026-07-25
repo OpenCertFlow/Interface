@@ -4,14 +4,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.util.UUID;
 
 @Entity
 @Table(name = "terms")
 public class TermsEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "term_key", nullable = false)
     private String termKey;

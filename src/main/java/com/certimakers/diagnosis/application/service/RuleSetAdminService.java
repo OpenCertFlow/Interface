@@ -12,7 +12,6 @@ import com.certimakers.diagnosis.application.port.out.RuleSetAdminPort.NewRule;
 import com.certimakers.diagnosis.application.port.out.RuleSetAdminPort.NewRuleSet;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import java.util.List;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -47,7 +46,7 @@ public class RuleSetAdminService implements ManageRuleSetUseCase {
     }
 
     @Override
-    public Mono<RuleSetDetail> get(UUID ruleSetId) {
+    public Mono<RuleSetDetail> get(Long ruleSetId) {
         return blockingBridge.mono(() -> ruleSetAdminPort.findDetail(ruleSetId).orElse(null))
                 .switchIfEmpty(Mono.error(BusinessException.invalid("룰셋을 찾을 수 없습니다: " + ruleSetId)))
                 .map(d -> new RuleSetDetail(
@@ -65,7 +64,7 @@ public class RuleSetAdminService implements ManageRuleSetUseCase {
     }
 
     @Override
-    public Mono<UUID> createDraft(CreateRuleSetCommand command) {
+    public Mono<Long> createDraft(CreateRuleSetCommand command) {
         return Mono.fromSupplier(() -> {
             ProductGroup productGroup = parseProductGroup(command.productGroup());
             ValidationResult result = runValidation(command.rules());
@@ -86,7 +85,7 @@ public class RuleSetAdminService implements ManageRuleSetUseCase {
     }
 
     @Override
-    public Mono<Void> activate(UUID ruleSetId) {
+    public Mono<Void> activate(Long ruleSetId) {
         return blockingBridge.mono(() -> ruleSetAdminPort.activate(ruleSetId))
                 .flatMap(activated -> Boolean.TRUE.equals(activated)
                         ? Mono.empty()

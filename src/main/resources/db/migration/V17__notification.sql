@@ -4,7 +4,7 @@
 -- 수신자가 없어 알림이 생성되지 않는다.
 
 CREATE TABLE notification (
-    id                uuid PRIMARY KEY,
+    id                bigint PRIMARY KEY,
     recipient_user_id varchar(40)  NOT NULL,
     kind              varchar(40)  NOT NULL,
     title             varchar(200) NOT NULL,

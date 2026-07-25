@@ -19,7 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -71,8 +70,8 @@ public class PostQueryService implements PostQuery {
             long total = postRepository.countByBoardType(boardType);
 
             // 닉네임과 댓글 수를 각각 한 번씩만 조회한다. 글마다 조회하면 20개 목록에 41번 질의가 나간다.
-            Map<UUID, String> nicknames = loadNicknames(posts);
-            Map<UUID, Integer> commentCounts = commentRepository.countByPostIds(
+            Map<Long, String> nicknames = loadNicknames(posts);
+            Map<Long, Integer> commentCounts = commentRepository.countByPostIds(
                     posts.stream().map(Post::id).toList());
 
             List<PostSummary> summaries = posts.stream()
@@ -96,7 +95,7 @@ public class PostQueryService implements PostQuery {
             postRepository.save(post);
 
             List<Comment> comments = commentRepository.findByPostId(postId);
-            Map<UUID, String> nicknames = loadNicknamesFor(post, comments);
+            Map<Long, String> nicknames = loadNicknamesFor(post, comments);
 
             return new PostDetail(
                     post,
@@ -109,8 +108,8 @@ public class PostQueryService implements PostQuery {
 
     private PostSummary toSummary(
             Post post,
-            Map<UUID, String> nicknames,
-            Map<UUID, Integer> commentCounts,
+            Map<Long, String> nicknames,
+            Map<Long, Integer> commentCounts,
             Requester requester) {
 
         AuthorRef viewer = requester.isAuthenticated() ? AuthorRef.of(requester.userId()) : null;
@@ -130,7 +129,7 @@ public class PostQueryService implements PostQuery {
     }
 
     private CommentView toCommentView(
-            Comment comment, Map<UUID, String> nicknames, AuthorRef viewer, Requester requester) {
+            Comment comment, Map<Long, String> nicknames, AuthorRef viewer, Requester requester) {
         return new CommentView(
                 comment.id().value().toString(),
                 nicknames.getOrDefault(comment.author().value(), UNKNOWN_AUTHOR),
@@ -144,16 +143,16 @@ public class PostQueryService implements PostQuery {
     }
 
     /** 목록의 작성자 식별자를 모아 한 번에 조회한다. 글마다 조회하면 N+1이 된다. */
-    private Map<UUID, String> loadNicknames(List<Post> posts) {
-        Set<UUID> authorIds = posts.stream()
+    private Map<Long, String> loadNicknames(List<Post> posts) {
+        Set<Long> authorIds = posts.stream()
                 .map(post -> post.author().value())
                 .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
         return loadAuthorNamePort.findNicknames(authorIds);
     }
 
     /** 상세 화면의 글 작성자와 댓글 작성자를 한 번에 조회한다. */
-    private Map<UUID, String> loadNicknamesFor(Post post, List<Comment> comments) {
-        Set<UUID> authorIds = new LinkedHashSet<>();
+    private Map<Long, String> loadNicknamesFor(Post post, List<Comment> comments) {
+        Set<Long> authorIds = new LinkedHashSet<>();
         authorIds.add(post.author().value());
         comments.forEach(comment -> authorIds.add(comment.author().value()));
         return loadAuthorNamePort.findNicknames(authorIds);

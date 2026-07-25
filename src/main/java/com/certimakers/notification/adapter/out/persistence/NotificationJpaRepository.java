@@ -2,11 +2,10 @@ package com.certimakers.notification.adapter.out.persistence;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface NotificationJpaRepository extends JpaRepository<NotificationEntity, UUID> {
+public interface NotificationJpaRepository extends JpaRepository<NotificationEntity, Long> {
 
     List<NotificationEntity> findByRecipientUserIdOrderByCreatedAtDesc(
             String recipientUserId, Pageable pageable);
@@ -16,5 +15,5 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationEnt
 
     long countByRecipientUserIdAndReadIsFalse(String recipientUserId);
 
-    Optional<NotificationEntity> findByIdAndRecipientUserId(UUID id, String recipientUserId);
+    Optional<NotificationEntity> findByIdAndRecipientUserId(Long id, String recipientUserId);
 }

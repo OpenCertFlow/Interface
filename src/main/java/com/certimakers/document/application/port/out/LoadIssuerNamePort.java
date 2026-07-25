@@ -1,7 +1,6 @@
 package com.certimakers.document.application.port.out;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * 발급자 표시 이름 조회. 인증 컨텍스트를 향한 포트다.
@@ -11,5 +10,5 @@ import java.util.UUID;
  */
 public interface LoadIssuerNamePort {
 
-    Optional<String> findNickname(UUID issuerId);
+    Optional<String> findNickname(Long issuerId);
 }

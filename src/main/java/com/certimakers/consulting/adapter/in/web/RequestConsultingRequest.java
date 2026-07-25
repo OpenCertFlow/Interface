@@ -3,7 +3,6 @@ package com.certimakers.consulting.adapter.in.web;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
 
 /**
  * 상담 연결 요청 본문.
@@ -12,7 +11,7 @@ import java.util.UUID;
  * 도메인({@code ConsultingLead.submit})이 2차로 강제한다. 방어가 두 겹이다.
  */
 public record RequestConsultingRequest(
-        @NotNull UUID diagnosisId,
+        @NotNull Long diagnosisId,
         @NotBlank String contactName,
         @NotBlank String contactPhone,
         String contactEmail,

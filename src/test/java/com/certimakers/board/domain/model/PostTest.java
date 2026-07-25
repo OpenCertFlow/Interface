@@ -8,7 +8,6 @@ import com.certimakers.board.domain.error.BoardErrorCode;
 import com.certimakers.common.domain.error.BusinessException;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,7 +25,7 @@ class PostTest {
     private static final Instant NOW = Instant.parse("2026-08-10T12:00:00Z");
 
     private static AuthorRef author() {
-        return AuthorRef.of(UUID.randomUUID());
+        return AuthorRef.of(com.certimakers.support.TestIds.next());
     }
 
     private static PostContent content() {
@@ -35,7 +34,7 @@ class PostTest {
 
     private static Post write(BoardType type, AuthorRef author, boolean isAdmin) {
         return Post.write(
-                PostId.of(UUID.randomUUID()), type, author, isAdmin,
+                PostId.of(com.certimakers.support.TestIds.next()), type, author, isAdmin,
                 content(), false, List.of(), NOW);
     }
 
@@ -76,7 +75,7 @@ class PostTest {
         @DisplayName("질문게시판만 비밀글을 허용한다")
         void 질문게시판만_비밀글을_허용한다() {
             assertThatCode(() -> Post.write(
-                    PostId.of(UUID.randomUUID()), BoardType.QNA, author(), false,
+                    PostId.of(com.certimakers.support.TestIds.next()), BoardType.QNA, author(), false,
                     content(), true, List.of(), NOW))
                     .doesNotThrowAnyException();
         }
@@ -85,7 +84,7 @@ class PostTest {
         @DisplayName("자유게시판에는 비밀글을 쓸 수 없다")
         void 자유게시판은_비밀글을_거부한다() {
             assertThatThrownBy(() -> Post.write(
-                    PostId.of(UUID.randomUUID()), BoardType.FREE, author(), false,
+                    PostId.of(com.certimakers.support.TestIds.next()), BoardType.FREE, author(), false,
                     content(), true, List.of(), NOW))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(error -> assertThat(((BusinessException) error).errorCode())
@@ -98,7 +97,7 @@ class PostTest {
             AuthorRef owner = author();
             AuthorRef stranger = author();
             Post secret = Post.write(
-                    PostId.of(UUID.randomUUID()), BoardType.QNA, owner, false,
+                    PostId.of(com.certimakers.support.TestIds.next()), BoardType.QNA, owner, false,
                     content(), true, List.of(), NOW);
 
             assertThatCode(() -> secret.requireReadableBy(owner, false)).doesNotThrowAnyException();
@@ -111,7 +110,7 @@ class PostTest {
         @DisplayName("비로그인 사용자는 비밀글을 볼 수 없다")
         void 비로그인은_비밀글을_볼_수_없다() {
             Post secret = Post.write(
-                    PostId.of(UUID.randomUUID()), BoardType.QNA, author(), false,
+                    PostId.of(com.certimakers.support.TestIds.next()), BoardType.QNA, author(), false,
                     content(), true, List.of(), NOW);
 
             assertThatThrownBy(() -> secret.requireReadableBy(null, false))
@@ -193,9 +192,9 @@ class PostTest {
         @Test
         @DisplayName("중복 첨부는 하나로 접는다")
         void 중복_첨부는_하나로_접는다() {
-            UUID duplicated = UUID.randomUUID();
+            Long duplicated = com.certimakers.support.TestIds.next();
             Post post = Post.write(
-                    PostId.of(UUID.randomUUID()), BoardType.FREE, author(), false,
+                    PostId.of(com.certimakers.support.TestIds.next()), BoardType.FREE, author(), false,
                     content(), false, List.of(duplicated, duplicated), NOW);
 
             assertThat(post.attachmentFileIds()).containsExactly(duplicated);
@@ -204,12 +203,12 @@ class PostTest {
         @Test
         @DisplayName("첨부 개수 상한을 넘으면 거부한다")
         void 첨부_개수_상한을_강제한다() {
-            List<UUID> tooMany = java.util.stream.Stream.generate(UUID::randomUUID)
+            List<Long> tooMany = java.util.stream.Stream.generate(com.certimakers.support.TestIds::next)
                     .limit(6)
                     .toList();
 
             assertThatThrownBy(() -> Post.write(
-                    PostId.of(UUID.randomUUID()), BoardType.FREE, author(), false,
+                    PostId.of(com.certimakers.support.TestIds.next()), BoardType.FREE, author(), false,
                     content(), false, tooMany, NOW))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(error -> assertThat(((BusinessException) error).errorCode())

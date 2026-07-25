@@ -1,11 +1,10 @@
 package com.certimakers.audit.adapter.out.persistence;
 
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AuditLogJpaRepository extends JpaRepository<AuditLogEntity, UUID> {
+public interface AuditLogJpaRepository extends JpaRepository<AuditLogEntity, Long> {
 
     List<AuditLogEntity> findByOrderByOccurredAtDesc(Pageable pageable);
 

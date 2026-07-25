@@ -15,7 +15,6 @@ import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import jakarta.validation.Valid;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -74,7 +73,7 @@ public class DiagnosisController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> getReport(
-            @PathVariable UUID id) {
+            @PathVariable Long id) {
         return getDiagnosisReportQuery.getById(DiagnosisId.of(id))
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.OK));
     }
@@ -87,7 +86,7 @@ public class DiagnosisController {
      */
     @PostMapping("/{id}/simulations")
     public Mono<ResponseEntity<ApiResponse<SimulationResponse>>> simulate(
-            @PathVariable UUID id, @Valid @RequestBody SimulateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody SimulateRequest request) {
 
         SimulateCommand command = new SimulateCommand(
                 DiagnosisId.of(id), simulationWebMapper.toAdjustment(request));
@@ -103,7 +102,7 @@ public class DiagnosisController {
     /** 목표 준비도에 도달하기 위한 최소 보완 경로. */
     @GetMapping("/{id}/remediation-plan")
     public Mono<ResponseEntity<ApiResponse<RemediationPlanResponse>>> remediationPlan(
-            @PathVariable UUID id,
+            @PathVariable Long id,
             @RequestParam(defaultValue = "100") int targetScore) {
 
         return getRemediationPlanQuery.plan(DiagnosisId.of(id), targetScore)
@@ -120,7 +119,7 @@ public class DiagnosisController {
      * <p>저장하지 않고 매번 다시 그린다 — 표현이 바뀌어도 최신 형식으로 나온다.
      */
     @GetMapping(value = "/{id}/report.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public Mono<ResponseEntity<byte[]>> exportReportPdf(@PathVariable UUID id) {
+    public Mono<ResponseEntity<byte[]>> exportReportPdf(@PathVariable Long id) {
         return exportReportPdfQuery.export(id.toString())
                 .map(report -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)

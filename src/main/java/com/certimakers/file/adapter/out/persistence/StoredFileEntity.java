@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 /** {@code stored_file} 테이블 매핑. 파일 바이트가 아니라 메타데이터만 담는다. */
 @Entity
@@ -13,7 +12,7 @@ import java.util.UUID;
 public class StoredFileEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(name = "original_name", nullable = false)
     private String originalName;
@@ -28,7 +27,7 @@ public class StoredFileEntity {
     private String storageKey;
 
     @Column(name = "owner_id", nullable = false)
-    private UUID ownerId;
+    private Long ownerId;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -37,8 +36,8 @@ public class StoredFileEntity {
     }
 
     public StoredFileEntity(
-            UUID id, String originalName, String contentType, long sizeInBytes,
-            String storageKey, UUID ownerId, Instant createdAt) {
+            Long id, String originalName, String contentType, long sizeInBytes,
+            String storageKey, Long ownerId, Instant createdAt) {
         this.id = id;
         this.originalName = originalName;
         this.contentType = contentType;
@@ -48,7 +47,7 @@ public class StoredFileEntity {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
@@ -68,7 +67,7 @@ public class StoredFileEntity {
         return storageKey;
     }
 
-    public UUID getOwnerId() {
+    public Long getOwnerId() {
         return ownerId;
     }
 

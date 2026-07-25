@@ -9,7 +9,6 @@ import com.certimakers.diagnosis.application.port.out.RenderReportPdfPort;
 import com.certimakers.diagnosis.domain.error.DiagnosisErrorCode;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -55,7 +54,7 @@ public class ExportReportPdfService implements ExportReportPdfQuery {
 
     private DiagnosisId parseId(String rawId) {
         try {
-            return DiagnosisId.of(UUID.fromString(rawId));
+            return DiagnosisId.of(Long.parseLong(rawId));
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(DiagnosisErrorCode.DIAGNOSIS_NOT_FOUND);
         }

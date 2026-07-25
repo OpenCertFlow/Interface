@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 게시글 애그리거트 루트.
@@ -33,13 +32,13 @@ public class Post extends AggregateRoot<PostId> {
 
     private PostContent content;
     private boolean secret;
-    private final List<UUID> attachmentFileIds = new ArrayList<>();
+    private final List<Long> attachmentFileIds = new ArrayList<>();
     private long viewCount;
     private Instant updatedAt;
 
     private Post(
             PostId id, BoardType boardType, AuthorRef author, PostContent content,
-            boolean secret, List<UUID> attachmentFileIds, long viewCount,
+            boolean secret, List<Long> attachmentFileIds, long viewCount,
             Instant createdAt, Instant updatedAt) {
         this.id = Guard.notNull(id, "id");
         this.boardType = Guard.notNull(boardType, "boardType");
@@ -64,13 +63,13 @@ public class Post extends AggregateRoot<PostId> {
             boolean authorIsAdmin,
             PostContent content,
             boolean secret,
-            List<UUID> attachmentFileIds,
+            List<Long> attachmentFileIds,
             Instant now) {
 
         if (boardType.isAdminOnlyToWrite() && !authorIsAdmin) {
             throw new BusinessException(BoardErrorCode.ADMIN_ONLY_BOARD);
         }
-        List<UUID> attachments = normalizeAttachments(boardType, attachmentFileIds);
+        List<Long> attachments = normalizeAttachments(boardType, attachmentFileIds);
         if (secret && !boardType.allowsSecretPost()) {
             throw new BusinessException(BoardErrorCode.SECRET_POST_NOT_ALLOWED);
         }
@@ -81,7 +80,7 @@ public class Post extends AggregateRoot<PostId> {
     /** 저장된 상태에서 되살린다(영속성 재구성 전용). */
     public static Post reconstitute(
             PostId id, BoardType boardType, AuthorRef author, PostContent content,
-            boolean secret, List<UUID> attachmentFileIds, long viewCount,
+            boolean secret, List<Long> attachmentFileIds, long viewCount,
             Instant createdAt, Instant updatedAt) {
         return new Post(id, boardType, author, content, secret,
                 attachmentFileIds == null ? List.of() : attachmentFileIds,
@@ -89,14 +88,14 @@ public class Post extends AggregateRoot<PostId> {
     }
 
     /** 첨부 허용 여부·개수·중복을 정리한다. 중복 첨부는 조용히 하나로 접는다. */
-    private static List<UUID> normalizeAttachments(BoardType boardType, List<UUID> raw) {
+    private static List<Long> normalizeAttachments(BoardType boardType, List<Long> raw) {
         if (raw == null || raw.isEmpty()) {
             return List.of();
         }
         if (!boardType.allowsAttachments()) {
             throw new BusinessException(BoardErrorCode.ATTACHMENTS_NOT_ALLOWED);
         }
-        List<UUID> unique = List.copyOf(new LinkedHashSet<>(raw));
+        List<Long> unique = List.copyOf(new LinkedHashSet<>(raw));
         if (unique.size() > MAX_ATTACHMENTS) {
             throw new BusinessException(
                     BoardErrorCode.TOO_MANY_ATTACHMENTS,
@@ -109,7 +108,7 @@ public class Post extends AggregateRoot<PostId> {
     /** 글을 수정한다. 작성자 본인 또는 관리자만 가능하다. */
     public void edit(
             AuthorRef editor, boolean editorIsAdmin, PostContent newContent,
-            boolean newSecret, List<UUID> newAttachments, Instant now) {
+            boolean newSecret, List<Long> newAttachments, Instant now) {
 
         requireEditableBy(editor, editorIsAdmin);
         if (newSecret && !boardType.allowsSecretPost()) {
@@ -189,7 +188,7 @@ public class Post extends AggregateRoot<PostId> {
         return secret;
     }
 
-    public List<UUID> attachmentFileIds() {
+    public List<Long> attachmentFileIds() {
         return Collections.unmodifiableList(attachmentFileIds);
     }
 

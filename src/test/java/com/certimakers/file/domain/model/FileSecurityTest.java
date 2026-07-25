@@ -7,7 +7,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.certimakers.common.domain.error.BusinessException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -86,12 +85,12 @@ class FileSecurityTest {
         @Test
         @DisplayName("날짜와 식별자로 키를 만들며 원본 파일명이 경로에 섞이지 않는다")
         void 원본_파일명이_경로에_섞이지_않는다() {
-            FileId fileId = FileId.of(UUID.fromString("01890000-0000-7000-8000-000000000001"));
+            FileId fileId = FileId.of(1L);
             OriginalFileName name = OriginalFileName.of("../../민감정보.pdf");
 
             StorageKey key = StorageKey.create(LocalDate.of(2026, 8, 10), fileId, name);
 
-            assertThat(key.value()).isEqualTo("2026/08/10/01890000-0000-7000-8000-000000000001.pdf");
+            assertThat(key.value()).isEqualTo("2026/08/10/1.pdf");
         }
 
         @ParameterizedTest
@@ -140,7 +139,7 @@ class FileSecurityTest {
 
         private StoredFile fileOwnedBy(OwnerRef owner) {
             return StoredFile.register(
-                    FileId.of(UUID.randomUUID()),
+                    FileId.of(com.certimakers.support.TestIds.next()),
                     OriginalFileName.of("보고서.pdf"),
                     ContentType.of("application/pdf"),
                     1024,
@@ -152,7 +151,7 @@ class FileSecurityTest {
         @Test
         @DisplayName("업로더 본인은 지울 수 있다")
         void 업로더는_지울_수_있다() {
-            OwnerRef owner = OwnerRef.of(UUID.randomUUID());
+            OwnerRef owner = OwnerRef.of(com.certimakers.support.TestIds.next());
 
             assertThatCode(() -> fileOwnedBy(owner).requireDeletableBy(owner, false))
                     .doesNotThrowAnyException();
@@ -161,18 +160,18 @@ class FileSecurityTest {
         @Test
         @DisplayName("남의 파일은 지울 수 없다")
         void 남의_파일은_지울_수_없다() {
-            StoredFile file = fileOwnedBy(OwnerRef.of(UUID.randomUUID()));
+            StoredFile file = fileOwnedBy(OwnerRef.of(com.certimakers.support.TestIds.next()));
 
-            assertThatThrownBy(() -> file.requireDeletableBy(OwnerRef.of(UUID.randomUUID()), false))
+            assertThatThrownBy(() -> file.requireDeletableBy(OwnerRef.of(com.certimakers.support.TestIds.next()), false))
                     .isInstanceOf(BusinessException.class);
         }
 
         @Test
         @DisplayName("관리자는 남의 파일도 지울 수 있다")
         void 관리자는_남의_파일도_지운다() {
-            StoredFile file = fileOwnedBy(OwnerRef.of(UUID.randomUUID()));
+            StoredFile file = fileOwnedBy(OwnerRef.of(com.certimakers.support.TestIds.next()));
 
-            assertThatCode(() -> file.requireDeletableBy(OwnerRef.of(UUID.randomUUID()), true))
+            assertThatCode(() -> file.requireDeletableBy(OwnerRef.of(com.certimakers.support.TestIds.next()), true))
                     .doesNotThrowAnyException();
         }
     }
@@ -181,12 +180,12 @@ class FileSecurityTest {
     @DisplayName("빈 파일은 등록할 수 없다")
     void 빈_파일은_거부한다() {
         assertThatThrownBy(() -> StoredFile.register(
-                FileId.of(UUID.randomUUID()),
+                FileId.of(com.certimakers.support.TestIds.next()),
                 OriginalFileName.of("empty.txt"),
                 ContentType.octetStream(),
                 0,
                 StorageKey.of("2026/08/10/empty.txt"),
-                OwnerRef.of(UUID.randomUUID()),
+                OwnerRef.of(com.certimakers.support.TestIds.next()),
                 Instant.parse("2026-08-10T12:00:00Z")))
                 .isInstanceOf(BusinessException.class);
     }

@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.consulting.domain.error.ConsultingErrorCode;
 import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,11 +14,11 @@ class ConsultingLeadTest {
     private static final Instant NOW = Instant.parse("2026-07-11T00:00:00Z");
 
     private ConsultingLeadId id() {
-        return ConsultingLeadId.of(UUID.randomUUID());
+        return ConsultingLeadId.of(com.certimakers.support.TestIds.next());
     }
 
     private DiagnosisReference diagnosis() {
-        return DiagnosisReference.of(UUID.randomUUID());
+        return DiagnosisReference.of(com.certimakers.support.TestIds.next());
     }
 
     private ContactInfo contact() {

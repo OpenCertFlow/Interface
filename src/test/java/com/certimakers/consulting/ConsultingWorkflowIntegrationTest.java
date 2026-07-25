@@ -14,7 +14,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +51,11 @@ class ConsultingWorkflowIntegrationTest {
     @Autowired
     TokenProviderPort tokenProvider;
 
-    private final String consultantId = UUID.randomUUID().toString();
+    private final String consultantId = com.certimakers.support.TestIds.nextString();
 
     private String tokenFor(Role role, String id) {
         User user = User.reconstitute(
-                UserId.of(UUID.fromString(id)), Email.of(role + "@certimakers.local"), null,
+                UserId.of(Long.parseLong(id)), Email.of(role + "@certimakers.local"), null,
                 Nickname.of(role.name()), role, AuthProvider.LOCAL, null, true,
                 Instant.parse("2026-08-10T00:00:00Z"));
         return tokenProvider.issue(user).accessToken();
@@ -128,7 +127,7 @@ class ConsultingWorkflowIntegrationTest {
 
         // 일반 사용자(USER)는 접근 금지(403).
         webTestClient.get().uri("/api/v1/consulting/leads")
-                .header("Authorization", "Bearer " + tokenFor(Role.USER, UUID.randomUUID().toString()))
+                .header("Authorization", "Bearer " + tokenFor(Role.USER, com.certimakers.support.TestIds.nextString()))
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -223,7 +222,7 @@ class ConsultingWorkflowIntegrationTest {
     @Test
     @DisplayName("로그인 상태로 접수하면 내 상담으로 조회된다 — 소유자 연결(F-APP-041)")
     void 로그인_접수는_내_상담으로_조회된다() {
-        String userToken = tokenFor(Role.USER, UUID.randomUUID().toString());
+        String userToken = tokenFor(Role.USER, com.certimakers.support.TestIds.nextString());
         String diagnosisId = createDiagnosis();
         submitAs(userToken, diagnosisId);
 
@@ -234,7 +233,7 @@ class ConsultingWorkflowIntegrationTest {
     @Test
     @DisplayName("컨설턴트가 처리하면 소유자에게 알림이 발행된다(F-BE-013) — 익명 리드는 알림 없음")
     void 상담_처리시_소유자에게_알림() {
-        String userToken = tokenFor(Role.USER, UUID.randomUUID().toString());
+        String userToken = tokenFor(Role.USER, com.certimakers.support.TestIds.nextString());
         submitAs(userToken, createDiagnosis());
         String leadId = myLeads(userToken).at("/data").get(0).get("id").asText();
 
@@ -291,7 +290,7 @@ class ConsultingWorkflowIntegrationTest {
         assertThat(ruleSets.at("/data").size()).isGreaterThanOrEqualTo(1);
 
         webTestClient.get().uri("/api/v1/rule-sets")
-                .header("Authorization", "Bearer " + tokenFor(Role.USER, UUID.randomUUID().toString()))
+                .header("Authorization", "Bearer " + tokenFor(Role.USER, com.certimakers.support.TestIds.nextString()))
                 .exchange().expectStatus().isForbidden();
 
         webTestClient.get().uri("/api/v1/rule-sets")

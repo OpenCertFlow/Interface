@@ -17,7 +17,6 @@ import com.certimakers.notification.application.port.in.RecordNotificationUseCas
 import com.certimakers.notification.application.port.in.RecordNotificationUseCase.RecordCommand;
 import java.util.List;
 import java.util.Locale;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /** 상담 메시지 오케스트레이션. id·시각 생성과 저장을 BlockingBridge 위에서 수행한다. */
@@ -45,7 +44,7 @@ public class ConsultingMessageService implements ConsultingMessageUseCase {
 
     @Override
     public Mono<Void> post(String leadId, String authorId, String kind, String body) {
-        UUID lead = parseId(leadId);
+        Long lead = parseId(leadId);
         MessageKind messageKind = parseKind(kind);
         if (body == null || body.isBlank()) {
             throw BusinessException.invalid("메시지 내용이 필요합니다.");
@@ -74,7 +73,7 @@ public class ConsultingMessageService implements ConsultingMessageUseCase {
 
     @Override
     public Mono<List<MessageView>> list(String leadId) {
-        UUID lead = parseId(leadId);
+        Long lead = parseId(leadId);
         return blockingBridge.mono(() -> messagePort.findByLead(lead).stream()
                 .map(this::toView)
                 .toList());
@@ -82,7 +81,7 @@ public class ConsultingMessageService implements ConsultingMessageUseCase {
 
     @Override
     public Mono<List<MessageView>> listPublic(String leadId) {
-        UUID lead = parseId(leadId);
+        Long lead = parseId(leadId);
         return blockingBridge.mono(() -> messagePort.findByLead(lead).stream()
                 .filter(ConsultingMessage::isPublic)
                 .map(this::toView)
@@ -104,9 +103,9 @@ public class ConsultingMessageService implements ConsultingMessageUseCase {
         }
     }
 
-    private UUID parseId(String raw) {
+    private Long parseId(String raw) {
         try {
-            return UUID.fromString(raw);
+            return Long.parseLong(raw);
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new BusinessException(ConsultingErrorCode.LEAD_NOT_FOUND);
         }

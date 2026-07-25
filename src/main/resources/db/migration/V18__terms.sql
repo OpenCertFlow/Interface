@@ -4,7 +4,7 @@
 -- 않으면 가입이 거부된다(서비스 계층이 강제).
 
 CREATE TABLE terms (
-    id         uuid PRIMARY KEY,
+    id         bigint PRIMARY KEY,
     term_key   varchar(40)  NOT NULL,
     version    varchar(20)  NOT NULL,
     title      varchar(200) NOT NULL,
@@ -18,8 +18,8 @@ CREATE TABLE terms (
 CREATE UNIQUE INDEX uq_terms_active_key ON terms (term_key) WHERE active;
 
 CREATE TABLE user_terms_agreement (
-    id           uuid PRIMARY KEY,
-    user_id      uuid        NOT NULL,
+    id           bigint PRIMARY KEY,
+    user_id      bigint        NOT NULL,
     term_key     varchar(40) NOT NULL,
     term_version varchar(20) NOT NULL,
     agreed_at    timestamptz NOT NULL

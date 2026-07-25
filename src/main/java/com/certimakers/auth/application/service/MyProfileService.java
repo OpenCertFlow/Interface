@@ -12,7 +12,6 @@ import com.certimakers.auth.domain.model.UserId;
 import com.certimakers.common.application.annotation.UseCase;
 import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /** 마이페이지 조회·수정 오케스트레이션. 모든 조회·저장이 JPA라 BlockingBridge로 감싼다. */
@@ -66,7 +65,7 @@ public class MyProfileService implements MyProfileUseCase {
     }
 
     private User load(String userId) {
-        return loadUserPort.findById(UserId.of(UUID.fromString(userId)))
+        return loadUserPort.findById(UserId.of(Long.parseLong(userId)))
                 .orElseThrow(() -> new BusinessException(AuthErrorCode.USER_NOT_FOUND));
     }
 }

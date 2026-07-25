@@ -13,7 +13,6 @@ import com.certimakers.file.domain.model.StoredFile;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 파일 메타데이터 포트의 JPA 구현. 메서드는 블로킹이다. */
@@ -45,7 +44,7 @@ public class StoredFilePersistenceAdapter implements SaveFilePort, LoadFilePort,
         if (ids.isEmpty()) {
             return List.of();
         }
-        List<UUID> raw = ids.stream().map(FileId::value).toList();
+        List<Long> raw = ids.stream().map(FileId::value).toList();
         return repository.findAllByIdIn(raw).stream()
                 .map(StoredFilePersistenceAdapter::toDomain)
                 .toList();

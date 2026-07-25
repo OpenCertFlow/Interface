@@ -6,11 +6,11 @@
 -- file_id에 외래키를 걸지 않는 이유는 파일이 다른 바운디드 컨텍스트이기 때문이다(V6와 같은 판단).
 
 CREATE TABLE issued_document (
-    id            UUID        PRIMARY KEY,
+    id            BIGINT        PRIMARY KEY,
     template_code VARCHAR(40) NOT NULL,
     values_json   TEXT        NOT NULL,
-    issuer_id     UUID        NOT NULL,
-    file_id       UUID        NOT NULL,
+    issuer_id     BIGINT        NOT NULL,
+    file_id       BIGINT        NOT NULL,
     issued_at     TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT ck_issued_document_template CHECK (

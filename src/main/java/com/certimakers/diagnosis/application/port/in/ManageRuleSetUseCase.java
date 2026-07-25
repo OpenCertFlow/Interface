@@ -2,7 +2,6 @@ package com.certimakers.diagnosis.application.port.in;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
@@ -21,7 +20,7 @@ public interface ManageRuleSetUseCase {
     Mono<List<RuleSetSummary>> list();
 
     /** 룰셋 상세 — 각 룰의 condition/effects를 저장된 JSON 그대로 보여 준다(편집·검토용). */
-    Mono<RuleSetDetail> get(UUID ruleSetId);
+    Mono<RuleSetDetail> get(Long ruleSetId);
 
     /**
      * 룰 정의를 파싱 검증만 한다(저장하지 않음). 배포 전에 관리자가 안전하게 확인하는 용도다.
@@ -33,13 +32,13 @@ public interface ManageRuleSetUseCase {
      * 새 룰셋 초안을 만든다(비활성). 제품군의 다음 버전 번호를 자동 부여한다. 저장 전에 모든 룰을
      * 검증하며, 하나라도 파싱 실패면 저장하지 않고 검증 오류를 돌려준다.
      */
-    Mono<UUID> createDraft(CreateRuleSetCommand command);
+    Mono<Long> createDraft(CreateRuleSetCommand command);
 
     /**
      * 룰셋을 활성화(배포)한다. 같은 제품군의 기존 활성 룰셋은 자동으로 비활성화된다 —
      * "제품군당 활성 룰셋 하나" 불변식(부분 유니크 인덱스)을 지킨다.
      */
-    Mono<Void> activate(UUID ruleSetId);
+    Mono<Void> activate(Long ruleSetId);
 
     // ── 커맨드/뷰 ────────────────────────────────────────────────
 
@@ -51,11 +50,11 @@ public interface ManageRuleSetUseCase {
     record CreateRuleSetCommand(String productGroup, List<RuleDraft> rules) {
     }
 
-    record RuleSetSummary(UUID id, String productGroup, int version, boolean active,
+    record RuleSetSummary(Long id, String productGroup, int version, boolean active,
                           Instant activatedAt, int ruleCount) {
     }
 
-    record RuleSetDetail(UUID id, String productGroup, int version, boolean active,
+    record RuleSetDetail(Long id, String productGroup, int version, boolean active,
                          Instant activatedAt, List<RuleLine> rules) {
     }
 

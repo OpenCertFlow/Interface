@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * {@code app_user} 테이블 매핑. 테이블명은 {@code user}가 PostgreSQL 예약어라 {@code app_user}로 둔다.
@@ -18,7 +17,7 @@ import java.util.UUID;
 public class UserEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -48,7 +47,7 @@ public class UserEntity {
     }
 
     public UserEntity(
-            UUID id, String email, String passwordHash, String nickname, String role,
+            Long id, String email, String passwordHash, String nickname, String role,
             String provider, String providerId, boolean emailVerified, Instant createdAt) {
         this.id = id;
         this.email = email;
@@ -61,7 +60,7 @@ public class UserEntity {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

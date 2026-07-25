@@ -5,7 +5,6 @@ import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdap
 import com.certimakers.common.domain.port.IdGenerator;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.transaction.annotation.Transactional;
 
 @PersistenceAdapter
@@ -34,7 +33,7 @@ public class TermsPersistenceAdapter implements TermsPort {
 
     @Override
     @Transactional
-    public void saveAgreements(UUID userId, List<AgreedTerm> agreed, Instant agreedAt) {
+    public void saveAgreements(Long userId, List<AgreedTerm> agreed, Instant agreedAt) {
         agreed.forEach(term -> agreementRepository.save(new UserTermsAgreementEntity(
                 idGenerator.nextId(), userId, term.termKey(), term.version(), agreedAt)));
     }

@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,7 +50,7 @@ public class AdminRuleSetController {
     @GetMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<ManageRuleSetUseCase.RuleSetDetail>>> get(
             @PathVariable String id) {
-        return manageRuleSetUseCase.get(UUID.fromString(id))
+        return manageRuleSetUseCase.get(Long.parseLong(id))
                 .flatMap(body -> wrap(body, HttpStatus.OK));
     }
 
@@ -76,7 +75,7 @@ public class AdminRuleSetController {
     /** 룰셋을 활성화(배포)한다. 같은 제품군의 기존 활성본은 자동 비활성화된다. */
     @PostMapping("/{id}/activate")
     public Mono<ResponseEntity<ApiResponse<Void>>> activate(@PathVariable String id) {
-        return manageRuleSetUseCase.activate(UUID.fromString(id))
+        return manageRuleSetUseCase.activate(Long.parseLong(id))
                 .then(wrap(null, HttpStatus.OK));
     }
 

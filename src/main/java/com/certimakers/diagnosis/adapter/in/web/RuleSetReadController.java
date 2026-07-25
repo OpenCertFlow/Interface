@@ -6,7 +6,6 @@ import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
 import com.certimakers.diagnosis.application.port.in.ManageRuleSetUseCase;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,7 +38,7 @@ public class RuleSetReadController {
     @GetMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<ManageRuleSetUseCase.RuleSetDetail>>> get(
             @PathVariable String id) {
-        return manageRuleSetUseCase.get(UUID.fromString(id)).flatMap(body -> wrap(body));
+        return manageRuleSetUseCase.get(Long.parseLong(id)).flatMap(body -> wrap(body));
     }
 
     private <T> Mono<ResponseEntity<ApiResponse<T>>> wrap(T body) {

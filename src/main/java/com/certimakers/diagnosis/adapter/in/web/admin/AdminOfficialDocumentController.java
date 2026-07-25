@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,7 +42,7 @@ public class AdminOfficialDocumentController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<DocumentView>>> get(@PathVariable String id) {
-        return manageOfficialDocumentUseCase.get(UUID.fromString(id))
+        return manageOfficialDocumentUseCase.get(Long.parseLong(id))
                 .flatMap(body -> wrap(body, HttpStatus.OK));
     }
 
@@ -58,7 +57,7 @@ public class AdminOfficialDocumentController {
     @PutMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<Void>>> update(
             @PathVariable String id, @Valid @RequestBody DocumentRequest request) {
-        return manageOfficialDocumentUseCase.update(UUID.fromString(id), request.toCommand())
+        return manageOfficialDocumentUseCase.update(Long.parseLong(id), request.toCommand())
                 .then(wrap(null, HttpStatus.OK));
     }
 

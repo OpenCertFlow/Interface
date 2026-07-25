@@ -10,7 +10,6 @@ import com.certimakers.diagnosis.domain.model.Narration;
 import com.certimakers.diagnosis.domain.model.ProductProfile;
 import java.time.Instant;
 import java.util.Set;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +21,7 @@ class TemplateNarratorTest {
 
     private Diagnosis evaluated(ProductProfile profile) {
         Diagnosis diagnosis =
-                Diagnosis.request(DiagnosisId.of(UUID.randomUUID()), profile, Instant.EPOCH);
+                Diagnosis.request(DiagnosisId.of(com.certimakers.support.TestIds.next()), profile, Instant.EPOCH);
         RuleEvaluationResult ruleResult =
                 ruleEvaluator.evaluate(profile, RuleSetFixtures.smallApplianceV1());
         ScoreResult scoreResult = scoreCalculator.calculate(

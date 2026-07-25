@@ -164,7 +164,7 @@ class SimulationFlowIntegrationTest {
     void 존재하지_않는_진단은_404() {
         webTestClient.post()
                 .uri("/api/v1/diagnoses/{id}/simulations",
-                        "00000000-0000-0000-0000-000000000000")
+                        "999999999")
                 .bodyValue(Map.of("addDocuments", List.of("BIZ_LICENSE")))
                 .exchange()
                 .expectStatus().isNotFound()

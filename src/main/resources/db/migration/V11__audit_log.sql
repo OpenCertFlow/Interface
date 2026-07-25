@@ -4,7 +4,7 @@
 -- 웹 필터가 /api/v1/admin/** 의 변경 요청(POST/PUT/PATCH/DELETE)을 자동 기록한다.
 
 CREATE TABLE audit_log (
-    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id           bigint PRIMARY KEY,
     actor        varchar(100) NOT NULL,
     http_method  varchar(10)  NOT NULL,
     request_path varchar(500) NOT NULL,

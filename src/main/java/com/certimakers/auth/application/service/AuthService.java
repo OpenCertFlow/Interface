@@ -127,7 +127,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
         return refreshTokenStore.matches(principal.userId(), command.refreshToken())
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(new BusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN)))
-                .flatMap(valid -> loadById(UserId.of(java.util.UUID.fromString(principal.userId()))))
+                .flatMap(valid -> loadById(UserId.of(Long.parseLong(principal.userId()))))
                 .flatMap(this::issueAndStore);
     }
 

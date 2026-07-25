@@ -5,7 +5,6 @@ import com.certimakers.common.domain.port.IdGenerator;
 import com.certimakers.notification.application.port.out.NotificationPort;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,9 +51,9 @@ public class NotificationPersistenceAdapter implements NotificationPort {
     @Override
     @Transactional
     public boolean markRead(String recipientUserId, String notificationId) {
-        UUID id;
+        Long id;
         try {
-            id = UUID.fromString(notificationId);
+            id = Long.parseLong(notificationId);
         } catch (IllegalArgumentException e) {
             return false;
         }

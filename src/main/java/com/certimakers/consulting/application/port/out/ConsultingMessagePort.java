@@ -2,12 +2,11 @@ package com.certimakers.consulting.application.port.out;
 
 import com.certimakers.consulting.domain.model.ConsultingMessage;
 import java.util.List;
-import java.util.UUID;
 
 /** 상담 메시지 저장·조회. 블로킹(JPA)이라 호출자는 BlockingBridge로 감싼다. */
 public interface ConsultingMessagePort {
 
     void append(ConsultingMessage message);
 
-    List<ConsultingMessage> findByLead(UUID leadId);
+    List<ConsultingMessage> findByLead(Long leadId);
 }

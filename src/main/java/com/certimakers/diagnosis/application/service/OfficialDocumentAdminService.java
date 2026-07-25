@@ -10,7 +10,6 @@ import com.certimakers.diagnosis.application.port.out.OfficialDocumentAdminPort.
 import com.certimakers.diagnosis.domain.model.CertificationType;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import java.util.List;
-import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /** 공식 문서 메타데이터 등록·수정·조회. 본문 색인(Vector DB)은 AI워커 소관이라 여기선 메타데이터만 다룬다. */
@@ -34,20 +33,20 @@ public class OfficialDocumentAdminService implements ManageOfficialDocumentUseCa
     }
 
     @Override
-    public Mono<DocumentView> get(UUID id) {
+    public Mono<DocumentView> get(Long id) {
         return blockingBridge.mono(() -> documentPort.findById(id).orElse(null))
                 .switchIfEmpty(Mono.error(BusinessException.invalid("문서를 찾을 수 없습니다: " + id)))
                 .map(this::toView);
     }
 
     @Override
-    public Mono<UUID> register(DocumentCommand command) {
+    public Mono<Long> register(DocumentCommand command) {
         return Mono.fromSupplier(() -> validated(command))
                 .flatMap(data -> blockingBridge.mono(() -> documentPort.register(data)));
     }
 
     @Override
-    public Mono<Void> update(UUID id, DocumentCommand command) {
+    public Mono<Void> update(Long id, DocumentCommand command) {
         return Mono.fromSupplier(() -> validated(command))
                 .flatMap(data -> blockingBridge.mono(() -> documentPort.update(id, data)))
                 .flatMap(found -> Boolean.TRUE.equals(found)

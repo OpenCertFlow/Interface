@@ -6,7 +6,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /** {@code official_document} 매핑. source_url은 NOT NULL — 출처 없는 문서는 근거가 아니다(불변식 6). */
 @Entity
@@ -14,7 +13,7 @@ import java.util.UUID;
 public class OfficialDocumentEntity {
 
     @Id
-    private UUID id;
+    private Long id;
 
     @Column(nullable = false)
     private String title;
@@ -46,7 +45,7 @@ public class OfficialDocumentEntity {
     protected OfficialDocumentEntity() {
     }
 
-    public OfficialDocumentEntity(UUID id, String title, String issuer, LocalDate publishedAt,
+    public OfficialDocumentEntity(Long id, String title, String issuer, LocalDate publishedAt,
                                   LocalDate verifiedAt, String productGroup, String certificationType,
                                   String schemeName, String sourceUrl) {
         this.id = id;
@@ -73,7 +72,7 @@ public class OfficialDocumentEntity {
         this.sourceUrl = sourceUrl;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 

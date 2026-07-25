@@ -15,7 +15,6 @@ import com.certimakers.common.domain.port.TimeProvider;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -52,7 +51,7 @@ class JwtTokenProviderTest {
 
     private static User user() {
         return User.registerLocal(
-                UserId.of(UUID.fromString("01890000-0000-7000-8000-000000000001")),
+                UserId.of(1L),
                 Email.of("user@example.com"),
                 PasswordHash.of("$2a$10$hashed"),
                 Nickname.of("테스터"),

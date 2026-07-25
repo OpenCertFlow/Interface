@@ -26,7 +26,6 @@ import com.certimakers.common.domain.port.IdGenerator;
 import com.certimakers.common.domain.port.TimeProvider;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,7 +62,7 @@ class GoogleAuthServiceTest {
         saveUserPort = Mockito.mock(SaveUserPort.class);
         tokenProvider = Mockito.mock(TokenProviderPort.class);
         refreshTokenStore = Mockito.mock(RefreshTokenStorePort.class);
-        IdGenerator idGenerator = UUID::randomUUID;
+        IdGenerator idGenerator = com.certimakers.support.TestIds::next;
         TimeProvider timeProvider = new TimeProvider() {
             @Override
             public Instant now() {
@@ -108,7 +107,7 @@ class GoogleAuthServiceTest {
     @DisplayName("이미 연동된 구글 계정은 다시 만들지 않고 로그인만 시킨다")
     void 기존_계정은_다시_만들지_않는다() {
         User existing = User.registerGoogle(
-                UserId.of(UUID.randomUUID()), Email.of("user@gmail.com"),
+                UserId.of(com.certimakers.support.TestIds.next()), Email.of("user@gmail.com"),
                 Nickname.of("홍길동"), "google-sub-1", NOW);
         when(loadUserPort.findByGoogleId("google-sub-1")).thenReturn(Optional.of(existing));
 

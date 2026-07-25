@@ -24,14 +24,14 @@
 DELETE FROM rule_set WHERE product_group = 'ELECTRIC_HEATING_PAD' AND version = 1;
 
 INSERT INTO rule_set (id, version, product_group, active, activated_at)
-VALUES ('00000000-0000-0000-0000-000000000002', 1, 'ELECTRIC_HEATING_PAD', true, now());
+VALUES (2, 1, 'ELECTRIC_HEATING_PAD', true, now());
 
 -- ── R-EH-001: 전기 사용 + 신체 직접 접촉 → 발열 제품 식별 ───────────────────
 -- [TODO-확인후] 인증 등급이 확인되면 flagExpertReview를 아래로 교체:
 --   {"type":"addCandidate","schemeCode":"<확인된_제도코드>","certificationType":"<확인된_등급>"},
 --   {"type":"requireDocument","documentCode":"...","requirement":"REQUIRED"}
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-001', 10,
+(2, 'R-EH-001', 10,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
      {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]}
@@ -46,7 +46,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- 온도조절기 유무가 시험 항목을 가르는 것은 발열 제품의 일반적 특성이나,
 -- 구체적으로 어떤 시험이 요구되는지는 확인 전이므로 질문 형태로만 남긴다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-002', 20,
+(2, 'R-EH-002', 20,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]},
      {"type":"attr","attribute":"CONTROLLER_STATUS","operator":"EQ","value":"ABSENT"}
@@ -58,7 +58,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 
 -- ── R-EH-002B: 온도조절기 모름 → 판단 불가 ──────────────────────────────────
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-002B', 21,
+(2, 'R-EH-002B', 21,
  '{"type":"attr","attribute":"CONTROLLER_STATUS","operator":"EQ","value":"UNKNOWN"}',
  '[
      {"type":"flagExpertReview","question":"온도조절기 탑재 여부를 모르면 과열 보호 수준을 판단할 수 없습니다. 제품의 온도조절기 유무를 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
@@ -69,7 +69,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- 정격전압·소비전력 표시는 전기용품 공통 사항이라 확인 전에도 안내할 수 있다.
 -- 발열 제품 고유의 표시사항(최고온도·사용시간 경고 등)은 [TODO-확인후] 추가한다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-010', 30,
+(2, 'R-EH-010', 30,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
      {"type":"attr","attribute":"RATED_VOLTAGE","operator":"GT","value":50}
@@ -84,7 +84,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- ── R-EH-020: 어린이용 → 어린이제품 안전인증 후보 ────────────────────────────
 -- 소형가전 룰셋(R-SA-010)과 동일한 근거를 쓴다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-020', 10,
+(2, 'R-EH-020', 10,
  '{"type":"attr","attribute":"TARGET_USER","operator":"EQ","value":"CHILD"}',
  '[
      {"type":"addCandidate","schemeCode":"KC_CHILD_SAFETY_CERT","certificationType":"SAFETY_CERT"}
@@ -95,7 +95,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- 혈액순환·통증 완화 등을 표방하면 전기용품이 아니라 의료기기법 적용 대상이 될 수 있다.
 -- 구체적 분류는 단정하지 않고, 규제 영역이 달라질 수 있음을 확인하도록 안내한다(불변식 6).
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-003', 5,
+(2, 'R-EH-003', 5,
  '{"type":"attr","attribute":"MEDICAL_USE_CLAIM","operator":"EQ","value":true}',
  '[
      {"type":"flagExpertReview","question":"혈액순환·통증 완화 등 의료적 효능을 표시·광고하면 전기용품이 아니라 의료기기로 분류될 수 있어 인증 경로가 완전히 달라집니다. 표방 문구가 의료적 효능에 해당하는지 확인해 주세요.","reason":"NO_EVIDENCE"}
@@ -105,7 +105,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- ── R-EH-004: 과열 보호 장치 없음 → 화상·과열 위험 확인 ──────────────────────
 -- 온도조절기(단계 조절)와 별개로, 이상 과열 시 전원을 끊는 보호 장치의 유무는 화상 위험과 직결된다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-004', 20,
+(2, 'R-EH-004', 20,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]},
      {"type":"attr","attribute":"OVERHEAT_PROTECTION","operator":"EQ","value":false}
@@ -118,7 +118,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- ── R-EH-005: 세탁 가능한데 전기부 분리 불가 → 감전 위험 확인 ────────────────
 -- 물세탁이 가능한데 열선·컨트롤러를 분리할 수 없으면 세탁 후 감전·절연 손상 위험이 있다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-005', 25,
+(2, 'R-EH-005', 25,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"WASHABLE","operator":"EQ","value":true},
      {"type":"attr","attribute":"SEPARABLE_ELECTRIC_PARTS","operator":"EQ","value":false}
@@ -131,7 +131,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- ── R-EH-011: 커버 분리형 → 세탁·분리 방법 표시 ──────────────────────────────
 -- 커버를 분리·세탁할 수 있으면 그 방법과 전기부 취급 주의사항을 표시해야 한다(표시사항 공통).
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-011', 30,
+(2, 'R-EH-011', 30,
  '{"type":"attr","attribute":"REMOVABLE_COVER","operator":"EQ","value":true}',
  '[
      {"type":"addLabelingCheck","label":"커버 분리·세탁 방법 및 전기부 취급 주의사항 표시"}
@@ -142,7 +142,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- 별도 전원 어댑터를 쓰는데 어댑터 자체가 인증받지 않았다면, 어댑터도 인증 범위에 포함되는지
 -- 확인이 필요하다. 인증받은 어댑터(adapterCertified=true)는 범위가 달라질 수 있어 별도 판단한다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-030', 40,
+(2, 'R-EH-030', 40,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"HAS_SEPARATE_ADAPTER","operator":"EQ","value":true},
      {"type":"attr","attribute":"ADAPTER_CERTIFIED","operator":"EQ","value":false}
@@ -155,7 +155,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- ── R-EH-006: 표면온도 출처가 측정값이 아님 → 근거 약함 확인 ────────────────
 -- 자체 추정값은 인증 판단의 근거로 충분하지 않다. 시험기관 측정값 확보를 안내한다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-006', 26,
+(2, 'R-EH-006', 26,
  '{"type":"attr","attribute":"TEMPERATURE_SOURCE","operator":"EQ","value":"ESTIMATED"}',
  '[
      {"type":"flagExpertReview","question":"표면온도가 자체 추정값입니다. 화상 위험 기준 판단에는 시험기관 측정값이 필요하니 측정을 통해 확인해 주세요.","reason":"NO_EVIDENCE"}
@@ -165,7 +165,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 -- ── R-EH-090: 표면온도 출처 모름 → 판단 불가 ────────────────────────────────
 -- 정격전압 미상(R-SA-090)과 같은 규약이다. 모른다고 진단을 막지 않고 전문가 확인으로 보낸다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-090', 90,
+(2, 'R-EH-090', 90,
  '{"type":"attr","attribute":"TEMPERATURE_SOURCE","operator":"EQ","value":"UNKNOWN"}',
  '[
      {"type":"flagExpertReview","question":"최고 표면온도를 모르면 화상 위험 기준 충족 여부를 판단할 수 없습니다. 시험기관에서 표면온도를 측정해 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
@@ -174,7 +174,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 
 -- ── R-EH-091: 전기 사용인데 정격전압 미상 → 판단 불가 ────────────────────────
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-('00000000-0000-0000-0000-000000000002', 'R-EH-091', 91,
+(2, 'R-EH-091', 91,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
      {"type":"attr","attribute":"RATED_VOLTAGE","operator":"EQ","value":null}
