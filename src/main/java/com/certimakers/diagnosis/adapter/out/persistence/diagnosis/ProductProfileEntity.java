@@ -57,27 +57,33 @@ public class ProductProfileEntity {
     @Column(name = "held_documents", nullable = false)
     private String heldDocuments;
 
-    // ── 발열 사양. 발열 제품이 아니면 셋 다 null이다 ──
-    // 세 컬럼이 함께 null이거나 함께 채워진다는 규칙은 DB CHECK 제약이 강제한다(V8).
+    // ── 발열 사양(F-APP-014~018). 발열 제품이 아니면 모두 null이다 ──
+    // 값의 짝 규칙(온도출처↔표면온도, 조절기↔단계 등)은 도메인 HeatingSpec이 강제한다.
 
-    @Column(name = "direct_body_contact")
-    private Boolean directBodyContact;
+    @Column(name = "body_contact_type")
+    private String bodyContactType;
 
-    @Column(name = "has_temperature_controller")
-    private Boolean hasTemperatureController;
+    @Column(name = "controller_status")
+    private String controllerStatus;
 
-    /** 최고 표면온도(℃). 발열 제품이어도 측정하지 않았으면 null — "모른다"는 뜻이다. */
+    @Column(name = "adjustment_steps")
+    private Integer adjustmentSteps;
+
+    /** 최고 표면온도(℃). 출처가 모름이면 null. */
     @Column(name = "max_surface_temperature")
     private Integer maxSurfaceTemperature;
 
-    // ── 발열 제품 상세(기능정의서 F-APP-014~018). 발열 제품이 아니면 모두 null이다 ──
-    // 어댑터 세부(external·certified)는 별도 어댑터가 없으면 null이다 — 도메인 HeatingSpec이 강제한다.
+    @Column(name = "temperature_source")
+    private String temperatureSource;
 
     @Column(name = "medical_use_claim")
     private Boolean medicalUseClaim;
 
     @Column(name = "auto_shut_off")
     private Boolean autoShutOff;
+
+    @Column(name = "auto_shut_off_minutes")
+    private Integer autoShutOffMinutes;
 
     @Column(name = "overheat_protection")
     private Boolean overheatProtection;
@@ -107,11 +113,12 @@ public class ProductProfileEntity {
             String productName, String productGroup, boolean usesElectricity,
             Integer ratedVoltage, Integer powerConsumption, boolean hasBattery,
             String targetUser, String salesChannel, String materials, String heldDocuments,
-            Boolean directBodyContact, Boolean hasTemperatureController,
-            Integer maxSurfaceTemperature,
-            Boolean medicalUseClaim, Boolean autoShutOff, Boolean overheatProtection,
-            Boolean removableCover, Boolean washable, Boolean separableElectricParts,
-            Boolean hasSeparateAdapter, Boolean adapterExternallyAttached, Boolean adapterCertified) {
+            String bodyContactType, String controllerStatus, Integer adjustmentSteps,
+            Integer maxSurfaceTemperature, String temperatureSource,
+            Boolean medicalUseClaim, Boolean autoShutOff, Integer autoShutOffMinutes,
+            Boolean overheatProtection, Boolean removableCover, Boolean washable,
+            Boolean separableElectricParts, Boolean hasSeparateAdapter,
+            Boolean adapterExternallyAttached, Boolean adapterCertified) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
@@ -122,11 +129,14 @@ public class ProductProfileEntity {
         this.salesChannel = salesChannel;
         this.materials = materials;
         this.heldDocuments = heldDocuments;
-        this.directBodyContact = directBodyContact;
-        this.hasTemperatureController = hasTemperatureController;
+        this.bodyContactType = bodyContactType;
+        this.controllerStatus = controllerStatus;
+        this.adjustmentSteps = adjustmentSteps;
         this.maxSurfaceTemperature = maxSurfaceTemperature;
+        this.temperatureSource = temperatureSource;
         this.medicalUseClaim = medicalUseClaim;
         this.autoShutOff = autoShutOff;
+        this.autoShutOffMinutes = autoShutOffMinutes;
         this.overheatProtection = overheatProtection;
         this.removableCover = removableCover;
         this.washable = washable;
@@ -180,16 +190,24 @@ public class ProductProfileEntity {
         return heldDocuments;
     }
 
-    public Boolean getDirectBodyContact() {
-        return directBodyContact;
+    public String getBodyContactType() {
+        return bodyContactType;
     }
 
-    public Boolean getHasTemperatureController() {
-        return hasTemperatureController;
+    public String getControllerStatus() {
+        return controllerStatus;
+    }
+
+    public Integer getAdjustmentSteps() {
+        return adjustmentSteps;
     }
 
     public Integer getMaxSurfaceTemperature() {
         return maxSurfaceTemperature;
+    }
+
+    public String getTemperatureSource() {
+        return temperatureSource;
     }
 
     public Boolean getMedicalUseClaim() {
@@ -198,6 +216,10 @@ public class ProductProfileEntity {
 
     public Boolean getAutoShutOff() {
         return autoShutOff;
+    }
+
+    public Integer getAutoShutOffMinutes() {
+        return autoShutOffMinutes;
     }
 
     public Boolean getOverheatProtection() {
@@ -228,8 +250,8 @@ public class ProductProfileEntity {
         return adapterCertified;
     }
 
-    /** 발열 사양이 저장되어 있는지. 두 불리언이 모두 있어야 발열 제품으로 본다. */
+    /** 발열 사양이 저장되어 있는지. 신체접촉 방식이 있으면 발열 제품으로 본다. */
     public boolean hasHeatingSpec() {
-        return directBodyContact != null && hasTemperatureController != null;
+        return bodyContactType != null;
     }
 }

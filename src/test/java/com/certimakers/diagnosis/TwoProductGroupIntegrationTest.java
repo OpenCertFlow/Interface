@@ -61,7 +61,11 @@ class TwoProductGroupIntegrationTest {
         return request;
     }
 
-    /** 봉제 소공인이 방석에 열선·온도조절기·어댑터를 결합한 제품. */
+    /**
+     * 봉제 소공인이 방석에 열선·온도조절기·어댑터를 결합한 제품(F-APP-014~018 재정의 모델).
+     * {@code hasController}가 참이면 온도조절기 있음(3단), 거짓이면 없음. 표면온도가 있으면 측정값,
+     * 없으면 출처 '모름'으로 둔다.
+     */
     private static Map<String, Object> heatingPad(
             Boolean hasController, Integer surfaceTemperature) {
         Map<String, Object> request = new HashMap<>();
@@ -75,12 +79,17 @@ class TwoProductGroupIntegrationTest {
         request.put("salesChannel", "ONLINE");
         request.put("materials", List.of("TEXTILE"));
         request.put("heldDocuments", List.of());
-        request.put("directBodyContact", true);
-        request.put("hasTemperatureController", hasController);
+        request.put("bodyContactType", "DIRECT_SKIN");
+        request.put("controllerStatus", Boolean.TRUE.equals(hasController) ? "PRESENT" : "ABSENT");
+        if (Boolean.TRUE.equals(hasController)) {
+            request.put("adjustmentSteps", 3);
+        }
         request.put("maxSurfaceTemperatureCelsius", surfaceTemperature);
+        request.put("temperatureSource", surfaceTemperature == null ? "UNKNOWN" : "MEASURED");
         // 발열 상세(F-APP-014~018) — 안전 요건을 갖춘 표준 구성. 별도 어댑터는 없다.
         request.put("medicalUseClaim", false);
         request.put("autoShutOff", true);
+        request.put("autoShutOffMinutes", 30);
         request.put("overheatProtection", true);
         request.put("removableCover", true);
         request.put("washable", true);
@@ -178,7 +187,7 @@ class TwoProductGroupIntegrationTest {
     @DisplayName("발열 사양 없이 전기방석을 보내면 무엇이 빠졌는지 알려 준다")
     void 발열_사양이_빠지면_알려준다() {
         Map<String, Object> incomplete = heatingPad(true, 45);
-        incomplete.remove("hasTemperatureController");
+        incomplete.remove("controllerStatus");
 
         webTestClient.post().uri("/api/v1/diagnoses")
                 .bodyValue(incomplete)
@@ -186,7 +195,7 @@ class TwoProductGroupIntegrationTest {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.error.message").value(message ->
-                        assertThat(message.toString()).contains("온도조절기"));
+                        assertThat(message.toString()).contains("controllerStatus"));
     }
 
     @Test

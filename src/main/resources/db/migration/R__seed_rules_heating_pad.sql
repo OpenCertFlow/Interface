@@ -34,11 +34,11 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 ('00000000-0000-0000-0000-000000000002', 'R-EH-001', 10,
  '{"type":"allOf","conditions":[
      {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
-     {"type":"attr","attribute":"DIRECT_BODY_CONTACT","operator":"EQ","value":true}
+     {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]}
    ]}',
  '[
      {"type":"requireDocument","documentCode":"BIZ_LICENSE","requirement":"REQUIRED"},
-     {"type":"flagExpertReview","question":"신체에 직접 닿는 발열 제품입니다. 적용되는 인증 제도와 등급을 인증기관에 확인해 주세요. (서비스에서 공식 기준 확인 후 자동 안내 예정)","reason":"NO_EVIDENCE"}
+     {"type":"flagExpertReview","question":"신체에 닿는 발열 제품입니다. 적용되는 인증 제도와 등급을 인증기관에 확인해 주세요. (서비스에서 공식 기준 확인 후 자동 안내 예정)","reason":"NO_EVIDENCE"}
    ]',
  '전기 사용 + 신체 접촉 발열 제품 식별. 등급·서류는 공식 확인 전이라 전문가 확인으로 보낸다');
 
@@ -48,13 +48,22 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
 ('00000000-0000-0000-0000-000000000002', 'R-EH-002', 20,
  '{"type":"allOf","conditions":[
-     {"type":"attr","attribute":"DIRECT_BODY_CONTACT","operator":"EQ","value":true},
-     {"type":"attr","attribute":"HAS_TEMPERATURE_CONTROLLER","operator":"EQ","value":false}
+     {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]},
+     {"type":"attr","attribute":"CONTROLLER_STATUS","operator":"EQ","value":"ABSENT"}
    ]}',
  '[
-     {"type":"flagExpertReview","question":"온도조절기(과열 방지 장치)가 없습니다. 장시간 사용 시 과열·화상 위험과 관련해 어떤 시험이 필요한지 확인이 필요합니다.","reason":"NO_EVIDENCE"}
+     {"type":"flagExpertReview","question":"온도조절기가 없습니다. 장시간 사용 시 과열·화상 위험과 관련해 어떤 시험이 필요한지 확인이 필요합니다.","reason":"NO_EVIDENCE"}
    ]',
  '온도조절기 미탑재 시 과열 위험 확인 필요');
+
+-- ── R-EH-002B: 온도조절기 모름 → 판단 불가 ──────────────────────────────────
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+('00000000-0000-0000-0000-000000000002', 'R-EH-002B', 21,
+ '{"type":"attr","attribute":"CONTROLLER_STATUS","operator":"EQ","value":"UNKNOWN"}',
+ '[
+     {"type":"flagExpertReview","question":"온도조절기 탑재 여부를 모르면 과열 보호 수준을 판단할 수 없습니다. 제품의 온도조절기 유무를 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
+   ]',
+ '온도조절기 유무 모름 → 판단 불가');
 
 -- ── R-EH-010: 표시·라벨링 (전기용품 공통) ────────────────────────────────────
 -- 정격전압·소비전력 표시는 전기용품 공통 사항이라 확인 전에도 안내할 수 있다.
@@ -98,7 +107,7 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
 ('00000000-0000-0000-0000-000000000002', 'R-EH-004', 20,
  '{"type":"allOf","conditions":[
-     {"type":"attr","attribute":"DIRECT_BODY_CONTACT","operator":"EQ","value":true},
+     {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]},
      {"type":"attr","attribute":"OVERHEAT_PROTECTION","operator":"EQ","value":false}
    ]}',
  '[
@@ -143,14 +152,21 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
    ]',
  '미인증 별도 어댑터 사용 시 어댑터 인증 범위 확인 필요');
 
--- ── R-EH-090: 표면온도 미상 → 판단 불가 ──────────────────────────────────────
+-- ── R-EH-006: 표면온도 출처가 측정값이 아님 → 근거 약함 확인 ────────────────
+-- 자체 추정값은 인증 판단의 근거로 충분하지 않다. 시험기관 측정값 확보를 안내한다.
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+('00000000-0000-0000-0000-000000000002', 'R-EH-006', 26,
+ '{"type":"attr","attribute":"TEMPERATURE_SOURCE","operator":"EQ","value":"ESTIMATED"}',
+ '[
+     {"type":"flagExpertReview","question":"표면온도가 자체 추정값입니다. 화상 위험 기준 판단에는 시험기관 측정값이 필요하니 측정을 통해 확인해 주세요.","reason":"NO_EVIDENCE"}
+   ]',
+ '표면온도가 추정값이면 측정값 확보 필요');
+
+-- ── R-EH-090: 표면온도 출처 모름 → 판단 불가 ────────────────────────────────
 -- 정격전압 미상(R-SA-090)과 같은 규약이다. 모른다고 진단을 막지 않고 전문가 확인으로 보낸다.
 INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
 ('00000000-0000-0000-0000-000000000002', 'R-EH-090', 90,
- '{"type":"allOf","conditions":[
-     {"type":"attr","attribute":"DIRECT_BODY_CONTACT","operator":"EQ","value":true},
-     {"type":"attr","attribute":"MAX_SURFACE_TEMPERATURE","operator":"EQ","value":null}
-   ]}',
+ '{"type":"attr","attribute":"TEMPERATURE_SOURCE","operator":"EQ","value":"UNKNOWN"}',
  '[
      {"type":"flagExpertReview","question":"최고 표면온도를 모르면 화상 위험 기준 충족 여부를 판단할 수 없습니다. 시험기관에서 표면온도를 측정해 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
    ]',

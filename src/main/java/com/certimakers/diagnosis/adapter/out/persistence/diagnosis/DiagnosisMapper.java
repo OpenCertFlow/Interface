@@ -1,9 +1,12 @@
 package com.certimakers.diagnosis.adapter.out.persistence.diagnosis;
 
 import com.certimakers.common.adapter.out.persistence.json.JsonColumns;
+import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.CertificationCandidate;
 import com.certimakers.diagnosis.domain.model.CertificationType;
 import com.certimakers.diagnosis.domain.model.ChecklistItem;
+import com.certimakers.diagnosis.domain.model.ControllerStatus;
+import com.certimakers.diagnosis.domain.model.TemperatureSource;
 import com.certimakers.diagnosis.domain.model.DegradedFlags;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
@@ -84,11 +87,14 @@ public class DiagnosisMapper {
                 JsonColumns.writeStringList(profile.materials().stream().map(Enum::name).toList()),
                 JsonColumns.writeStringList(
                         profile.heldDocuments().stream().map(DocumentCode::value).toList()),
-                heating != null ? heating.directBodyContact() : null,
-                heating != null ? heating.hasTemperatureController() : null,
+                heating != null ? heating.bodyContactType().name() : null,
+                heating != null ? heating.controllerStatus().name() : null,
+                heating != null ? heating.adjustmentSteps() : null,
                 heating != null ? heating.maxSurfaceTemperatureCelsius() : null,
+                heating != null ? heating.temperatureSource().name() : null,
                 heating != null ? heating.medicalUseClaim() : null,
                 heating != null ? heating.autoShutOff() : null,
+                heating != null ? heating.autoShutOffMinutes() : null,
                 heating != null ? heating.overheatProtection() : null,
                 heating != null ? heating.removableCover() : null,
                 heating != null ? heating.washable() : null,
@@ -165,16 +171,19 @@ public class DiagnosisMapper {
         Set<DocumentCode> heldDocuments = JsonColumns.readStringList(entity.getHeldDocuments()).stream()
                 .map(DocumentCode::of)
                 .collect(Collectors.toUnmodifiableSet());
-        // 발열 사양이 없는 제품이면 null로 되살린다 — false로 채우면 발열 룰이 잘못 매칭된다.
-        // 발열 상세 불리언은 발열 제품이면 저장 시 함께 기록된다. 혹시 없으면(비정상 legacy 행)
-        // false로 되살려 언박싱 NPE를 피한다 — 어댑터 세부만 부재를 그대로 유지한다.
+        // 발열 사양이 없는 제품이면 null로 되살린다 — 기본값으로 채우면 발열 룰이 잘못 매칭된다.
+        // 발열 상세는 발열 제품이면 저장 시 함께 기록된다. 불리언 세부만 혹시 없으면 false로 되살려
+        // 언박싱 NPE를 피하고, enum·조절단계·온도출처는 저장값을 그대로 복원한다.
         HeatingSpec heating = entity.hasHeatingSpec()
                 ? new HeatingSpec(
-                        entity.getDirectBodyContact(),
-                        entity.getHasTemperatureController(),
+                        BodyContactType.valueOf(entity.getBodyContactType()),
+                        ControllerStatus.valueOf(entity.getControllerStatus()),
+                        entity.getAdjustmentSteps(),
                         entity.getMaxSurfaceTemperature(),
+                        TemperatureSource.valueOf(entity.getTemperatureSource()),
                         Boolean.TRUE.equals(entity.getMedicalUseClaim()),
                         Boolean.TRUE.equals(entity.getAutoShutOff()),
+                        entity.getAutoShutOffMinutes(),
                         Boolean.TRUE.equals(entity.getOverheatProtection()),
                         Boolean.TRUE.equals(entity.getRemovableCover()),
                         Boolean.TRUE.equals(entity.getWashable()),

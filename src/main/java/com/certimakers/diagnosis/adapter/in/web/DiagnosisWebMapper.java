@@ -8,10 +8,13 @@ import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.Evidence
 import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.ExpertReviewView;
 import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.NarrationView;
 import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.ScoreView;
+import com.certimakers.diagnosis.domain.model.BodyContactType;
+import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ElectricalSpec;
 import com.certimakers.diagnosis.domain.model.HeatingSpec;
+import com.certimakers.diagnosis.domain.model.TemperatureSource;
 import com.certimakers.diagnosis.domain.model.MaterialType;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import com.certimakers.diagnosis.domain.model.ProductProfile;
@@ -67,10 +70,14 @@ public class DiagnosisWebMapper {
         if (!request.hasHeatingInput()) {
             return null;
         }
-        // 발열 제품이라면 안전·세탁 관련 항목은 답이 있어야 한다. 누락 시 false로 채우지 않고 명시적으로
-        // 요구한다 — "모른다"를 "아니다"로 바꾸면 화상·감전 위험 판단이 조용히 뒤집힌다.
-        requireBoolean(request.directBodyContact(), "신체 접촉 여부");
-        requireBoolean(request.hasTemperatureController(), "온도조절기 유무");
+        // 발열 제품이라면 신체접촉 방식·온도조절기·온도출처와 안전·세탁 항목은 답이 있어야 한다.
+        // 누락 시 기본값으로 뭉개지 않고 명시적으로 요구한다 — "모름"을 "없음"으로 바꾸면 판정이 뒤집힌다.
+        BodyContactType bodyContactType = parse(
+                BodyContactType.class, request.bodyContactType(), "bodyContactType");
+        ControllerStatus controllerStatus = parse(
+                ControllerStatus.class, request.controllerStatus(), "controllerStatus");
+        TemperatureSource temperatureSource = parse(
+                TemperatureSource.class, request.temperatureSource(), "temperatureSource");
         requireBoolean(request.medicalUseClaim(), "의료적 표현 여부");
         requireBoolean(request.autoShutOff(), "자동 전원 차단 여부");
         requireBoolean(request.overheatProtection(), "과열 방지 여부");
@@ -89,19 +96,19 @@ public class DiagnosisWebMapper {
             adapterCertified = request.adapterCertified();
         }
 
-        return new HeatingSpec(
-                request.directBodyContact(),
-                request.hasTemperatureController(),
-                request.maxSurfaceTemperatureCelsius(),
-                request.medicalUseClaim(),
-                request.autoShutOff(),
-                request.overheatProtection(),
-                request.removableCover(),
-                request.washable(),
-                request.separableElectricParts(),
-                request.hasSeparateAdapter(),
-                adapterExternallyAttached,
-                adapterCertified);
+        // 조절단계·자동꺼짐 시간·표면온도와 출처의 짝 규칙은 HeatingSpec 생성자가 강제한다.
+        // 위반 시 도메인의 IllegalArgumentException을 400 메시지로 바꿔 사용자가 고칠 수 있게 한다.
+        try {
+            return new HeatingSpec(
+                    bodyContactType, controllerStatus, request.adjustmentSteps(),
+                    request.maxSurfaceTemperatureCelsius(), temperatureSource,
+                    request.medicalUseClaim(), request.autoShutOff(), request.autoShutOffMinutes(),
+                    request.overheatProtection(), request.removableCover(), request.washable(),
+                    request.separableElectricParts(), request.hasSeparateAdapter(),
+                    adapterExternallyAttached, adapterCertified);
+        } catch (IllegalArgumentException e) {
+            throw BusinessException.invalid(e.getMessage());
+        }
     }
 
     private void requireBoolean(Boolean value, String label) {

@@ -61,7 +61,7 @@ public enum ProductGroup {
 
     /** 발열 사양을 입력받는 제품군인지. 앱은 이 값을 볼 필요 없이 스키마를 그대로 따르면 된다. */
     public boolean requiresHeatingSpec() {
-        return inputFields.stream().anyMatch(field -> field.code().equals("directBodyContact"));
+        return inputFields.stream().anyMatch(field -> field.code().equals("bodyContactType"));
     }
 
     // ── 입력 스키마 정의 ──────────────────────────────────────────
@@ -92,26 +92,45 @@ public enum ProductGroup {
      */
     private static List<InputField> heatingFields() {
         List<InputField> fields = new ArrayList<>(commonFields());
-        fields.add(InputField.bool("directBodyContact",
-                "사용 중 신체에 직접 닿나요?",
-                "방석·요처럼 몸에 닿는 제품은 화상 위험 기준이 달라집니다"));
-        fields.add(InputField.bool("hasTemperatureController",
+
+        // 신체접촉 방식(F-APP-014) — 접촉 강도에 따라 화상 위험 기준이 달라진다.
+        fields.add(InputField.singleSelect("bodyContactType",
+                "사용 중 신체에 어떻게 닿나요?",
+                enumOptions(BodyContactType.values(), BodyContactType::name, BodyContactType::displayName),
+                "직접 피부 접촉일수록 화상 위험 기준이 엄격해집니다"));
+
+        // 온도조절기 유무(F-APP-016) — '모름'을 별도로 둔다. 조절 단계는 있을 때만 의미가 있다.
+        fields.add(InputField.singleSelect("controllerStatus",
                 "온도조절기(온도 단계 조절 장치)가 있나요?",
-                "온도조절기 유무에 따라 요구되는 시험 항목이 달라질 수 있습니다"));
+                enumOptions(ControllerStatus.values(), ControllerStatus::name, ControllerStatus::displayName),
+                "확실하지 않으면 '모름'을 선택하세요. 전문가 확인 항목으로 안내됩니다"));
+        fields.add(new InputField(
+                "adjustmentSteps", "온도 조절 단계 수(예: 3단)",
+                InputFieldType.INTEGER, false, null,
+                "온도조절기가 있을 때만 입력하세요", List.of()));
+
+        // 표면온도와 출처(F-APP-017) — 측정값만 근거로 충분하다. 출처가 '모름'이면 온도는 비워 둔다.
         fields.add(new InputField(
                 "maxSurfaceTemperatureCelsius", "최고 표면온도(℃)",
                 InputFieldType.INTEGER, false, null,
-                "측정값을 모르면 비워 두세요. 전문가 확인 항목으로 안내됩니다", List.of()));
+                "출처가 '모름'이면 비워 두세요", List.of()));
+        fields.add(InputField.singleSelect("temperatureSource",
+                "표면온도 값의 출처는?",
+                enumOptions(TemperatureSource.values(), TemperatureSource::name, TemperatureSource::displayName),
+                "시험기관 측정값만 인증 근거로 충분합니다"));
 
         // 의료적 표현 — 표방하면 의료기기 규제로 넘어가 인증 경로 자체가 달라진다(APP-EC-01).
         fields.add(InputField.bool("medicalUseClaim",
                 "혈액순환·통증 완화 등 의료적 효능을 표시·광고하나요?",
                 "의료적 효능을 표방하면 전기용품이 아니라 의료기기로 분류될 수 있습니다"));
 
-        // 안전 장치 — 자동 차단·과열 보호(APP-EC-04)
+        // 안전 장치 — 자동 차단·과열 보호(F-APP-017). 자동 차단이 있으면 꺼짐 시간(분)을 묻는다.
         fields.add(InputField.bool("autoShutOff",
                 "일정 시간 뒤 자동으로 전원이 꺼지나요?",
                 "장시간 사용 발열 제품의 안전 요건입니다"));
+        fields.add(InputField.integerWhen("autoShutOffMinutes",
+                "몇 분 뒤에 꺼지나요?", true, "autoShutOff",
+                "자동 차단이 있을 때만 입력하세요"));
         fields.add(InputField.bool("overheatProtection",
                 "과열 시 전원을 차단하는 장치가 있나요?",
                 "온도 제한(과열 방지) 장치 유무에 따라 시험 항목이 달라집니다"));
@@ -140,6 +159,14 @@ public enum ProductGroup {
                 "hasSeparateAdapter",
                 "인증받은 어댑터는 인증 범위 판단이 달라집니다"));
         return fields;
+    }
+
+    private static <E> List<InputOption> enumOptions(
+            E[] values, java.util.function.Function<E, String> code,
+            java.util.function.Function<E, String> label) {
+        return Arrays.stream(values)
+                .map(value -> new InputOption(code.apply(value), label.apply(value)))
+                .toList();
     }
 
     private static List<InputOption> targetUserOptions() {

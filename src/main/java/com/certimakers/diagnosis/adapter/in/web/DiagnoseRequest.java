@@ -27,20 +27,29 @@ public record DiagnoseRequest(
         // ── 발열 제품(전기방석 등) 전용. 소형가전에서는 보내지 않는다 ──
         // 어떤 제품군이 어떤 항목을 요구하는지는 GET /api/v1/product-groups가 알려 준다.
 
-        /** 사용 중 신체에 직접 닿는지. 발열 제품이 아니면 null */
-        Boolean directBodyContact,
+        /** 신체에 닿는 방식(BodyContactType). 발열 제품이 아니면 null */
+        String bodyContactType,
 
-        /** 온도조절기(과열 방지 장치) 유무. 발열 제품이 아니면 null */
-        Boolean hasTemperatureController,
+        /** 온도조절기 유무(ControllerStatus: PRESENT/ABSENT/UNKNOWN). 발열 제품이 아니면 null */
+        String controllerStatus,
 
-        /** 최고 표면온도(℃). 모르면 null — 룰이 판단 불가로 처리해 전문가 확인으로 보낸다 */
+        /** 온도 조절 단계 수. 조절기가 있을 때만 값이 있다 */
+        @PositiveOrZero Integer adjustmentSteps,
+
+        /** 최고 표면온도(℃). 출처가 모름이면 null */
         @PositiveOrZero Integer maxSurfaceTemperatureCelsius,
+
+        /** 표면온도 값의 출처(TemperatureSource: MEASURED/ESTIMATED/UNKNOWN) */
+        String temperatureSource,
 
         /** 혈액순환·통증 완화 등 의료적 효능을 표방하는지. 표방하면 의료기기 규제로 넘어간다 */
         Boolean medicalUseClaim,
 
         /** 일정 시간 뒤 자동 전원 차단 장치가 있는지 */
         Boolean autoShutOff,
+
+        /** 자동으로 꺼지기까지의 시간(분). 자동 차단이 있을 때만 값이 있다 */
+        @PositiveOrZero Integer autoShutOffMinutes,
 
         /** 과열 시 전원을 차단하는 온도 제한 장치가 있는지 */
         Boolean overheatProtection,
@@ -77,8 +86,9 @@ public record DiagnoseRequest(
      * 의미가 있고, {@link DiagnosisWebMapper}가 함께 요구한다.
      */
     public boolean hasHeatingInput() {
-        return directBodyContact != null
-                || hasTemperatureController != null
+        return bodyContactType != null
+                || controllerStatus != null
+                || temperatureSource != null
                 || maxSurfaceTemperatureCelsius != null
                 || medicalUseClaim != null
                 || autoShutOff != null

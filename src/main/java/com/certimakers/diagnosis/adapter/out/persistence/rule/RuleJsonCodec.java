@@ -2,7 +2,9 @@ package com.certimakers.diagnosis.adapter.out.persistence.rule;
 
 import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.common.domain.error.CommonErrorCode;
+import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.CertificationType;
+import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ExpertReviewReason;
 import com.certimakers.diagnosis.domain.model.MaterialType;
@@ -11,6 +13,7 @@ import com.certimakers.diagnosis.domain.model.Requirement;
 import com.certimakers.diagnosis.domain.model.SalesChannel;
 import com.certimakers.diagnosis.domain.model.SchemeCode;
 import com.certimakers.diagnosis.domain.model.TargetUser;
+import com.certimakers.diagnosis.domain.model.TemperatureSource;
 import com.certimakers.diagnosis.domain.rule.AddCandidate;
 import com.certimakers.diagnosis.domain.rule.AddLabelingCheck;
 import com.certimakers.diagnosis.domain.rule.AllOf;
@@ -117,6 +120,9 @@ public class RuleJsonCodec {
             case PRODUCT_GROUP -> enumValue(ProductGroup.class, node.asText());
             case MATERIAL -> enumValue(MaterialType.class, node.asText());
             case DOCUMENT_CODE -> DocumentCode.of(node.asText());
+            case BODY_CONTACT_TYPE -> enumValue(BodyContactType.class, node.asText());
+            case CONTROLLER_STATUS -> enumValue(ControllerStatus.class, node.asText());
+            case TEMPERATURE_SOURCE -> enumValue(TemperatureSource.class, node.asText());
         };
     }
 

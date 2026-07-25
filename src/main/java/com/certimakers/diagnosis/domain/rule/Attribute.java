@@ -1,6 +1,10 @@
 package com.certimakers.diagnosis.domain.rule;
 
+import com.certimakers.diagnosis.domain.model.BodyContactType;
+import com.certimakers.diagnosis.domain.model.ControllerStatus;
+import com.certimakers.diagnosis.domain.model.HeatingSpec;
 import com.certimakers.diagnosis.domain.model.ProductProfile;
+import com.certimakers.diagnosis.domain.model.TemperatureSource;
 
 /**
  * 룰 조건이 검사할 수 있는 제품 속성. 각 상수는 {@link ProductProfile}에서 값을 꺼내는 방법을 안다.
@@ -37,35 +41,53 @@ public enum Attribute {
     },
 
     /**
-     * 사용 중 신체에 직접 닿는지. 발열 제품에서 화상 위험 판단의 핵심 입력이다.
+     * 신체에 닿는 방식({@link BodyContactType}). 발열 제품에서 화상 위험 판단의 핵심 입력이다.
      *
-     * <p>발열 사양이 없는 제품(드라이기 등)은 {@code null}을 반환한다 — {@code false}가 아니다.
-     * "닿지 않는다"와 "발열 제품이 아니라 물을 이유가 없다"는 다른 상태이며, 후자를 false로
-     * 뭉개면 발열 룰이 엉뚱한 제품에 매칭될 수 있다.
+     * <p>발열 사양이 없는 제품(드라이기 등)은 {@code null}을 반환한다 — {@code NONE}이 아니다.
+     * "비접촉"과 "발열 제품이 아니라 물을 이유가 없다"는 다른 상태이며, 후자를 NONE으로 뭉개면
+     * 발열 룰이 엉뚱한 제품에 매칭될 수 있다. 룰은 신체 접촉을 {@code Not(EQ NONE)}으로 표현한다.
      */
-    DIRECT_BODY_CONTACT(ValueKind.BOOLEAN) {
+    BODY_CONTACT_TYPE(ValueKind.BODY_CONTACT_TYPE) {
         @Override
         public Object resolve(ProductProfile profile) {
-            return profile.heatingSpec().map(heating -> (Object) heating.directBodyContact())
+            return profile.heatingSpec().map(heating -> (Object) heating.bodyContactType())
                     .orElse(null);
         }
     },
 
-    /** 온도조절기(과열 방지 장치)를 갖췄는지. 발열 사양이 없으면 null. */
-    HAS_TEMPERATURE_CONTROLLER(ValueKind.BOOLEAN) {
+    /** 온도조절기 유무({@link ControllerStatus} 있음/없음/모름). 발열 사양이 없으면 null. */
+    CONTROLLER_STATUS(ValueKind.CONTROLLER_STATUS) {
         @Override
         public Object resolve(ProductProfile profile) {
-            return profile.heatingSpec().map(heating -> (Object) heating.hasTemperatureController())
+            return profile.heatingSpec().map(heating -> (Object) heating.controllerStatus())
                     .orElse(null);
         }
     },
 
-    /** 최고 표면온도(℃). 측정하지 않았거나 발열 제품이 아니면 null → 판단 불가로 이어진다. */
+    /** 온도 조절 단계 수. 조절기가 있을 때만 값이 있고, 없거나 모름이면 null. */
+    ADJUSTMENT_STEPS(ValueKind.INTEGER) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.adjustmentSteps())
+                    .orElse(null);
+        }
+    },
+
+    /** 최고 표면온도(℃). 출처가 모름이거나 발열 제품이 아니면 null → 판단 불가로 이어진다. */
     MAX_SURFACE_TEMPERATURE(ValueKind.INTEGER) {
         @Override
         public Object resolve(ProductProfile profile) {
             return profile.heatingSpec()
                     .map(heating -> (Object) heating.maxSurfaceTemperatureCelsius())
+                    .orElse(null);
+        }
+    },
+
+    /** 표면온도 값의 출처({@link TemperatureSource} 측정/추정/모름). 측정만 근거로 충분하다. */
+    TEMPERATURE_SOURCE(ValueKind.TEMPERATURE_SOURCE) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.temperatureSource())
                     .orElse(null);
         }
     },
@@ -87,6 +109,15 @@ public enum Attribute {
         @Override
         public Object resolve(ProductProfile profile) {
             return profile.heatingSpec().map(heating -> (Object) heating.autoShutOff())
+                    .orElse(null);
+        }
+    },
+
+    /** 자동으로 꺼지기까지의 시간(분). 자동 차단이 있을 때만 값이 있다. */
+    AUTO_SHUT_OFF_MINUTES(ValueKind.INTEGER) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.autoShutOffMinutes())
                     .orElse(null);
         }
     },

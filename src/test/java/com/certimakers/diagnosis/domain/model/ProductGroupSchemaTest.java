@@ -18,7 +18,7 @@ class ProductGroupSchemaTest {
     @DisplayName("전기방석만 발열 항목을 묻는다 — 드라이기 화면에 표면온도 칸이 뜨면 안 된다")
     void 발열_항목은_전기방석에만_있다() {
         List<String> heatingCodes =
-                List.of("directBodyContact", "hasTemperatureController", "maxSurfaceTemperatureCelsius");
+                List.of("bodyContactType", "controllerStatus", "maxSurfaceTemperatureCelsius");
 
         assertThat(codesOf(ProductGroup.ELECTRIC_HEATING_PAD)).containsAll(heatingCodes);
         assertThat(codesOf(ProductGroup.SMALL_APPLIANCE)).doesNotContainAnyElementsOf(heatingCodes);
