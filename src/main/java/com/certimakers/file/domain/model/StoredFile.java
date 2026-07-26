@@ -21,16 +21,18 @@ public class StoredFile extends AggregateRoot<FileId> {
     private final long sizeInBytes;
     private final StorageKey storageKey;
     private final OwnerRef owner;
+    private final Visibility visibility;
     private final Instant createdAt;
 
     private StoredFile(
             FileId id, OriginalFileName originalName, ContentType contentType, long sizeInBytes,
-            StorageKey storageKey, OwnerRef owner, Instant createdAt) {
+            StorageKey storageKey, OwnerRef owner, Visibility visibility, Instant createdAt) {
         this.id = Guard.notNull(id, "id");
         this.originalName = Guard.notNull(originalName, "originalName");
         this.contentType = Guard.notNull(contentType, "contentType");
         this.storageKey = Guard.notNull(storageKey, "storageKey");
         this.owner = Guard.notNull(owner, "owner");
+        this.visibility = Guard.notNull(visibility, "visibility");
         this.createdAt = Guard.notNull(createdAt, "createdAt");
         if (sizeInBytes <= 0) {
             throw new BusinessException(FileErrorCode.EMPTY_FILE);
@@ -40,15 +42,20 @@ public class StoredFile extends AggregateRoot<FileId> {
 
     public static StoredFile register(
             FileId id, OriginalFileName originalName, ContentType contentType, long sizeInBytes,
-            StorageKey storageKey, OwnerRef owner, Instant createdAt) {
-        return new StoredFile(id, originalName, contentType, sizeInBytes, storageKey, owner, createdAt);
+            StorageKey storageKey, OwnerRef owner, Visibility visibility, Instant createdAt) {
+        return new StoredFile(id, originalName, contentType, sizeInBytes, storageKey, owner, visibility, createdAt);
     }
 
     /** 저장된 상태에서 되살린다(영속성 재구성 전용). */
     public static StoredFile reconstitute(
             FileId id, OriginalFileName originalName, ContentType contentType, long sizeInBytes,
-            StorageKey storageKey, OwnerRef owner, Instant createdAt) {
-        return new StoredFile(id, originalName, contentType, sizeInBytes, storageKey, owner, createdAt);
+            StorageKey storageKey, OwnerRef owner, Visibility visibility, Instant createdAt) {
+        return new StoredFile(id, originalName, contentType, sizeInBytes, storageKey, owner, visibility, createdAt);
+    }
+
+    /** 소유자·나머지 값은 그대로 두고 공개 범위만 바꾼 새 인스턴스를 만든다. */
+    public StoredFile withVisibility(Visibility newVisibility) {
+        return reconstitute(id, originalName, contentType, sizeInBytes, storageKey, owner, newVisibility, createdAt);
     }
 
     /**
@@ -68,6 +75,23 @@ public class StoredFile extends AggregateRoot<FileId> {
 
     public boolean isOwnedBy(OwnerRef candidate) {
         return owner.equals(candidate);
+    }
+
+    /**
+     * 조회 권한을 확인한다. 공개 파일은 누구나, 비공개 파일은 소유자·관리자만 볼 수 있다.
+     *
+     * <p>requester가 null일 수 있다 — 비로그인 사용자가 공개 파일을 요청하는 정상적인 경우다.
+     */
+    public void requireReadableBy(OwnerRef requester, boolean requesterIsAdmin) {
+        if (visibility == Visibility.PUBLIC) {
+            return;
+        }
+        if (requesterIsAdmin) {
+            return;
+        }
+        if (requester == null || !owner.equals(requester)) {
+            throw new BusinessException(FileErrorCode.NOT_FILE_READABLE);
+        }
     }
 
     @Override
@@ -93,6 +117,10 @@ public class StoredFile extends AggregateRoot<FileId> {
 
     public OwnerRef owner() {
         return owner;
+    }
+
+    public Visibility visibility() {
+        return visibility;
     }
 
     public Instant createdAt() {

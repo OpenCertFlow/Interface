@@ -22,7 +22,10 @@ public enum FileErrorCode implements ErrorCode {
     NOT_FILE_OWNER("CM-FILE-005", "본인이 업로드한 파일만 삭제할 수 있습니다.", ErrorType.CONFLICT),
 
     /** 업로드 본문이 비어 있다. */
-    EMPTY_FILE("CM-FILE-006", "빈 파일은 업로드할 수 없습니다.", ErrorType.VALIDATION);
+    EMPTY_FILE("CM-FILE-006", "빈 파일은 업로드할 수 없습니다.", ErrorType.VALIDATION),
+
+    /** 비공개 파일을 본인이 아닌 사람이 열람하려 했다. */
+    NOT_FILE_READABLE("CM-FILE-007", "본인이 업로드한 파일만 열람할 수 있습니다.", ErrorType.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

@@ -8,6 +8,7 @@ import com.certimakers.file.application.port.in.DeleteFileUseCase;
 import com.certimakers.file.application.port.in.DownloadFileQuery;
 import com.certimakers.file.application.port.in.UploadFileUseCase;
 import com.certimakers.file.domain.model.StoredFile;
+import com.certimakers.file.domain.model.Visibility;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -31,10 +32,11 @@ import reactor.core.publisher.Mono;
 /**
  * 파일 업로드·다운로드 API.
  *
- * <p>업로드와 삭제는 인증이 필요하고, 다운로드는 열려 있다 — 게시글 첨부를 비로그인 사용자도 볼 수
- * 있어야 하기 때문이다. 식별자가 전역 시퀀스(순번)로 바뀌면서 값이 열거 가능해졌으므로, 접근 통제를
- * 식별자의 비추측성에 의존하지 않는다. 지금은 첨부 공개가 의도된 동작이며, 비공개 파일을 다루게 되면
- * 다운로드에도 소유·권한 검사를 걸어야 한다.
+ * <p>업로드와 삭제는 인증이 필요하고, 다운로드 경로 자체는 비로그인도 열려 있다 — 게시글 첨부를
+ * 비로그인 사용자도 볼 수 있어야 하기 때문이다. 식별자가 전역 시퀀스(순번)로 바뀌면서 값이 열거
+ * 가능해졌으므로, 접근 통제를 식별자의 비추측성에 의존하지 않는다. 실제 허용 여부는
+ * {@link StoredFile#requireReadableBy}가 파일별 공개 범위(visibility)를 보고 판단한다 — 공개
+ * 파일은 누구나, 비공개 파일은 소유자·관리자만 받는다.
  */
 @WebAdapter
 @RequestMapping("/api/v1/files")
@@ -66,6 +68,7 @@ public class FileController {
                         filePart.filename(),
                         contentTypeOf(filePart),
                         ownerId,
+                        Visibility.PUBLIC,
                         filePart.content())))
                 .map(FileResponses.Uploaded::from)
                 .flatMap(body -> wrap(body, HttpStatus.CREATED));
@@ -76,10 +79,17 @@ public class FileController {
      *
      * <p>이미지·PDF만 인라인으로 열고 나머지는 첨부로 내려보낸다. HTML·SVG를 인라인으로 열어 주면
      * 업로드된 스크립트가 우리 출처에서 실행된다(저장형 XSS).
+     *
+     * <p>{@code authentication}이 비어 있으면(비로그인) 요청자 없이 조회한다 — 공개 파일은 그래도
+     * 받아야 하고, 비공개 파일이면 이 시점에 {@link StoredFile#requireReadableBy}가 막는다.
      */
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<Flux<DataBuffer>>> download(@PathVariable String id) {
-        return downloadFileQuery.download(id)
+    public Mono<ResponseEntity<Flux<DataBuffer>>> download(
+            @PathVariable String id, Mono<Authentication> authentication) {
+
+        return authentication
+                .flatMap(auth -> downloadFileQuery.download(id, auth.getName(), hasAdminRole(auth)))
+                .switchIfEmpty(downloadFileQuery.download(id, null, false))
                 .map(download -> {
                     StoredFile metadata = download.metadata();
                     return ResponseEntity.ok()

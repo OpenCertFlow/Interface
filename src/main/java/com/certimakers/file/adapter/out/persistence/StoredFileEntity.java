@@ -29,6 +29,9 @@ public class StoredFileEntity {
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
 
+    @Column(name = "visibility", nullable = false)
+    private String visibility;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -37,13 +40,14 @@ public class StoredFileEntity {
 
     public StoredFileEntity(
             Long id, String originalName, String contentType, long sizeInBytes,
-            String storageKey, Long ownerId, Instant createdAt) {
+            String storageKey, Long ownerId, String visibility, Instant createdAt) {
         this.id = id;
         this.originalName = originalName;
         this.contentType = contentType;
         this.sizeInBytes = sizeInBytes;
         this.storageKey = storageKey;
         this.ownerId = ownerId;
+        this.visibility = visibility;
         this.createdAt = createdAt;
     }
 
@@ -69,6 +73,10 @@ public class StoredFileEntity {
 
     public Long getOwnerId() {
         return ownerId;
+    }
+
+    public String getVisibility() {
+        return visibility;
     }
 
     public Instant getCreatedAt() {

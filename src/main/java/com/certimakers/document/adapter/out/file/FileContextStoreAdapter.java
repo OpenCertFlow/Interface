@@ -2,6 +2,7 @@ package com.certimakers.document.adapter.out.file;
 
 import com.certimakers.document.application.port.out.StoreGeneratedFilePort;
 import com.certimakers.file.application.port.in.UploadFileUseCase;
+import com.certimakers.file.domain.model.Visibility;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,7 @@ public class FileContextStoreAdapter implements StoreGeneratedFilePort {
         Flux<DataBuffer> body = Flux.just(bufferFactory.wrap(content));
 
         return uploadFileUseCase.upload(new UploadFileUseCase.UploadCommand(
-                        fileName, PDF_CONTENT_TYPE, ownerId, body))
+                        fileName, PDF_CONTENT_TYPE, ownerId, Visibility.PRIVATE, body))
                 .map(stored -> stored.id().value());
     }
 }

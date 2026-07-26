@@ -88,7 +88,8 @@ public class FileService implements UploadFileUseCase, DownloadFileQuery, Delete
                                                     new BusinessException(FileErrorCode.FILE_TOO_LARGE)));
                                 }
                                 StoredFile file = StoredFile.register(
-                                        fileId, originalName, contentType, written, key, owner, now);
+                                        fileId, originalName, contentType, written, key, owner,
+                                        command.visibility(), now);
                                 return persist(file, key);
                             });
                 });
@@ -106,8 +107,11 @@ public class FileService implements UploadFileUseCase, DownloadFileQuery, Delete
     }
 
     @Override
-    public Mono<Download> download(String fileId) {
+    public Mono<Download> download(String fileId, String requesterId, boolean requesterIsAdmin) {
+        OwnerRef requester = requesterId == null ? null : OwnerRef.of(requesterId);
+
         return loadMetadata(fileId)
+                .doOnNext(metadata -> metadata.requireReadableBy(requester, requesterIsAdmin))
                 .map(metadata -> new Download(metadata, storage.read(metadata.storageKey())));
     }
 

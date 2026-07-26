@@ -10,6 +10,7 @@ import com.certimakers.file.domain.model.OriginalFileName;
 import com.certimakers.file.domain.model.OwnerRef;
 import com.certimakers.file.domain.model.StorageKey;
 import com.certimakers.file.domain.model.StoredFile;
+import com.certimakers.file.domain.model.Visibility;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +65,7 @@ public class StoredFilePersistenceAdapter implements SaveFilePort, LoadFilePort,
                 file.sizeInBytes(),
                 file.storageKey().value(),
                 file.owner().value(),
+                file.visibility().name(),
                 file.createdAt());
     }
 
@@ -75,6 +77,7 @@ public class StoredFilePersistenceAdapter implements SaveFilePort, LoadFilePort,
                 entity.getSizeInBytes(),
                 StorageKey.of(entity.getStorageKey()),
                 OwnerRef.of(entity.getOwnerId()),
+                Visibility.valueOf(entity.getVisibility()),
                 entity.getCreatedAt());
     }
 }
