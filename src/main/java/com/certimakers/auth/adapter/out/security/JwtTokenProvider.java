@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,10 @@ public class JwtTokenProvider implements TokenProviderPort {
     private final String issuer;
     private final TimeProvider timeProvider;
 
+    // 리프레시 토큰마다 유일한 jti를 붙이기 위한 카운터. 같은 밀리초에 두 번 로그인해도(웹·앱 동시)
+    // 토큰이 서로 달라야 각각 독립된 세션으로 저장된다(F-AUTH-013). SecureRandom을 피해 이벤트 루프에서도 안전.
+    private final AtomicLong tokenSequence = new AtomicLong();
+
     public JwtTokenProvider(AuthProperties properties, TimeProvider timeProvider) {
         AuthProperties.Jwt jwt = properties.jwt();
         this.signingKey = Keys.hmacShaKeyFor(jwt.secret().getBytes(StandardCharsets.UTF_8));
@@ -57,7 +62,7 @@ public class JwtTokenProvider implements TokenProviderPort {
      */
     private void warmUp() {
         Instant now = timeProvider.now();
-        String probe = buildToken("warm-up", "USER", now, 60);
+        String probe = buildToken("warm-up", "USER", now, 60, null);
         Jwts.parser()
                 .verifyWith(signingKey)
                 .requireIssuer(issuer)
@@ -72,8 +77,9 @@ public class JwtTokenProvider implements TokenProviderPort {
         String subject = user.id().value().toString();
         String role = user.role().name();
 
-        String accessToken = buildToken(subject, role, now, accessTtlSeconds);
-        String refreshToken = buildToken(subject, role, now, refreshTtlSeconds);
+        // 리프레시 토큰만 jti로 유일하게 만든다. 저장·회전 대상이 리프레시 토큰이기 때문이다.
+        String accessToken = buildToken(subject, role, now, accessTtlSeconds, null);
+        String refreshToken = buildToken(subject, role, now, refreshTtlSeconds, nextTokenId(now));
         return new IssuedTokens(accessToken, refreshToken, accessTtlSeconds);
     }
 
@@ -96,15 +102,22 @@ public class JwtTokenProvider implements TokenProviderPort {
         }
     }
 
-    private String buildToken(String subject, String role, Instant issuedAt, long ttlSeconds) {
+    /** 리프레시 토큰의 유일 식별자. {@code <발급밀리초>-<증가카운터>}라 같은 순간의 발급도 서로 다르다. */
+    private String nextTokenId(Instant issuedAt) {
+        return issuedAt.toEpochMilli() + "-" + tokenSequence.incrementAndGet();
+    }
+
+    private String buildToken(String subject, String role, Instant issuedAt, long ttlSeconds, String jti) {
         Instant expiry = issuedAt.plusSeconds(ttlSeconds);
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .issuer(issuer)
                 .subject(subject)
                 .claim(ROLE_CLAIM, role)
                 .issuedAt(Date.from(issuedAt))
-                .expiration(Date.from(expiry))
-                .signWith(signingKey)
-                .compact();
+                .expiration(Date.from(expiry));
+        if (jti != null) {
+            builder.id(jti); // JWT 표준 jti 클레임
+        }
+        return builder.signWith(signingKey).compact();
     }
 }

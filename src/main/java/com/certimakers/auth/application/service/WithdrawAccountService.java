@@ -38,7 +38,7 @@ public class WithdrawAccountService implements WithdrawAccountUseCase {
             }
             deleteUserPort.deleteById(id);
             return id.value().toString();
-        }).flatMap(refreshTokenStore::delete);
+        }).flatMap(refreshTokenStore::deleteAll);
     }
 
     private UserId parseId(String raw) {

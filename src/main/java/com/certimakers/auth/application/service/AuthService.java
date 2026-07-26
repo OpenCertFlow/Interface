@@ -127,13 +127,16 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
         return refreshTokenStore.matches(principal.userId(), command.refreshToken())
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(new BusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN)))
-                .flatMap(valid -> loadById(UserId.of(Long.parseLong(principal.userId()))))
+                // 재발급 시 옛 토큰은 즉시 폐기한다(회전). 탈취된 토큰이 무한정 재사용되지 않도록.
+                .flatMap(valid -> refreshTokenStore
+                        .delete(principal.userId(), command.refreshToken())
+                        .then(loadById(UserId.of(Long.parseLong(principal.userId())))))
                 .flatMap(this::issueAndStore);
     }
 
     @Override
-    public Mono<Void> logout(String userId) {
-        return refreshTokenStore.delete(userId);
+    public Mono<Void> logout(String userId, String refreshToken) {
+        return refreshTokenStore.delete(userId, refreshToken);
     }
 
     /** 토큰을 발급하고 리프레시 토큰을 저장소에 심는다. 이후 이 리프레시 토큰만 재발급에 쓸 수 있다. */

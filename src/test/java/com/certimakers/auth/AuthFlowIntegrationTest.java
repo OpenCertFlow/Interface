@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -254,6 +255,48 @@ class AuthFlowIntegrationTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody().jsonPath("$.data.accessToken").isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("웹·앱 다중 세션 — 한 세션을 로그아웃해도 다른 기기 세션은 유지된다(F-AUTH-013)")
+    void 다중_세션은_서로_독립적이다() {
+        String email = uniqueEmail("multi-session");
+        signUp(email, "다중세션");
+
+        JsonNode sessionA = loginTokens(email);
+        JsonNode sessionB = loginTokens(email);
+        String accessA = sessionA.at("/data/accessToken").asText();
+        String refreshA = sessionA.at("/data/refreshToken").asText();
+        String refreshB = sessionB.at("/data/refreshToken").asText();
+
+        // 세션 A만 로그아웃한다.
+        webTestClient.method(HttpMethod.DELETE).uri("/api/v1/me/session")
+                .header("Authorization", "Bearer " + accessA)
+                .bodyValue(Map.of("refreshToken", refreshA))
+                .exchange()
+                .expectStatus().isNoContent();
+
+        // 세션 A의 리프레시 토큰은 이제 무효.
+        webTestClient.post().uri("/api/v1/auth/refresh")
+                .bodyValue(Map.of("refreshToken", refreshA))
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody().jsonPath("$.error.code").isEqualTo("CM-AUTH-008");
+
+        // 세션 B는 그대로 유효 — 다른 기기 로그인이 살아 있다.
+        webTestClient.post().uri("/api/v1/auth/refresh")
+                .bodyValue(Map.of("refreshToken", refreshB))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody().jsonPath("$.data.accessToken").isNotEmpty();
+    }
+
+    private JsonNode loginTokens(String email) {
+        return webTestClient.post().uri("/api/v1/auth/login")
+                .bodyValue(Map.of("email", email, "password", PASSWORD))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
     }
 
     @Test

@@ -80,11 +80,15 @@ public class MeController {
                 .then(wrap(null, HttpStatus.OK));
     }
 
-    /** 로그아웃. 저장된 리프레시 토큰을 폐기한다. 액세스 토큰은 만료까지 유효하다(짧게 설정). */
+    /**
+     * 로그아웃(F-AUTH-013). 요청 본문의 리프레시 토큰이 가리키는 <b>현재 세션만</b> 폐기하고, 같은
+     * 계정의 다른 기기 세션은 유지한다. 액세스 토큰은 만료까지 유효하다(짧게 설정).
+     */
     @DeleteMapping("/session")
-    public Mono<ResponseEntity<ApiResponse<Void>>> logout(Mono<Principal> principal) {
+    public Mono<ResponseEntity<ApiResponse<Void>>> logout(
+            Mono<Principal> principal, @Valid @RequestBody AuthRequests.Logout request) {
         return currentUserId(principal)
-                .flatMap(logoutUseCase::logout)
+                .flatMap(userId -> logoutUseCase.logout(userId, request.refreshToken()))
                 .then(wrap(null, HttpStatus.NO_CONTENT));
     }
 

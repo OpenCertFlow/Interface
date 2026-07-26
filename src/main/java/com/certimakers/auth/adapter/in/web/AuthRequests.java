@@ -54,6 +54,12 @@ public final class AuthRequests {
             String refreshToken) {
     }
 
+    /** 로그아웃(F-AUTH-013). 폐기할 현재 세션을 리프레시 토큰으로 식별한다. */
+    public record Logout(
+            @NotBlank(message = "리프레시 토큰이 필요합니다.")
+            String refreshToken) {
+    }
+
     public record SendEmailCode(
             @NotBlank(message = "이메일을 입력해 주세요.")
             @Email(message = "이메일 형식이 올바르지 않습니다.")
