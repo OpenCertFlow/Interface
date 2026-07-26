@@ -4,8 +4,13 @@ import com.certimakers.board.application.port.out.LoadAttachmentPort;
 import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdapter;
 import com.certimakers.file.application.port.out.LoadFilePort;
 import com.certimakers.file.domain.model.FileId;
+import com.certimakers.file.domain.model.OwnerRef;
+import com.certimakers.file.domain.model.StoredFile;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * {@link LoadAttachmentPort}의 구현. 파일 컨텍스트의 조회 포트를 빌려 첨부 정보를 가져온다.
@@ -41,6 +46,25 @@ public class StoredFileAttachmentAdapter implements LoadAttachmentPort {
                             file.contentType().value(),
                             file.sizeInBytes(),
                             "/api/v1/files/" + id);
+                })
+                .toList();
+    }
+
+    @Override
+    public List<Long> findNotOwnedBy(Collection<Long> fileIds, Long ownerId) {
+        if (fileIds.isEmpty()) {
+            return List.of();
+        }
+        List<FileId> ids = fileIds.stream().map(FileId::of).toList();
+        OwnerRef owner = OwnerRef.of(ownerId);
+
+        Map<Long, StoredFile> found = loadFilePort.findAllByIds(ids).stream()
+                .collect(Collectors.toMap(file -> file.id().value(), Function.identity()));
+
+        return fileIds.stream()
+                .filter(fileId -> {
+                    StoredFile file = found.get(fileId);
+                    return file == null || !file.isOwnedBy(owner);
                 })
                 .toList();
     }

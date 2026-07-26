@@ -2,6 +2,7 @@ package com.certimakers.board.application.service;
 
 import com.certimakers.board.application.port.in.PostUseCase;
 import com.certimakers.board.application.port.out.CommentRepositoryPort;
+import com.certimakers.board.application.port.out.LoadAttachmentPort;
 import com.certimakers.board.application.port.out.PostRepositoryPort;
 import com.certimakers.board.domain.error.BoardErrorCode;
 import com.certimakers.board.domain.model.AuthorRef;
@@ -23,12 +24,16 @@ import reactor.core.publisher.Mono;
  * <p>게시판별 정책(작성 권한·첨부·비밀글)은 전부 {@link Post} 애그리거트가 강제한다. 이 서비스는
  * 입력을 도메인 타입으로 바꾸고 저장을 조율할 뿐, 규칙을 다시 판단하지 않는다 — 규칙이 두 곳에
  * 있으면 언젠가 서로 어긋난다.
+ *
+ * <p>예외 하나: 첨부파일 소유권 확인은 이 서비스에서 한다. file 컨텍스트에 물어봐야 하는데,
+ * {@link Post}는 다른 컨텍스트를 몰라야 하기 때문이다.
  */
 @UseCase
 public class PostService implements PostUseCase {
 
     private final PostRepositoryPort postRepository;
     private final CommentRepositoryPort commentRepository;
+    private final LoadAttachmentPort loadAttachmentPort;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
@@ -36,11 +41,13 @@ public class PostService implements PostUseCase {
     public PostService(
             PostRepositoryPort postRepository,
             CommentRepositoryPort commentRepository,
+            LoadAttachmentPort loadAttachmentPort,
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
+        this.loadAttachmentPort = loadAttachmentPort;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -54,6 +61,7 @@ public class PostService implements PostUseCase {
         List<Long> attachments = toUuids(command.attachmentFileIds());
 
         return blockingBridge.mono(() -> {
+            requireOwnedAttachments(attachments, author);
             Post post = Post.write(
                     PostId.of(idGenerator.nextId()),
                     boardType,
@@ -75,6 +83,7 @@ public class PostService implements PostUseCase {
         PostId postId = PostIds.parse(command.postId());
 
         return blockingBridge.mono(() -> {
+            requireOwnedAttachments(attachments, editor);
             Post post = loadPost(postId);
             post.edit(editor, command.requester().isAdmin(), content,
                     command.secret(), attachments, timeProvider.now());
@@ -107,6 +116,20 @@ public class PostService implements PostUseCase {
             throw new BusinessException(com.certimakers.auth.domain.error.AuthErrorCode.UNAUTHENTICATED);
         }
         return AuthorRef.of(requester.userId());
+    }
+
+    /**
+     * 첨부하려는 파일이 전부 요청자 소유인지 확인한다. 관리자도 예외 없다 — 새 글 첨부는
+     * 글쓴이 행위지 남의 콘텐츠를 관리하는 행위가 아니다.
+     */
+    private void requireOwnedAttachments(List<Long> attachments, AuthorRef author) {
+        if (attachments.isEmpty()) {
+            return;
+        }
+        List<Long> notOwned = loadAttachmentPort.findNotOwnedBy(attachments, author.value());
+        if (!notOwned.isEmpty()) {
+            throw new BusinessException(BoardErrorCode.ATTACHMENT_NOT_OWNED);
+        }
     }
 
     private List<Long> toUuids(List<String> rawIds) {

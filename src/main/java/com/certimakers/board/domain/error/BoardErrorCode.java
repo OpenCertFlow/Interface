@@ -31,7 +31,10 @@ public enum BoardErrorCode implements ErrorCode {
     SECRET_POST_FORBIDDEN("CM-BOARD-009", "비밀글은 작성자와 관리자만 볼 수 있습니다.", ErrorType.CONFLICT),
 
     /** 첨부 개수 상한을 넘었다. */
-    TOO_MANY_ATTACHMENTS("CM-BOARD-010", "첨부할 수 있는 파일 개수를 초과했습니다.", ErrorType.VALIDATION);
+    TOO_MANY_ATTACHMENTS("CM-BOARD-010", "첨부할 수 있는 파일 개수를 초과했습니다.", ErrorType.VALIDATION),
+
+    /** 본인 소유가 아닌 파일을 첨부하려 했다. */
+    ATTACHMENT_NOT_OWNED("CM-BOARD-011", "본인이 소유한 파일만 첨부할 수 있습니다.", ErrorType.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

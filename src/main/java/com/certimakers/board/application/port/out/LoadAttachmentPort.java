@@ -16,6 +16,13 @@ public interface LoadAttachmentPort {
     List<AttachmentInfo> findAll(Collection<Long> fileIds);
 
     /**
+     * 넘긴 fileIds 중 ownerId 소유가 아닌 것만 돌려준다. 결과가 비어 있으면 전부 소유.
+     *
+     * <p>존재하지 않는 fileId도 "소유 아님"으로 취급한다 — 없는 파일을 소유했다고 볼 근거가 없다.
+     */
+    List<Long> findNotOwnedBy(Collection<Long> fileIds, Long ownerId);
+
+    /**
      * @param downloadUrl 클라이언트가 그대로 쓸 수 있는 다운로드 경로
      */
     record AttachmentInfo(
