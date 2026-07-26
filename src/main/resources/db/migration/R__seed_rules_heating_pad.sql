@@ -183,3 +183,35 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
      {"type":"flagExpertReview","question":"정격전압 정보가 없어 적용 제도를 판단할 수 없습니다. 어댑터·전원부에 표시된 정격전압을 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
    ]',
  '정격전압 미상 시 판단 불가 → 전문가 확인');
+
+-- ── R-EH-001C: 신체 접촉 방식 모름 → 판단 불가 (결정문 §5.2 접촉 '모름') ──────
+-- 접촉 방식을 모르면 화상 위험 기준을 고를 수 없다. 없음(비접촉)으로 뭉개지 않고 확인으로 보낸다.
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+(2, 'R-EH-001C', 11,
+ '{"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"EQ","value":"UNKNOWN"}',
+ '[
+     {"type":"flagExpertReview","question":"신체에 닿는 방식을 모르면 화상 위험 기준을 판단할 수 없습니다. 직접 피부·의류 위·커버를 통한 접촉 중 어디에 해당하는지 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
+   ]',
+ '신체 접촉 방식 모름 → 판단 불가');
+
+-- ── R-EH-007: 조절 방식 기타·미확인 → 확인 필요 (결정문 §5.2 조절 방식) ───────
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+(2, 'R-EH-007', 22,
+ '{"type":"attr","attribute":"ADJUSTMENT_MODE","operator":"EQ","value":"OTHER"}',
+ '[
+     {"type":"flagExpertReview","question":"온도 조절 방식이 확인되지 않았습니다. 단계 조절인지 연속 조절인지에 따라 요구되는 시험이 달라질 수 있으니 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
+   ]',
+ '조절 방식 기타·미확인 → 확인 필요');
+
+-- ── R-EH-008: 신체 접촉 + 온도제한장치 없음 → 화상 위험 확인 (결정문 §5.2) ─────
+-- 과열 차단(R-EH-004)과 별개로, 최고 온도 자체를 제한하는 장치가 없으면 상시 고온 노출 위험이 있다.
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+(2, 'R-EH-008', 24,
+ '{"type":"allOf","conditions":[
+     {"type":"attr","attribute":"BODY_CONTACT_TYPE","operator":"IN","value":["DIRECT_SKIN","THROUGH_CLOTHING","THROUGH_COVER"]},
+     {"type":"attr","attribute":"TEMPERATURE_LIMIT_DEVICE","operator":"EQ","value":false}
+   ]}',
+ '[
+     {"type":"flagExpertReview","question":"표면온도 상한을 제한하는 장치가 없습니다. 신체에 닿는 발열 제품은 상시 고온 노출로 저온화상 위험이 있어, 온도 제한과 관련해 어떤 요건이 필요한지 확인해 주세요.","reason":"NO_EVIDENCE"}
+   ]',
+ '온도제한장치 미탑재 시 화상 위험 확인 필요');

@@ -68,6 +68,9 @@ public class ProductProfileEntity {
     @Column(name = "adjustment_steps")
     private Integer adjustmentSteps;
 
+    @Column(name = "adjustment_mode")
+    private String adjustmentMode;
+
     /** 최고 표면온도(℃). 출처가 모름이면 null. */
     @Column(name = "max_surface_temperature")
     private Integer maxSurfaceTemperature;
@@ -86,6 +89,9 @@ public class ProductProfileEntity {
 
     @Column(name = "overheat_protection")
     private Boolean overheatProtection;
+
+    @Column(name = "temperature_limit_device")
+    private Boolean temperatureLimitDevice;
 
     @Column(name = "removable_cover")
     private Boolean removableCover;
@@ -117,7 +123,8 @@ public class ProductProfileEntity {
             Boolean medicalUseClaim, Boolean autoShutOff, Integer autoShutOffMinutes,
             Boolean overheatProtection, Boolean removableCover, Boolean washable,
             Boolean separableElectricParts, Boolean hasSeparateAdapter,
-            Boolean adapterExternallyAttached, Boolean adapterCertified) {
+            Boolean adapterExternallyAttached, Boolean adapterCertified,
+            String adjustmentMode, Boolean temperatureLimitDevice) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
@@ -143,6 +150,8 @@ public class ProductProfileEntity {
         this.hasSeparateAdapter = hasSeparateAdapter;
         this.adapterExternallyAttached = adapterExternallyAttached;
         this.adapterCertified = adapterCertified;
+        this.adjustmentMode = adjustmentMode;
+        this.temperatureLimitDevice = temperatureLimitDevice;
     }
 
     void setDiagnosis(DiagnosisEntity diagnosis) {
@@ -199,6 +208,14 @@ public class ProductProfileEntity {
 
     public Integer getAdjustmentSteps() {
         return adjustmentSteps;
+    }
+
+    public String getAdjustmentMode() {
+        return adjustmentMode;
+    }
+
+    public Boolean getTemperatureLimitDevice() {
+        return temperatureLimitDevice;
     }
 
     public Integer getMaxSurfaceTemperature() {

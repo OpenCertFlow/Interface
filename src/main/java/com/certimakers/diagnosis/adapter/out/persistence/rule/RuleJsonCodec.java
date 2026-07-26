@@ -2,6 +2,7 @@ package com.certimakers.diagnosis.adapter.out.persistence.rule;
 
 import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.common.domain.error.CommonErrorCode;
+import com.certimakers.diagnosis.domain.model.AdjustmentMode;
 import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.CertificationType;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
@@ -123,6 +124,7 @@ public class RuleJsonCodec {
             case BODY_CONTACT_TYPE -> enumValue(BodyContactType.class, node.asText());
             case CONTROLLER_STATUS -> enumValue(ControllerStatus.class, node.asText());
             case TEMPERATURE_SOURCE -> enumValue(TemperatureSource.class, node.asText());
+            case ADJUSTMENT_MODE -> enumValue(AdjustmentMode.class, node.asText());
         };
     }
 

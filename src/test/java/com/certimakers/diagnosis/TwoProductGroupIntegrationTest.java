@@ -82,15 +82,17 @@ class TwoProductGroupIntegrationTest {
         request.put("bodyContactType", "DIRECT_SKIN");
         request.put("controllerStatus", Boolean.TRUE.equals(hasController) ? "PRESENT" : "ABSENT");
         if (Boolean.TRUE.equals(hasController)) {
+            request.put("adjustmentMode", "STEP");
             request.put("adjustmentSteps", 3);
         }
         request.put("maxSurfaceTemperatureCelsius", surfaceTemperature);
         request.put("temperatureSource", surfaceTemperature == null ? "UNKNOWN" : "MEASURED");
-        // 발열 상세(F-APP-014~018) — 안전 요건을 갖춘 표준 구성. 별도 어댑터는 없다.
+        // 발열 상세(F-APP-014~018, 결정문 §5.2) — 안전 요건을 갖춘 표준 구성. 별도 어댑터는 없다.
         request.put("medicalUseClaim", false);
         request.put("autoShutOff", true);
         request.put("autoShutOffMinutes", 30);
         request.put("overheatProtection", true);
+        request.put("temperatureLimitDevice", true);
         request.put("removableCover", true);
         request.put("washable", true);
         request.put("separableElectricParts", true);
@@ -210,5 +212,39 @@ class TwoProductGroupIntegrationTest {
 
         // 온도조절기 없음 분기가 재조회 후에도 유지되면 발열 사양이 온전히 저장·복원된 것이다.
         assertThat(reloaded.at("/data/expertReviewItems").toString()).contains("온도조절기");
+    }
+
+    @Test
+    @DisplayName("신체 접촉 방식을 모르면 접촉 방식 확인 항목으로 안내한다 — 결정문 §5.2 '모름'")
+    void 접촉_방식_모름은_확인으로_보낸다() {
+        Map<String, Object> request = heatingPad(true, 45);
+        request.put("bodyContactType", "UNKNOWN");
+
+        String items = diagnose(request).at("/data/expertReviewItems").toString();
+        assertThat(items).contains("닿는 방식", "AMBIGUOUS_CONDITION");
+    }
+
+    @Test
+    @DisplayName("온도제한장치가 없으면 화상 위험 확인이 추가된다 — 과열 차단과 별개(결정문 §5.2)")
+    void 온도제한장치_없음은_화상_위험_확인이다() {
+        String withLimit =
+                diagnose(heatingPad(true, 45)).at("/data/expertReviewItems").toString();
+        Map<String, Object> without = heatingPad(true, 45);
+        without.put("temperatureLimitDevice", false);
+        String withoutLimit = diagnose(without).at("/data/expertReviewItems").toString();
+
+        assertThat(withoutLimit).contains("상한을 제한하는 장치");
+        assertThat(withLimit).doesNotContain("상한을 제한하는 장치");
+    }
+
+    @Test
+    @DisplayName("온도 조절 방식이 '기타'면 조절 방식 확인 항목으로 안내한다 — 결정문 §5.2")
+    void 조절_방식_기타는_확인으로_보낸다() {
+        Map<String, Object> request = heatingPad(true, 45);
+        request.put("adjustmentMode", "OTHER");
+        request.remove("adjustmentSteps"); // 기타·연속이면 단계 수는 비어 있어야 한다(불변식)
+
+        String items = diagnose(request).at("/data/expertReviewItems").toString();
+        assertThat(items).contains("조절 방식이 확인되지", "AMBIGUOUS_CONDITION");
     }
 }

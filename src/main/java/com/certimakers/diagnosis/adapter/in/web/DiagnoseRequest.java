@@ -33,8 +33,11 @@ public record DiagnoseRequest(
         /** 온도조절기 유무(ControllerStatus: PRESENT/ABSENT/UNKNOWN). 발열 제품이 아니면 null */
         String controllerStatus,
 
-        /** 온도 조절 단계 수. 조절기가 있을 때만 값이 있다 */
+        /** 온도 조절 단계 수. 조절 방식이 STEP일 때만 값이 있다 */
         @PositiveOrZero Integer adjustmentSteps,
+
+        /** 온도 조절 방식(AdjustmentMode: STEP/CONTINUOUS/OTHER). 조절기가 있을 때만 값이 있다 */
+        String adjustmentMode,
 
         /** 최고 표면온도(℃). 출처가 모름이면 null */
         @PositiveOrZero Integer maxSurfaceTemperatureCelsius,
@@ -51,8 +54,11 @@ public record DiagnoseRequest(
         /** 자동으로 꺼지기까지의 시간(분). 자동 차단이 있을 때만 값이 있다 */
         @PositiveOrZero Integer autoShutOffMinutes,
 
-        /** 과열 시 전원을 차단하는 온도 제한 장치가 있는지 */
+        /** 과열 시 전원을 차단하는 장치가 있는지 */
         Boolean overheatProtection,
+
+        /** 표면온도 상한을 제한하는 장치가 있는지(과열 차단과 별개) */
+        Boolean temperatureLimitDevice,
 
         /** 커버를 분리할 수 있는지(세탁을 위해) */
         Boolean removableCover,

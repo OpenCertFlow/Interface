@@ -1,5 +1,6 @@
 package com.certimakers.diagnosis.domain.rule;
 
+import com.certimakers.diagnosis.domain.model.AdjustmentMode;
 import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.HeatingSpec;
@@ -64,11 +65,20 @@ public enum Attribute {
         }
     },
 
-    /** 온도 조절 단계 수. 조절기가 있을 때만 값이 있고, 없거나 모름이면 null. */
+    /** 온도 조절 단계 수. 조절 방식이 STEP일 때만 값이 있고, 그 외에는 null. */
     ADJUSTMENT_STEPS(ValueKind.INTEGER) {
         @Override
         public Object resolve(ProductProfile profile) {
             return profile.heatingSpec().map(heating -> (Object) heating.adjustmentSteps())
+                    .orElse(null);
+        }
+    },
+
+    /** 온도 조절 방식({@link AdjustmentMode} 단계/연속/기타). 조절기가 있을 때만 값이 있다. */
+    ADJUSTMENT_MODE(ValueKind.ADJUSTMENT_MODE) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.adjustmentMode())
                     .orElse(null);
         }
     },
@@ -122,11 +132,20 @@ public enum Attribute {
         }
     },
 
-    /** 과열 시 전원을 차단하는 온도 제한 장치가 있는지. 발열 제품이 아니면 null. */
+    /** 과열 시 전원을 차단하는 장치가 있는지. 발열 제품이 아니면 null. */
     OVERHEAT_PROTECTION(ValueKind.BOOLEAN) {
         @Override
         public Object resolve(ProductProfile profile) {
             return profile.heatingSpec().map(heating -> (Object) heating.overheatProtection())
+                    .orElse(null);
+        }
+    },
+
+    /** 표면온도 상한을 제한하는 장치가 있는지(과열 차단과 별개). 발열 제품이 아니면 null. */
+    TEMPERATURE_LIMIT_DEVICE(ValueKind.BOOLEAN) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.heatingSpec().map(heating -> (Object) heating.temperatureLimitDevice())
                     .orElse(null);
         }
     },

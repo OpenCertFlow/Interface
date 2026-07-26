@@ -8,6 +8,7 @@ import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.Evidence
 import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.ExpertReviewView;
 import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.NarrationView;
 import com.certimakers.diagnosis.adapter.in.web.DiagnosisReportResponse.ScoreView;
+import com.certimakers.diagnosis.domain.model.AdjustmentMode;
 import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
@@ -81,7 +82,14 @@ public class DiagnosisWebMapper {
         requireBoolean(request.medicalUseClaim(), "의료적 표현 여부");
         requireBoolean(request.autoShutOff(), "자동 전원 차단 여부");
         requireBoolean(request.overheatProtection(), "과열 방지 여부");
+        requireBoolean(request.temperatureLimitDevice(), "온도제한장치 여부");
         requireBoolean(request.removableCover(), "커버 분리 가능 여부");
+
+        // 조절 방식은 온도조절기가 있을 때만 요구한다. 없거나 모름이면 null이어야 불변식을 지킨다.
+        AdjustmentMode adjustmentMode = null;
+        if (controllerStatus == ControllerStatus.PRESENT) {
+            adjustmentMode = parse(AdjustmentMode.class, request.adjustmentMode(), "온도 조절 방식");
+        }
         requireBoolean(request.washable(), "세탁 가능 여부");
         requireBoolean(request.separableElectricParts(), "전기부 분리 가능 여부");
         requireBoolean(request.hasSeparateAdapter(), "별도 어댑터 사용 여부");
@@ -105,7 +113,8 @@ public class DiagnosisWebMapper {
                     request.medicalUseClaim(), request.autoShutOff(), request.autoShutOffMinutes(),
                     request.overheatProtection(), request.removableCover(), request.washable(),
                     request.separableElectricParts(), request.hasSeparateAdapter(),
-                    adapterExternallyAttached, adapterCertified);
+                    adapterExternallyAttached, adapterCertified,
+                    adjustmentMode, request.temperatureLimitDevice());
         } catch (IllegalArgumentException e) {
             throw BusinessException.invalid(e.getMessage());
         }

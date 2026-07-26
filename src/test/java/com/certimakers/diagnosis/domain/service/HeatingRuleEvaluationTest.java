@@ -10,6 +10,7 @@ import static com.certimakers.diagnosis.domain.rule.Operator.GT;
 import static com.certimakers.diagnosis.domain.rule.Operator.IN;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.certimakers.diagnosis.domain.model.AdjustmentMode;
 import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
@@ -61,6 +62,7 @@ class HeatingRuleEvaluationTest {
         TemperatureSource source =
                 surfaceTemperature == null ? TemperatureSource.UNKNOWN : TemperatureSource.MEASURED;
         Integer steps = controller == ControllerStatus.PRESENT ? 3 : null;
+        AdjustmentMode mode = controller == ControllerStatus.PRESENT ? AdjustmentMode.STEP : null;
         return new ProductProfile(
                 "보온용 전기방석",
                 ProductGroup.ELECTRIC_HEATING_PAD,
@@ -69,7 +71,8 @@ class HeatingRuleEvaluationTest {
                         BodyContactType.DIRECT_SKIN, controller, steps,
                         surfaceTemperature, source,
                         false, true, 30, true, true, true, true,
-                        false, null, null),
+                        false, null, null,
+                        mode, true),
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.TEXTILE),
@@ -261,7 +264,8 @@ class HeatingRuleEvaluationTest {
                             BodyContactType.DIRECT_SKIN, ControllerStatus.PRESENT, 3,
                             45, TemperatureSource.MEASURED,
                             medicalClaim, true, 30, true, true, true, true,
-                            false, null, null),
+                            false, null, null,
+                            AdjustmentMode.STEP, true),
                     TargetUser.GENERAL,
                     SalesChannel.ONLINE,
                     Set.of(MaterialType.TEXTILE),

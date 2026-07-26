@@ -1,6 +1,7 @@
 package com.certimakers.diagnosis.adapter.out.persistence.diagnosis;
 
 import com.certimakers.common.adapter.out.persistence.json.JsonColumns;
+import com.certimakers.diagnosis.domain.model.AdjustmentMode;
 import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.CertificationCandidate;
 import com.certimakers.diagnosis.domain.model.CertificationType;
@@ -101,7 +102,10 @@ public class DiagnosisMapper {
                 heating != null ? heating.separableElectricParts() : null,
                 heating != null ? heating.hasSeparateAdapter() : null,
                 heating != null ? heating.adapterExternallyAttached() : null,
-                heating != null ? heating.adapterCertified() : null);
+                heating != null ? heating.adapterCertified() : null,
+                heating != null && heating.adjustmentMode() != null
+                        ? heating.adjustmentMode().name() : null,
+                heating != null ? heating.temperatureLimitDevice() : null);
     }
 
     private CertificationCandidateEntity toCandidateEntity(CertificationCandidate candidate) {
@@ -190,7 +194,10 @@ public class DiagnosisMapper {
                         Boolean.TRUE.equals(entity.getSeparableElectricParts()),
                         Boolean.TRUE.equals(entity.getHasSeparateAdapter()),
                         entity.getAdapterExternallyAttached(),
-                        entity.getAdapterCertified())
+                        entity.getAdapterCertified(),
+                        entity.getAdjustmentMode() != null
+                                ? AdjustmentMode.valueOf(entity.getAdjustmentMode()) : null,
+                        Boolean.TRUE.equals(entity.getTemperatureLimitDevice()))
                 : null;
 
         return new ProductProfile(

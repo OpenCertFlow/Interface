@@ -105,9 +105,14 @@ public enum ProductGroup {
                 enumOptions(ControllerStatus.values(), ControllerStatus::name, ControllerStatus::displayName),
                 "확실하지 않으면 '모름'을 선택하세요. 전문가 확인 항목으로 안내됩니다"));
         fields.add(new InputField(
+                "adjustmentMode", "온도 조절 방식은?",
+                InputFieldType.SINGLE_SELECT, false, null,
+                "온도조절기가 있을 때만 선택하세요. 단계 조절이면 아래 단계 수도 입력하세요",
+                enumOptions(AdjustmentMode.values(), AdjustmentMode::name, AdjustmentMode::displayName)));
+        fields.add(new InputField(
                 "adjustmentSteps", "온도 조절 단계 수(예: 3단)",
                 InputFieldType.INTEGER, false, null,
-                "온도조절기가 있을 때만 입력하세요", List.of()));
+                "조절 방식이 '단계 조절'일 때만 입력하세요", List.of()));
 
         // 표면온도와 출처(F-APP-017) — 측정값만 근거로 충분하다. 출처가 '모름'이면 온도는 비워 둔다.
         fields.add(new InputField(
@@ -133,7 +138,10 @@ public enum ProductGroup {
                 "자동 차단이 있을 때만 입력하세요"));
         fields.add(InputField.bool("overheatProtection",
                 "과열 시 전원을 차단하는 장치가 있나요?",
-                "온도 제한(과열 방지) 장치 유무에 따라 시험 항목이 달라집니다"));
+                "이상 과열 시 전원을 끊는 장치입니다"));
+        fields.add(InputField.bool("temperatureLimitDevice",
+                "표면온도 상한을 제한하는 장치가 있나요?",
+                "과열 차단과 별개로, 최고 온도 자체를 일정 수준으로 제한하는 장치입니다"));
 
         // 커버·세탁·전기부 분리(APP-EC-05)
         fields.add(InputField.bool("removableCover",
