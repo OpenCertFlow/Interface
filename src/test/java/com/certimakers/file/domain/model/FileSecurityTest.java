@@ -145,6 +145,7 @@ class FileSecurityTest {
                     1024,
                     StorageKey.of("2026/08/10/file.pdf"),
                     owner,
+                    Visibility.PUBLIC,
                     Instant.parse("2026-08-10T12:00:00Z"));
         }
 
@@ -186,6 +187,7 @@ class FileSecurityTest {
                 0,
                 StorageKey.of("2026/08/10/empty.txt"),
                 OwnerRef.of(com.certimakers.support.TestIds.next()),
+                Visibility.PUBLIC,
                 Instant.parse("2026-08-10T12:00:00Z")))
                 .isInstanceOf(BusinessException.class);
     }

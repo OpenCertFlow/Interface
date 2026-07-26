@@ -11,6 +11,7 @@ import com.certimakers.board.application.port.in.PostUseCase.WritePostCommand;
 import com.certimakers.board.application.port.out.CommentRepositoryPort;
 import com.certimakers.board.application.port.out.LoadAttachmentPort;
 import com.certimakers.board.application.port.out.PostRepositoryPort;
+import com.certimakers.board.application.port.out.SyncAttachmentVisibilityPort;
 import com.certimakers.board.domain.error.BoardErrorCode;
 import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
@@ -40,6 +41,7 @@ class PostServiceTest {
     private PostRepositoryPort postRepository;
     private CommentRepositoryPort commentRepository;
     private LoadAttachmentPort loadAttachmentPort;
+    private SyncAttachmentVisibilityPort syncAttachmentVisibilityPort;
     private PostService service;
 
     @BeforeEach
@@ -47,6 +49,7 @@ class PostServiceTest {
         postRepository = Mockito.mock(PostRepositoryPort.class);
         commentRepository = Mockito.mock(CommentRepositoryPort.class);
         loadAttachmentPort = Mockito.mock(LoadAttachmentPort.class);
+        syncAttachmentVisibilityPort = Mockito.mock(SyncAttachmentVisibilityPort.class);
         IdGenerator idGenerator = com.certimakers.support.TestIds::next;
         TimeProvider timeProvider = new TimeProvider() {
             @Override
@@ -63,7 +66,7 @@ class PostServiceTest {
         when(postRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service = new PostService(
-                postRepository, commentRepository, loadAttachmentPort,
+                postRepository, commentRepository, loadAttachmentPort, syncAttachmentVisibilityPort,
                 new BlockingBridge(Schedulers.immediate()), idGenerator, timeProvider);
     }
 

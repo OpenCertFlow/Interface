@@ -117,7 +117,9 @@ class DocumentFlowIntegrationTest {
         String downloadUrl = issued.at("/data/downloadUrl").asText();
         assertThat(downloadUrl).startsWith("/api/v1/files/");
 
+        // 발급 PDF는 비공개다 — 발급자 본인 인증 없이는 못 받는다
         byte[] pdf = webTestClient.get().uri(downloadUrl)
+                .header("Authorization", "Bearer " + token)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody().returnResult().getResponseBody();
@@ -126,6 +128,33 @@ class DocumentFlowIntegrationTest {
         assertThat(new String(pdf, 0, 5, StandardCharsets.ISO_8859_1)).isEqualTo("%PDF-");
         // 한글 폰트가 실제로 실렸는지 — 없으면 글자가 조용히 사라진다
         assertThat(new String(pdf, StandardCharsets.ISO_8859_1)).contains("HYSMyeongJo-Medium");
+    }
+
+    @Test
+    @DisplayName("발급받은 PDF는 본인이 아니면 내려받을 수 없다")
+    void 발급_PDF는_본인만_내려받는다() {
+        String ownerToken = signUpAndLogin("pdfowner");
+        String strangerToken = signUpAndLogin("pdfstranger");
+
+        JsonNode issued = webTestClient.post().uri("/api/v1/documents/issues")
+                .header("Authorization", "Bearer " + ownerToken)
+                .bodyValue(Map.of("templateCode", "SELF_DECLARATION", "values", selfDeclarationValues()))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+
+        String downloadUrl = issued.at("/data/downloadUrl").asText();
+
+        // 비로그인은 거부됨
+        webTestClient.get().uri(downloadUrl)
+                .exchange()
+                .expectStatus().isEqualTo(409);
+
+        // 남도 거부됨
+        webTestClient.get().uri(downloadUrl)
+                .header("Authorization", "Bearer " + strangerToken)
+                .exchange()
+                .expectStatus().isEqualTo(409);
     }
 
     @Test

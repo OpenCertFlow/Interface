@@ -249,6 +249,40 @@ class BoardFlowIntegrationTest {
     }
 
     @Test
+    @DisplayName("비밀글 첨부파일은 fileId를 알아도 남이 직접 내려받을 수 없다")
+    void 비밀글_첨부파일은_남이_내려받을_수_없다() {
+        String ownerToken = signUpAndLogin("secretfileowner");
+        String strangerToken = signUpAndLogin("secretfilepeeker");
+
+        byte[] content = "민감한 제조 정보 파일".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String fileId = uploadFile(ownerToken, "비밀자료.pdf", content);
+
+        webTestClient.post().uri("/api/v1/boards/QNA/posts")
+                .header("Authorization", "Bearer " + ownerToken)
+                .bodyValue(Map.of("title", "민감한 제조 정보", "body", "내용", "secret", true,
+                        "attachmentFileIds", List.of(fileId)))
+                .exchange()
+                .expectStatus().isCreated();
+
+        // fileId를 이미 알고 있어도(URL을 직접 알아도) 남이 요청하면 거부된다
+        webTestClient.get().uri("/api/v1/files/{id}", fileId)
+                .header("Authorization", "Bearer " + strangerToken)
+                .exchange()
+                .expectStatus().isEqualTo(409);
+
+        // 비로그인도 거부된다
+        webTestClient.get().uri("/api/v1/files/{id}", fileId)
+                .exchange()
+                .expectStatus().isEqualTo(409);
+
+        // 작성자 본인은 받을 수 있다
+        webTestClient.get().uri("/api/v1/files/{id}", fileId)
+                .header("Authorization", "Bearer " + ownerToken)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
     @DisplayName("공지에는 댓글을 달 수 없다")
     void 공지에는_댓글을_달_수_없다() {
         String token = signUpAndLogin("commenter");
