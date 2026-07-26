@@ -139,6 +139,24 @@ class BoardFlowIntegrationTest {
     }
 
     @Test
+    @DisplayName("남의 파일을 첨부하려 하면 글쓰기가 거부된다")
+    void 남의_파일은_첨부할_수_없다() {
+        String ownerToken = signUpAndLogin("fileowner");
+        String strangerToken = signUpAndLogin("attacher");
+
+        byte[] content = "원본 파일".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String fileId = uploadFile(ownerToken, "원본.pdf", content);
+
+        webTestClient.post().uri("/api/v1/boards/FREE/posts")
+                .header("Authorization", "Bearer " + strangerToken)
+                .bodyValue(Map.of("title", "제목", "body", "내용", "secret", false,
+                        "attachmentFileIds", List.of(fileId)))
+                .exchange()
+                .expectStatus().isEqualTo(409)
+                .expectBody().jsonPath("$.error.code").isEqualTo("CM-BOARD-011");
+    }
+
+    @Test
     @DisplayName("공지 게시판에는 일반 회원이 글을 쓸 수 없다")
     void 공지에는_일반회원이_쓸_수_없다() {
         String token = signUpAndLogin("normaluser");
