@@ -10,6 +10,7 @@ import com.certimakers.diagnosis.domain.service.ScoreResult;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.List;
 
 /**
@@ -27,6 +28,9 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
     private final DiagnosisId id;
     private final ProductProfile profile;
     private final Instant createdAt;
+    // 진단을 요청한 로그인 사용자. 비로그인 진단은 null이라 소유자가 없다 — 진단은 기본적으로 익명이며,
+    // 로그인 상태로 요청하면 '내 진단 이력'(F-APP-032~035)으로 연결된다.
+    private final String ownerUserId;
 
     private DiagnosisStatus status;
     private RuleSetVersion ruleSetVersion;
@@ -39,16 +43,22 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
     private Narration narration;
     private final DegradedFlags degraded = new DegradedFlags();
 
-    private Diagnosis(DiagnosisId id, ProductProfile profile, Instant createdAt) {
+    private Diagnosis(DiagnosisId id, ProductProfile profile, String ownerUserId, Instant createdAt) {
         this.id = Guard.notNull(id, "id");
         this.profile = Guard.notNull(profile, "profile");
         this.createdAt = Guard.notNull(createdAt, "createdAt");
+        this.ownerUserId = ownerUserId; // nullable: 비로그인 진단은 소유자가 없다
         this.status = DiagnosisStatus.REQUESTED;
     }
 
-    /** 새 진단을 요청 상태로 시작한다. */
-    public static Diagnosis request(DiagnosisId id, ProductProfile profile, Instant createdAt) {
-        return new Diagnosis(id, profile, createdAt);
+    /** 새 진단을 요청 상태로 시작한다. {@code ownerUserId}가 null이면 익명 진단이다. */
+    public static Diagnosis request(
+            DiagnosisId id, ProductProfile profile, String ownerUserId, Instant createdAt) {
+        return new Diagnosis(id, profile, ownerUserId, createdAt);
+    }
+
+    public Optional<String> owner() {
+        return Optional.ofNullable(ownerUserId);
     }
 
     /**
@@ -61,6 +71,7 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
     public static Diagnosis reconstitute(
             DiagnosisId id,
             ProductProfile profile,
+            String ownerUserId,
             Instant createdAt,
             DiagnosisStatus status,
             RuleSetVersion ruleSetVersion,
@@ -73,7 +84,7 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
             Narration narration,
             DegradedFlags degraded) {
 
-        Diagnosis diagnosis = new Diagnosis(id, profile, createdAt);
+        Diagnosis diagnosis = new Diagnosis(id, profile, ownerUserId, createdAt);
         diagnosis.status = Guard.notNull(status, "status");
         diagnosis.ruleSetVersion = ruleSetVersion;
         diagnosis.score = score;

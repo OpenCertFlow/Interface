@@ -60,7 +60,8 @@ public class DiagnosisMapper {
                 diagnosis.degraded().isEvidenceDegraded(),
                 diagnosis.degraded().isNarrationDegraded(),
                 diagnosis.createdAt(),
-                diagnosis.createdAt()); // 애그리거트는 한 번에 저장되므로 updatedAt = createdAt
+                diagnosis.createdAt(), // 애그리거트는 한 번에 저장되므로 updatedAt = createdAt
+                diagnosis.owner().orElse(null));
 
         entity.attachProfile(toProfileEntity(diagnosis.profile()));
         entity.attachCandidates(diagnosis.candidates().stream().map(this::toCandidateEntity).toList());
@@ -155,6 +156,7 @@ public class DiagnosisMapper {
         return Diagnosis.reconstitute(
                 DiagnosisId.of(entity.getId()),
                 toProfile(entity.getProfile()),
+                entity.getOwnerUserId(),
                 entity.getCreatedAt(),
                 DiagnosisStatus.valueOf(entity.getStatus()),
                 entity.getRuleSetVersion() != null ? RuleSetVersion.of(entity.getRuleSetVersion()) : null,

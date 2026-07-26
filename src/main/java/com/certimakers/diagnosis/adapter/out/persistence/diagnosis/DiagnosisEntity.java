@@ -58,6 +58,10 @@ public class DiagnosisEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** 진단을 요청한 로그인 사용자. 비로그인 진단은 null(익명). '내 진단 이력' 조회의 기준이 된다. */
+    @Column(name = "owner_user_id")
+    private String ownerUserId;
+
     @OneToOne(mappedBy = "diagnosis", cascade = CascadeType.ALL, orphanRemoval = true, optional = false)
     private ProductProfileEntity profile;
 
@@ -85,7 +89,8 @@ public class DiagnosisEntity {
     public DiagnosisEntity(
             Long id, String status, Long ruleSetId, Integer ruleSetVersion, Integer readinessScore,
             boolean scoreApplicable, int earnedWeight, int totalWeight,
-            boolean degradedEvidence, boolean degradedNarration, Instant createdAt, Instant updatedAt) {
+            boolean degradedEvidence, boolean degradedNarration, Instant createdAt, Instant updatedAt,
+            String ownerUserId) {
         this.id = id;
         this.status = status;
         this.ruleSetId = ruleSetId;
@@ -98,6 +103,7 @@ public class DiagnosisEntity {
         this.degradedNarration = degradedNarration;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.ownerUserId = ownerUserId;
     }
 
     /** 자식과 부모의 양방향 관계를 한 곳에서 맺어, 매퍼가 FK 설정을 잊지 않게 한다. */
@@ -180,6 +186,10 @@ public class DiagnosisEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getOwnerUserId() {
+        return ownerUserId;
     }
 
     public ProductProfileEntity getProfile() {

@@ -1,5 +1,7 @@
 package com.certimakers.diagnosis.adapter.out.persistence.diagnosis;
 
+import java.util.List;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -10,4 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * 지연 초기화한다. 단일 애그리거트 로드라 컬렉션이 작아 N+1 비용은 무시할 수준이다.
  */
 public interface DiagnosisJpaRepository extends JpaRepository<DiagnosisEntity, Long> {
+
+    /** 소유자의 진단을 최신순으로. 진단 이력 목록(F-APP-032)에 쓴다. */
+    List<DiagnosisEntity> findByOwnerUserIdOrderByCreatedAtDesc(String ownerUserId, Pageable pageable);
 }

@@ -60,6 +60,11 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 인증 없이 쓰는 기존 서비스 — 시연 흐름을 막지 않는다
                         .pathMatchers("/api/v1/auth/**").permitAll()
+                        // 진단 이력(F-APP-032/034/035)은 본인만 — permitAll 규칙보다 먼저 둔다
+                        .pathMatchers(HttpMethod.GET, "/api/v1/diagnoses/mine").authenticated()
+                        .pathMatchers(HttpMethod.POST, "/api/v1/diagnoses/*/rediagnose").authenticated()
+                        .pathMatchers(HttpMethod.DELETE, "/api/v1/diagnoses/**").authenticated()
+                        // 진단 실행·조회·시뮬레이션은 비로그인도 가능(진단은 기본 익명)
                         .pathMatchers("/api/v1/diagnoses/**").permitAll()
                         .pathMatchers("/api/v1/consulting-leads/**").permitAll()
                         .pathMatchers("/api/v1/product-groups/**").permitAll()

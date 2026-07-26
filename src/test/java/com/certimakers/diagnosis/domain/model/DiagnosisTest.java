@@ -28,7 +28,7 @@ class DiagnosisTest {
     private Diagnosis evaluatedDryer() {
         ProductProfile dryer = ProductProfileFixtures.hairDryer(Set.of(RuleSetFixtures.TEST_REPORT));
         Diagnosis diagnosis =
-                Diagnosis.request(DiagnosisId.of(com.certimakers.support.TestIds.next()), dryer, NOW);
+                Diagnosis.request(DiagnosisId.of(com.certimakers.support.TestIds.next()), dryer, null, NOW);
 
         RuleEvaluationResult ruleResult =
                 ruleEvaluator.evaluate(dryer, RuleSetFixtures.smallApplianceV1());
@@ -45,6 +45,7 @@ class DiagnosisTest {
         Diagnosis diagnosis = Diagnosis.request(
                 DiagnosisId.of(com.certimakers.support.TestIds.next()),
                 ProductProfileFixtures.hairDryer(Set.of()),
+                null,
                 NOW);
 
         assertThat(diagnosis.status()).isEqualTo(DiagnosisStatus.REQUESTED);
@@ -67,6 +68,7 @@ class DiagnosisTest {
         Diagnosis diagnosis = Diagnosis.request(
                 DiagnosisId.of(com.certimakers.support.TestIds.next()),
                 ProductProfileFixtures.hairDryer(Set.of()),
+                null,
                 NOW);
 
         assertThatThrownBy(() -> diagnosis.attachEvidences(List.of()))

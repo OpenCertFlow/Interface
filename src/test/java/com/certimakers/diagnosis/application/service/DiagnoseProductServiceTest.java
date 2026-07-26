@@ -107,7 +107,7 @@ class DiagnoseProductServiceTest {
     }
 
     private DiagnoseCommand dryerCommand() {
-        return new DiagnoseCommand(ProductProfileFixtures.hairDryer(Set.of(RuleSetFixtures.TEST_REPORT)));
+        return DiagnoseCommand.anonymous(ProductProfileFixtures.hairDryer(Set.of(RuleSetFixtures.TEST_REPORT)));
     }
 
     private Narration llmNarration() {

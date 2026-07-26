@@ -100,7 +100,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         Mono<ScoreRubric> rubricMono = blockingBridge.mono(() -> loadScoreRubricPort.load(group));
 
         return Mono.zip(ruleSetMono, rubricMono)
-                .map(loaded -> evaluate(profile, loaded))          // ② 판정 확정
+                .map(loaded -> evaluate(profile, command.ownerUserId(), loaded)) // ② 판정 확정
                 .flatMap(this::attachEvidence)                     // ③ 근거 (폴백)
                 .flatMap(this::attachNarration)                    // ④ 문장화 (폴백)
                 .map(this::complete)
@@ -108,7 +108,8 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
     }
 
     /** ② 룰 평가와 점수 산정. 순수 함수. 이 시점에 판정이 확정된다. */
-    private Diagnosis evaluate(ProductProfile profile, Tuple2<RuleSet, ScoreRubric> loaded) {
+    private Diagnosis evaluate(
+            ProductProfile profile, String ownerUserId, Tuple2<RuleSet, ScoreRubric> loaded) {
         RuleSet ruleSet = loaded.getT1();
         ScoreRubric rubric = loaded.getT2();
 
@@ -117,7 +118,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
                 ruleResult.requiredDocuments(), profile.heldDocuments(), rubric);
 
         Diagnosis diagnosis = Diagnosis.request(
-                DiagnosisId.of(idGenerator.nextId()), profile, timeProvider.now());
+                DiagnosisId.of(idGenerator.nextId()), profile, ownerUserId, timeProvider.now());
         diagnosis.evaluated(ruleResult, scoreResult);
         return diagnosis;
     }

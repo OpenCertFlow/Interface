@@ -5,7 +5,9 @@ import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
+import com.certimakers.diagnosis.domain.model.ProductProfile;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
+import com.certimakers.diagnosis.application.port.in.DiagnosisHistoryUseCase;
 import com.certimakers.diagnosis.application.port.in.ExportReportPdfQuery;
 import com.certimakers.diagnosis.application.port.in.GetDiagnosisReportQuery;
 import com.certimakers.diagnosis.application.port.in.GetRemediationPlanQuery;
@@ -15,11 +17,15 @@ import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import jakarta.validation.Valid;
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +43,7 @@ public class DiagnosisController {
 
     private final DiagnoseProductUseCase diagnoseProductUseCase;
     private final GetDiagnosisReportQuery getDiagnosisReportQuery;
+    private final DiagnosisHistoryUseCase diagnosisHistoryUseCase;
     private final SimulateDiagnosisUseCase simulateDiagnosisUseCase;
     private final GetRemediationPlanQuery getRemediationPlanQuery;
     private final ExportReportPdfQuery exportReportPdfQuery;
@@ -47,6 +54,7 @@ public class DiagnosisController {
     public DiagnosisController(
             DiagnoseProductUseCase diagnoseProductUseCase,
             GetDiagnosisReportQuery getDiagnosisReportQuery,
+            DiagnosisHistoryUseCase diagnosisHistoryUseCase,
             SimulateDiagnosisUseCase simulateDiagnosisUseCase,
             GetRemediationPlanQuery getRemediationPlanQuery,
             ExportReportPdfQuery exportReportPdfQuery,
@@ -55,6 +63,7 @@ public class DiagnosisController {
             TimeProvider timeProvider) {
         this.diagnoseProductUseCase = diagnoseProductUseCase;
         this.getDiagnosisReportQuery = getDiagnosisReportQuery;
+        this.diagnosisHistoryUseCase = diagnosisHistoryUseCase;
         this.simulateDiagnosisUseCase = simulateDiagnosisUseCase;
         this.getRemediationPlanQuery = getRemediationPlanQuery;
         this.exportReportPdfQuery = exportReportPdfQuery;
@@ -63,11 +72,20 @@ public class DiagnosisController {
         this.timeProvider = timeProvider;
     }
 
+    /**
+     * 진단 실행. 인증은 <b>선택</b>이다 — 비로그인도 진단할 수 있고, 로그인 상태면 소유자가 연결되어
+     * '내 진단 이력'(F-APP-032~035)에 남는다.
+     */
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> diagnose(
-            @Valid @RequestBody DiagnoseRequest request) {
-        DiagnoseCommand command = new DiagnoseCommand(webMapper.toProfile(request));
-        return diagnoseProductUseCase.diagnose(command)
+            @Valid @RequestBody DiagnoseRequest request, Mono<Authentication> authentication) {
+        ProductProfile profile = webMapper.toProfile(request);
+        return authentication
+                .filter(auth -> auth.isAuthenticated()
+                        && !(auth instanceof AnonymousAuthenticationToken))
+                .map(auth -> new DiagnoseCommand(profile, auth.getName()))
+                .defaultIfEmpty(DiagnoseCommand.anonymous(profile))
+                .flatMap(diagnoseProductUseCase::diagnose)
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
     }
 
@@ -76,6 +94,43 @@ public class DiagnosisController {
             @PathVariable Long id) {
         return getDiagnosisReportQuery.getById(DiagnosisId.of(id))
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.OK));
+    }
+
+    /** 내 진단 이력 목록(F-APP-032). 로그인 사용자 본인의 진단만 최신순으로. */
+    @GetMapping("/mine")
+    public Mono<ResponseEntity<ApiResponse<java.util.List<DiagnosisSummaryResponse>>>> listMine(
+            Mono<Principal> principal) {
+        return currentUserId(principal)
+                .flatMap(diagnosisHistoryUseCase::listMine)
+                .flatMap(summaries -> {
+                    var body = summaries.stream().map(DiagnosisSummaryResponse::from).toList();
+                    return TraceId.current().map(traceId -> ResponseEntity.ok(
+                            ApiResponse.success(body, traceId, timeProvider.now())));
+                });
+    }
+
+    /** 재진단(F-APP-034). 기존 진단의 입력을 그대로 다시 평가해 새 진단을 만든다(본인 소유만). */
+    @PostMapping("/{id}/rediagnose")
+    public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> rediagnose(
+            @PathVariable Long id, Mono<Principal> principal) {
+        return currentUserId(principal)
+                .flatMap(userId -> diagnosisHistoryUseCase.rediagnose(DiagnosisId.of(id), userId))
+                .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
+    }
+
+    /** 진단 삭제(F-APP-035). 본인 소유 진단만 지운다. */
+    @DeleteMapping("/{id}")
+    public Mono<ResponseEntity<ApiResponse<Void>>> delete(
+            @PathVariable Long id, Mono<Principal> principal) {
+        return currentUserId(principal)
+                .flatMap(userId -> diagnosisHistoryUseCase.delete(DiagnosisId.of(id), userId))
+                .then(TraceId.current().map(traceId -> ResponseEntity.status(HttpStatus.NO_CONTENT)
+                        .body(ApiResponse.<Void>success(null, traceId, timeProvider.now()))));
+    }
+
+    /** 인증 주체의 이름이 곧 userId다(JWT subject). 이 경로들은 SecurityConfig가 인증을 강제하므로 항상 존재한다. */
+    private Mono<String> currentUserId(Mono<Principal> principal) {
+        return principal.map(Principal::getName);
     }
 
     /**
