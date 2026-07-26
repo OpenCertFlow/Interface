@@ -4,6 +4,7 @@ import com.certimakers.board.application.port.in.PostUseCase;
 import com.certimakers.board.application.port.out.CommentRepositoryPort;
 import com.certimakers.board.application.port.out.LoadAttachmentPort;
 import com.certimakers.board.application.port.out.PostRepositoryPort;
+import com.certimakers.board.application.port.out.SyncAttachmentVisibilityPort;
 import com.certimakers.board.domain.error.BoardErrorCode;
 import com.certimakers.board.domain.model.AuthorRef;
 import com.certimakers.board.domain.model.BoardType;
@@ -34,6 +35,7 @@ public class PostService implements PostUseCase {
     private final PostRepositoryPort postRepository;
     private final CommentRepositoryPort commentRepository;
     private final LoadAttachmentPort loadAttachmentPort;
+    private final SyncAttachmentVisibilityPort syncAttachmentVisibilityPort;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
@@ -42,12 +44,14 @@ public class PostService implements PostUseCase {
             PostRepositoryPort postRepository,
             CommentRepositoryPort commentRepository,
             LoadAttachmentPort loadAttachmentPort,
+            SyncAttachmentVisibilityPort syncAttachmentVisibilityPort,
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
         this.loadAttachmentPort = loadAttachmentPort;
+        this.syncAttachmentVisibilityPort = syncAttachmentVisibilityPort;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -71,7 +75,9 @@ public class PostService implements PostUseCase {
                     command.secret(),
                     attachments,
                     timeProvider.now());
-            return postRepository.save(post).id();
+            PostId savedId = postRepository.save(post).id();
+            syncAttachmentVisibilityPort.syncVisibility(attachments, author.value(), command.secret());
+            return savedId;
         });
     }
 
@@ -87,7 +93,9 @@ public class PostService implements PostUseCase {
             Post post = loadPost(postId);
             post.edit(editor, command.requester().isAdmin(), content,
                     command.secret(), attachments, timeProvider.now());
-            return postRepository.save(post);
+            Post saved = postRepository.save(post);
+            syncAttachmentVisibilityPort.syncVisibility(attachments, editor.value(), command.secret());
+            return saved;
         });
     }
 

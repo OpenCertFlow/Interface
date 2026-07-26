@@ -1,11 +1,14 @@
 package com.certimakers.board.adapter.out.attachment;
 
 import com.certimakers.board.application.port.out.LoadAttachmentPort;
+import com.certimakers.board.application.port.out.SyncAttachmentVisibilityPort;
 import com.certimakers.common.adapter.out.persistence.annotation.PersistenceAdapter;
 import com.certimakers.file.application.port.out.LoadFilePort;
+import com.certimakers.file.application.port.out.SaveFilePort;
 import com.certimakers.file.domain.model.FileId;
 import com.certimakers.file.domain.model.OwnerRef;
 import com.certimakers.file.domain.model.StoredFile;
+import com.certimakers.file.domain.model.Visibility;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +16,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * {@link LoadAttachmentPort}의 구현. 파일 컨텍스트의 조회 포트를 빌려 첨부 정보를 가져온다.
+ * {@link LoadAttachmentPort}·{@link SyncAttachmentVisibilityPort}의 구현. 파일 컨텍스트의
+ * 조회·저장 포트를 빌려 쓴다.
  *
  * <p>파일 컨텍스트의 애그리거트를 게시판 쪽 {@link LoadAttachmentPort.AttachmentInfo}로 좁혀 옮기는
  * 것이 이 어댑터의 존재 이유다. 여기서 변환하지 않으면 파일 모델이 게시판 API 응답까지 흘러간다.
@@ -22,12 +26,14 @@ import java.util.stream.Collectors;
  * 나타나지 않으므로, 깨진 링크를 사용자에게 보여 주지 않는다.
  */
 @PersistenceAdapter
-public class StoredFileAttachmentAdapter implements LoadAttachmentPort {
+public class StoredFileAttachmentAdapter implements LoadAttachmentPort, SyncAttachmentVisibilityPort {
 
     private final LoadFilePort loadFilePort;
+    private final SaveFilePort saveFilePort;
 
-    public StoredFileAttachmentAdapter(LoadFilePort loadFilePort) {
+    public StoredFileAttachmentAdapter(LoadFilePort loadFilePort, SaveFilePort saveFilePort) {
         this.loadFilePort = loadFilePort;
+        this.saveFilePort = saveFilePort;
     }
 
     @Override
@@ -67,5 +73,19 @@ public class StoredFileAttachmentAdapter implements LoadAttachmentPort {
                     return file == null || !file.isOwnedBy(owner);
                 })
                 .toList();
+    }
+
+    @Override
+    public void syncVisibility(Collection<Long> fileIds, Long ownerId, boolean secret) {
+        if (fileIds.isEmpty()) {
+            return;
+        }
+        List<FileId> ids = fileIds.stream().map(FileId::of).toList();
+        OwnerRef owner = OwnerRef.of(ownerId);
+        Visibility target = secret ? Visibility.PRIVATE : Visibility.PUBLIC;
+
+        loadFilePort.findAllByIds(ids).stream()
+                .filter(file -> file.isOwnedBy(owner))
+                .forEach(file -> saveFilePort.save(file.withVisibility(target)));
     }
 }
