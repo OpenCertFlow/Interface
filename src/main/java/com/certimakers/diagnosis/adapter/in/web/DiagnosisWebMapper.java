@@ -16,6 +16,7 @@ import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ElectricalSpec;
 import com.certimakers.diagnosis.domain.model.HeatingSpec;
 import com.certimakers.diagnosis.domain.model.TemperatureSource;
+import com.certimakers.diagnosis.domain.model.ManufacturingType;
 import com.certimakers.diagnosis.domain.model.MaterialType;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import com.certimakers.diagnosis.domain.model.ProductProfile;
@@ -58,7 +59,12 @@ public class DiagnosisWebMapper {
                         .collect(Collectors.toUnmodifiableSet()),
                 request.heldDocuments().stream()
                         .map(DocumentCode::of)
-                        .collect(Collectors.toUnmodifiableSet()));
+                        .collect(Collectors.toUnmodifiableSet()),
+                // 제조형태·변경모델은 선택 입력이다. 미입력이면 '모름'·false로 두어 기존 요청과 호환.
+                request.manufacturingType() == null || request.manufacturingType().isBlank()
+                        ? ManufacturingType.UNKNOWN
+                        : parse(ManufacturingType.class, request.manufacturingType(), "manufacturingType"),
+                Boolean.TRUE.equals(request.isModifiedModel()));
     }
 
     /**

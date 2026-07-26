@@ -81,7 +81,16 @@ public enum ProductGroup {
                 InputField.singleSelect("salesChannel", "판매 방식", salesChannelOptions(), null),
                 InputField.multiSelect("materials", "주요 재질", materialOptions(), true, null),
                 InputField.multiSelect("heldDocuments", "이미 보유한 서류", documentOptions(), false,
-                        "가지고 있는 것만 체크해 주세요. 준비도 점수 계산에 쓰입니다"));
+                        "가지고 있는 것만 체크해 주세요. 준비도 점수 계산에 쓰입니다"),
+                // 제조형태·변경모델(F-APP-006/008) — 선택 입력. 미입력이면 '모름'·아니오로 처리한다.
+                new InputField("manufacturingType", "제조 형태는?",
+                        InputFieldType.SINGLE_SELECT, false, null,
+                        "자체 제조·수입·OEM·ODM 중 해당하는 것을 고르세요",
+                        enumOptions(ManufacturingType.values(),
+                                ManufacturingType::name, ManufacturingType::displayName)),
+                new InputField("isModifiedModel", "기존 인증받은 모델을 변경한 제품인가요?",
+                        InputFieldType.BOOLEAN, false, null,
+                        "변경 제품이면 기존 인증 범위 확인이 필요합니다", List.of()));
     }
 
     /**

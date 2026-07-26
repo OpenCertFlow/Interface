@@ -59,3 +59,21 @@ INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, descript
      {"type":"flagExpertReview","question":"정격전압 정보가 없어 안전확인 대상 여부를 판단할 수 없습니다. 정격전압을 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
    ]',
  '정격전압 미상 시 판단 불가 → 전문가 확인');
+
+-- ── R-COM-001: 기존 인증 모델 변경 → 기존 인증 범위 확인 (F-APP-008) ────────────
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+(1, 'R-COM-001', 50,
+ '{"type":"attr","attribute":"IS_MODIFIED_MODEL","operator":"EQ","value":true}',
+ '[
+     {"type":"flagExpertReview","question":"기존 인증받은 모델을 변경한 제품입니다. 변경 범위가 기존 인증 범위를 벗어나 재인증·변경신고가 필요한지 확인해 주세요.","reason":"NO_EVIDENCE"}
+   ]',
+ '변경 모델 → 기존 인증 범위 확인 필요');
+
+-- ── R-COM-002: 수입·OEM·ODM → 제조 책임·서류 확인 (F-APP-006) ──────────────────
+INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
+(1, 'R-COM-002', 51,
+ '{"type":"attr","attribute":"MANUFACTURING_TYPE","operator":"IN","value":["IMPORTED","OEM","ODM"]}',
+ '[
+     {"type":"flagExpertReview","question":"수입·OEM·ODM 제품은 제조 책임 주체와 확보 가능한 제조자 자료(시험성적서·설계자료 등)가 달라집니다. 인증 책임과 필요 서류를 확인해 주세요.","reason":"NO_EVIDENCE"}
+   ]',
+ '수입·OEM·ODM → 제조 책임·서류 확인 필요');

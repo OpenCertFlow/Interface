@@ -224,6 +224,22 @@ public enum Attribute {
             return profile.salesChannel();
         }
     },
+
+    /** 제조 형태(자체/수입/OEM/ODM/모름, F-APP-006). 책임 주체·필요 서류가 달라진다. */
+    MANUFACTURING_TYPE(ValueKind.MANUFACTURING_TYPE) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.manufacturingType();
+        }
+    },
+
+    /** 기존 인증 모델을 변경한 제품인지(F-APP-008). 변경 시 기존 인증 범위 확인이 필요하다. */
+    IS_MODIFIED_MODEL(ValueKind.BOOLEAN) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.modifiedModel();
+        }
+    },
     PRODUCT_GROUP(ValueKind.PRODUCT_GROUP) {
         @Override
         public Object resolve(ProductProfile profile) {

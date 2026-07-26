@@ -247,4 +247,29 @@ class TwoProductGroupIntegrationTest {
         String items = diagnose(request).at("/data/expertReviewItems").toString();
         assertThat(items).contains("조절 방식이 확인되지", "AMBIGUOUS_CONDITION");
     }
+
+    @Test
+    @DisplayName("변경모델이면 기존 인증 범위 확인 항목이 뜬다(F-APP-008)")
+    void 변경모델은_기존_인증_범위_확인이다() {
+        Map<String, Object> request = hairDryer();
+        request.put("isModifiedModel", true);
+
+        String items = diagnose(request).at("/data/expertReviewItems").toString();
+        assertThat(items).contains("기존 인증 범위");
+    }
+
+    @Test
+    @DisplayName("수입·OEM·ODM 제품이면 제조 책임 확인 항목이 뜬다(F-APP-006)")
+    void 수입_oem_odm은_제조_책임_확인이다() {
+        Map<String, Object> oem = hairDryer();
+        oem.put("manufacturingType", "OEM");
+        assertThat(diagnose(oem).at("/data/expertReviewItems").toString())
+                .contains("제조 책임");
+
+        // 자체 제조면 그 항목이 없다 — 조건 분기가 실제로 동작한다.
+        Map<String, Object> self = hairDryer();
+        self.put("manufacturingType", "SELF_MADE");
+        assertThat(diagnose(self).at("/data/expertReviewItems").toString())
+                .doesNotContain("제조 책임");
+    }
 }

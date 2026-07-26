@@ -24,6 +24,12 @@ public record DiagnoseRequest(
         List<String> materials,
         List<String> heldDocuments,
 
+        /** 제조 형태(ManufacturingType: SELF_MADE/IMPORTED/OEM/ODM/UNKNOWN, F-APP-006) */
+        String manufacturingType,
+
+        /** 기존 인증 모델을 변경한 제품인지(F-APP-008) */
+        Boolean isModifiedModel,
+
         // ── 발열 제품(전기방석 등) 전용. 소형가전에서는 보내지 않는다 ──
         // 어떤 제품군이 어떤 항목을 요구하는지는 GET /api/v1/product-groups가 알려 준다.
 

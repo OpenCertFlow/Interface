@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.certimakers.diagnosis.domain.model.AdjustmentMode;
 import com.certimakers.diagnosis.domain.model.BodyContactType;
+import com.certimakers.diagnosis.domain.model.ManufacturingType;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ElectricalSpec;
@@ -76,7 +77,8 @@ class HeatingRuleEvaluationTest {
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.TEXTILE),
-                Set.of());
+                Set.of(),
+                ManufacturingType.SELF_MADE, false);
     }
 
     /** 발열 사양이 없는 드라이기. HeatingSpec 자체를 갖지 않는다. */
@@ -269,7 +271,8 @@ class HeatingRuleEvaluationTest {
                     TargetUser.GENERAL,
                     SalesChannel.ONLINE,
                     Set.of(MaterialType.TEXTILE),
-                    Set.of());
+                    Set.of(),
+                    ManufacturingType.SELF_MADE, false);
         }
 
         @Test

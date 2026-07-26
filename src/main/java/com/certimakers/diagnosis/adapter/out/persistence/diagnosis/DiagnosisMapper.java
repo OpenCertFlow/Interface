@@ -19,6 +19,7 @@ import com.certimakers.diagnosis.domain.model.Evidence;
 import com.certimakers.diagnosis.domain.model.ExpertReviewItem;
 import com.certimakers.diagnosis.domain.model.ExpertReviewReason;
 import com.certimakers.diagnosis.domain.model.LabelingCheckItem;
+import com.certimakers.diagnosis.domain.model.ManufacturingType;
 import com.certimakers.diagnosis.domain.model.MaterialType;
 import com.certimakers.diagnosis.domain.model.Narration;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
@@ -105,7 +106,9 @@ public class DiagnosisMapper {
                 heating != null ? heating.adapterCertified() : null,
                 heating != null && heating.adjustmentMode() != null
                         ? heating.adjustmentMode().name() : null,
-                heating != null ? heating.temperatureLimitDevice() : null);
+                heating != null ? heating.temperatureLimitDevice() : null,
+                profile.manufacturingType().name(),
+                profile.modifiedModel());
     }
 
     private CertificationCandidateEntity toCandidateEntity(CertificationCandidate candidate) {
@@ -208,7 +211,11 @@ public class DiagnosisMapper {
                 TargetUser.valueOf(entity.getTargetUser()),
                 SalesChannel.valueOf(entity.getSalesChannel()),
                 materials,
-                heldDocuments);
+                heldDocuments,
+                entity.getManufacturingType() != null
+                        ? ManufacturingType.valueOf(entity.getManufacturingType())
+                        : ManufacturingType.UNKNOWN,
+                Boolean.TRUE.equals(entity.getModifiedModel()));
     }
 
     private ReadinessScore toScore(DiagnosisEntity entity) {

@@ -93,13 +93,18 @@ public record ProfileAdjustment(
         }
         boolean battery = hasBattery != null ? hasBattery : baseElectrical.hasBattery();
 
+        // 시뮬레이션이 바꾸지 않는 항목(발열 사양·제조형태·변경모델)은 원본을 그대로 보존해야
+        // 재평가 결과가 원 진단과 어긋나지 않는다.
         return new ProductProfile(
                 base.productName(),
                 base.productGroup(),
                 new ElectricalSpec(electric, voltage, power, battery),
+                base.heating(),
                 targetUser != null ? targetUser : base.targetUser(),
                 salesChannel != null ? salesChannel : base.salesChannel(),
                 base.materials(),
-                held);
+                held,
+                base.manufacturingType(),
+                base.modifiedModel());
     }
 }

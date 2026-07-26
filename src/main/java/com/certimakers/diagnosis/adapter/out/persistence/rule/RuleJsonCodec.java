@@ -8,6 +8,7 @@ import com.certimakers.diagnosis.domain.model.CertificationType;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ExpertReviewReason;
+import com.certimakers.diagnosis.domain.model.ManufacturingType;
 import com.certimakers.diagnosis.domain.model.MaterialType;
 import com.certimakers.diagnosis.domain.model.ProductGroup;
 import com.certimakers.diagnosis.domain.model.Requirement;
@@ -125,6 +126,7 @@ public class RuleJsonCodec {
             case CONTROLLER_STATUS -> enumValue(ControllerStatus.class, node.asText());
             case TEMPERATURE_SOURCE -> enumValue(TemperatureSource.class, node.asText());
             case ADJUSTMENT_MODE -> enumValue(AdjustmentMode.class, node.asText());
+            case MANUFACTURING_TYPE -> enumValue(ManufacturingType.class, node.asText());
         };
     }
 

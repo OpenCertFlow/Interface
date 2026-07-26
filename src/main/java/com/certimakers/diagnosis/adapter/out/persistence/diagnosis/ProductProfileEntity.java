@@ -56,6 +56,12 @@ public class ProductProfileEntity {
     @Column(name = "held_documents", nullable = false)
     private String heldDocuments;
 
+    @Column(name = "manufacturing_type")
+    private String manufacturingType;
+
+    @Column(name = "is_modified_model")
+    private Boolean modifiedModel;
+
     // ── 발열 사양(F-APP-014~018). 발열 제품이 아니면 모두 null이다 ──
     // 값의 짝 규칙(온도출처↔표면온도, 조절기↔단계 등)은 도메인 HeatingSpec이 강제한다.
 
@@ -124,7 +130,8 @@ public class ProductProfileEntity {
             Boolean overheatProtection, Boolean removableCover, Boolean washable,
             Boolean separableElectricParts, Boolean hasSeparateAdapter,
             Boolean adapterExternallyAttached, Boolean adapterCertified,
-            String adjustmentMode, Boolean temperatureLimitDevice) {
+            String adjustmentMode, Boolean temperatureLimitDevice,
+            String manufacturingType, Boolean modifiedModel) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
@@ -135,6 +142,8 @@ public class ProductProfileEntity {
         this.salesChannel = salesChannel;
         this.materials = materials;
         this.heldDocuments = heldDocuments;
+        this.manufacturingType = manufacturingType;
+        this.modifiedModel = modifiedModel;
         this.bodyContactType = bodyContactType;
         this.controllerStatus = controllerStatus;
         this.adjustmentSteps = adjustmentSteps;
@@ -196,6 +205,14 @@ public class ProductProfileEntity {
 
     public String getHeldDocuments() {
         return heldDocuments;
+    }
+
+    public String getManufacturingType() {
+        return manufacturingType;
+    }
+
+    public Boolean getModifiedModel() {
+        return modifiedModel;
     }
 
     public String getBodyContactType() {

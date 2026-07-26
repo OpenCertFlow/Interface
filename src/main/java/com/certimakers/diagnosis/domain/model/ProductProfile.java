@@ -18,6 +18,8 @@ import java.util.Set;
  * @param salesChannel   판매 방식
  * @param materials      주요 재질
  * @param heldDocuments  사용자가 보유했다고 체크한 서류 (파일 아님, 보유 여부만)
+ * @param manufacturingType 제조 형태(자체/수입/OEM/ODM/모름, F-APP-006)
+ * @param modifiedModel  기존 인증 모델을 변경한 제품인지(F-APP-008). 변경 시 기존 인증 범위 확인 필요
  */
 public record ProductProfile(
         String productName,
@@ -27,7 +29,9 @@ public record ProductProfile(
         TargetUser targetUser,
         SalesChannel salesChannel,
         Set<MaterialType> materials,
-        Set<DocumentCode> heldDocuments) {
+        Set<DocumentCode> heldDocuments,
+        ManufacturingType manufacturingType,
+        boolean modifiedModel) {
 
     public ProductProfile {
         Guard.hasText(productName, "productName");
@@ -35,6 +39,7 @@ public record ProductProfile(
         Guard.notNull(electrical, "electrical");
         Guard.notNull(targetUser, "targetUser");
         Guard.notNull(salesChannel, "salesChannel");
+        Guard.notNull(manufacturingType, "manufacturingType");
         materials = Set.copyOf(Guard.notNull(materials, "materials"));
         heldDocuments = Set.copyOf(Guard.notNull(heldDocuments, "heldDocuments"));
     }
@@ -54,7 +59,8 @@ public record ProductProfile(
             Set<MaterialType> materials,
             Set<DocumentCode> heldDocuments) {
         this(productName, productGroup, electrical, null,
-                targetUser, salesChannel, materials, heldDocuments);
+                targetUser, salesChannel, materials, heldDocuments,
+                ManufacturingType.UNKNOWN, false);
     }
 
     public boolean holds(DocumentCode document) {
