@@ -21,7 +21,9 @@ class TemplateNarratorTest {
 
     private Diagnosis evaluated(ProductProfile profile) {
         Diagnosis diagnosis =
-                Diagnosis.request(DiagnosisId.of(com.certimakers.support.TestIds.next()), profile, null, Instant.EPOCH);
+                Diagnosis.request(
+                        DiagnosisId.of(com.certimakers.support.TestIds.next()), profile, null, null,
+                        Instant.EPOCH);
         RuleEvaluationResult ruleResult =
                 ruleEvaluator.evaluate(profile, RuleSetFixtures.smallApplianceV1());
         ScoreResult scoreResult = scoreCalculator.calculate(

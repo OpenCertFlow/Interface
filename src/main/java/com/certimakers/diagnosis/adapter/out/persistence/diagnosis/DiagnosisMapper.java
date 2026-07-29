@@ -157,6 +157,7 @@ public class DiagnosisMapper {
                 DiagnosisId.of(entity.getId()),
                 toProfile(entity.getProfile()),
                 entity.getOwnerUserId(),
+                null,
                 entity.getCreatedAt(),
                 DiagnosisStatus.valueOf(entity.getStatus()),
                 entity.getRuleSetVersion() != null ? RuleSetVersion.of(entity.getRuleSetVersion()) : null,

@@ -118,7 +118,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
                 ruleResult.requiredDocuments(), profile.heldDocuments(), rubric);
 
         Diagnosis diagnosis = Diagnosis.request(
-                DiagnosisId.of(idGenerator.nextId()), profile, ownerUserId, timeProvider.now());
+                DiagnosisId.of(idGenerator.nextId()), profile, ownerUserId, null, timeProvider.now());
         diagnosis.evaluated(ruleResult, scoreResult);
         return diagnosis;
     }

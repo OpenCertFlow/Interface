@@ -28,7 +28,8 @@ class DiagnosisTest {
     private Diagnosis evaluatedDryer() {
         ProductProfile dryer = ProductProfileFixtures.hairDryer(Set.of(RuleSetFixtures.TEST_REPORT));
         Diagnosis diagnosis =
-                Diagnosis.request(DiagnosisId.of(com.certimakers.support.TestIds.next()), dryer, null, NOW);
+                Diagnosis.request(
+                        DiagnosisId.of(com.certimakers.support.TestIds.next()), dryer, null, null, NOW);
 
         RuleEvaluationResult ruleResult =
                 ruleEvaluator.evaluate(dryer, RuleSetFixtures.smallApplianceV1());
@@ -45,6 +46,7 @@ class DiagnosisTest {
         Diagnosis diagnosis = Diagnosis.request(
                 DiagnosisId.of(com.certimakers.support.TestIds.next()),
                 ProductProfileFixtures.hairDryer(Set.of()),
+                null,
                 null,
                 NOW);
 
@@ -68,6 +70,7 @@ class DiagnosisTest {
         Diagnosis diagnosis = Diagnosis.request(
                 DiagnosisId.of(com.certimakers.support.TestIds.next()),
                 ProductProfileFixtures.hairDryer(Set.of()),
+                null,
                 null,
                 NOW);
 

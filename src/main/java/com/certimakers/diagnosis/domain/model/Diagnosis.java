@@ -31,6 +31,9 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
     // 진단을 요청한 로그인 사용자. 비로그인 진단은 null이라 소유자가 없다 — 진단은 기본적으로 익명이며,
     // 로그인 상태로 요청하면 '내 진단 이력'(F-APP-032~035)으로 연결된다.
     private final String ownerUserId;
+    // 이 진단이 어느 진단의 재진단인지. 최초 진단은 null이라 부모가 없다 —
+    // 재진단(F-APP-034)으로 만들어질 때만 원 진단 id가 채워지고, 그래야 비교가 성립한다.
+    private final DiagnosisId previousDiagnosisId;
 
     private DiagnosisStatus status;
     private RuleSetVersion ruleSetVersion;
@@ -43,22 +46,40 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
     private Narration narration;
     private final DegradedFlags degraded = new DegradedFlags();
 
-    private Diagnosis(DiagnosisId id, ProductProfile profile, String ownerUserId, Instant createdAt) {
+    private Diagnosis(
+            DiagnosisId id,
+            ProductProfile profile,
+            String ownerUserId,
+            DiagnosisId previousDiagnosisId,
+            Instant createdAt) {
         this.id = Guard.notNull(id, "id");
         this.profile = Guard.notNull(profile, "profile");
         this.createdAt = Guard.notNull(createdAt, "createdAt");
         this.ownerUserId = ownerUserId; // nullable: 비로그인 진단은 소유자가 없다
+        this.previousDiagnosisId = previousDiagnosisId; // nullable: 최초 진단은 부모가 없다
         this.status = DiagnosisStatus.REQUESTED;
     }
 
-    /** 새 진단을 요청 상태로 시작한다. {@code ownerUserId}가 null이면 익명 진단이다. */
+    /**
+     * 새 진단을 요청 상태로 시작한다. {@code ownerUserId}가 null이면 익명 진단이고,
+     * {@code previousDiagnosisId}가 null이면 최초 진단이다(재진단이 아님).
+     */
     public static Diagnosis request(
-            DiagnosisId id, ProductProfile profile, String ownerUserId, Instant createdAt) {
-        return new Diagnosis(id, profile, ownerUserId, createdAt);
+            DiagnosisId id,
+            ProductProfile profile,
+            String ownerUserId,
+            DiagnosisId previousDiagnosisId,
+            Instant createdAt) {
+        return new Diagnosis(id, profile, ownerUserId, previousDiagnosisId, createdAt);
     }
 
     public Optional<String> owner() {
         return Optional.ofNullable(ownerUserId);
+    }
+
+    /** 비면 최초 진단이다 — 비교할 이전 진단이 없다. */
+    public Optional<DiagnosisId> previousDiagnosisId() {
+        return Optional.ofNullable(previousDiagnosisId);
     }
 
     /**
@@ -72,6 +93,7 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
             DiagnosisId id,
             ProductProfile profile,
             String ownerUserId,
+            DiagnosisId previousDiagnosisId,
             Instant createdAt,
             DiagnosisStatus status,
             RuleSetVersion ruleSetVersion,
@@ -84,7 +106,7 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
             Narration narration,
             DegradedFlags degraded) {
 
-        Diagnosis diagnosis = new Diagnosis(id, profile, ownerUserId, createdAt);
+        Diagnosis diagnosis = new Diagnosis(id, profile, ownerUserId, previousDiagnosisId, createdAt);
         diagnosis.status = Guard.notNull(status, "status");
         diagnosis.ruleSetVersion = ruleSetVersion;
         diagnosis.score = score;
