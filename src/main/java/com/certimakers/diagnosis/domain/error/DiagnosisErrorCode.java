@@ -23,7 +23,11 @@ public enum DiagnosisErrorCode implements ErrorCode {
      * 비교 기준이 없어 "무엇이 달라지는가"를 답할 수 없다.
      */
     SIMULATION_NOT_AVAILABLE("CM-DIAG-005",
-            "아직 평가가 완료되지 않은 진단은 시뮬레이션할 수 없습니다.", ErrorType.CONFLICT);
+            "아직 평가가 완료되지 않은 진단은 시뮬레이션할 수 없습니다.", ErrorType.CONFLICT),
+
+    /** 최초 진단이라 비교할 이전 진단이 없다. 재진단 결과만 비교할 수 있다(F-APP-048). */
+    NOT_COMPARABLE("CM-DIAG-006",
+                           "비교할 이전 진단이 없습니다. 재진단 결과만 비교할 수 있습니다.", ErrorType.CONFLICT);
 
     private final String code;
     private final String defaultMessage;
