@@ -62,6 +62,10 @@ public class DiagnosisEntity {
     @Column(name = "owner_user_id")
     private String ownerUserId;
 
+    /** 이 진단이 어느 진단의 재진단인지. 최초 진단은 null. FK는 V26(ON DELETE SET NULL). */
+    @Column(name = "previous_id")
+    private Long previousId;
+
     @OneToOne(mappedBy = "diagnosis", cascade = CascadeType.ALL, orphanRemoval = true, optional = false)
     private ProductProfileEntity profile;
 
@@ -90,7 +94,7 @@ public class DiagnosisEntity {
             Long id, String status, Long ruleSetId, Integer ruleSetVersion, Integer readinessScore,
             boolean scoreApplicable, int earnedWeight, int totalWeight,
             boolean degradedEvidence, boolean degradedNarration, Instant createdAt, Instant updatedAt,
-            String ownerUserId) {
+            String ownerUserId, Long previousId) {
         this.id = id;
         this.status = status;
         this.ruleSetId = ruleSetId;
@@ -104,6 +108,7 @@ public class DiagnosisEntity {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.ownerUserId = ownerUserId;
+        this.previousId = previousId;
     }
 
     /** 자식과 부모의 양방향 관계를 한 곳에서 맺어, 매퍼가 FK 설정을 잊지 않게 한다. */
@@ -190,6 +195,10 @@ public class DiagnosisEntity {
 
     public String getOwnerUserId() {
         return ownerUserId;
+    }
+
+    public Long getPreviousId() {
+        return previousId;
     }
 
     public ProductProfileEntity getProfile() {

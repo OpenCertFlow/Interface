@@ -61,7 +61,9 @@ public class DiagnosisMapper {
                 diagnosis.degraded().isNarrationDegraded(),
                 diagnosis.createdAt(),
                 diagnosis.createdAt(), // 애그리거트는 한 번에 저장되므로 updatedAt = createdAt
-                diagnosis.owner().orElse(null));
+                diagnosis.owner().orElse(null),
+                // DiagnosisId(값 객체) → Long(컬럼). 없으면 null이 그대로 들어간다.
+                diagnosis.previousDiagnosisId().map(DiagnosisId::value).orElse(null));
 
         entity.attachProfile(toProfileEntity(diagnosis.profile()));
         entity.attachCandidates(diagnosis.candidates().stream().map(this::toCandidateEntity).toList());
@@ -157,7 +159,8 @@ public class DiagnosisMapper {
                 DiagnosisId.of(entity.getId()),
                 toProfile(entity.getProfile()),
                 entity.getOwnerUserId(),
-                null,
+                // Long(컬럼) → DiagnosisId(값 객체). null이면 최초 진단이라 그대로 null.
+                entity.getPreviousId() != null ? DiagnosisId.of(entity.getPreviousId()) : null,
                 entity.getCreatedAt(),
                 DiagnosisStatus.valueOf(entity.getStatus()),
                 entity.getRuleSetVersion() != null ? RuleSetVersion.of(entity.getRuleSetVersion()) : null,
