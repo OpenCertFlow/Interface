@@ -83,7 +83,7 @@ public class DiagnosisController {
         return authentication
                 .filter(auth -> auth.isAuthenticated()
                         && !(auth instanceof AnonymousAuthenticationToken))
-                .map(auth -> new DiagnoseCommand(profile, auth.getName()))
+                .map(auth -> DiagnoseCommand.of(profile, auth.getName()))
                 .defaultIfEmpty(DiagnoseCommand.anonymous(profile))
                 .flatMap(diagnoseProductUseCase::diagnose)
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
