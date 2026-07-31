@@ -157,4 +157,97 @@ class DiagnosisHistoryIntegrationTest {
         // 소유자에게는 여전히 남아 있다.
         assertThat(listMine(owner).at("/data").toString()).contains(id);
     }
+
+    // ── 재진단 비교(F-APP-048) ────────────────────────────────────
+
+    /** 재진단을 실행하고 새 진단 id를 돌려준다. */
+    private String rediagnose(String token, String originalId) {
+        JsonNode result = client.post().uri("/api/v1/diagnoses/{id}/rediagnose", originalId)
+                .header("Authorization", "Bearer " + token)
+                .exchange().expectStatus().isCreated()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+        return result.at("/data/id").asText();
+    }
+
+    @Test
+    @DisplayName("재진단 결과를 원 진단과 비교하면 두 진단 id와 준비도 변화가 나온다")
+    void 재진단_결과를_원_진단과_비교한다() {
+        String token = signUpAndLogin("compare-user");
+        String originalId = diagnose(token);
+        String newId = rediagnose(token, originalId);
+
+        JsonNode body = client.get().uri("/api/v1/diagnoses/{id}/compare", newId)
+                .header("Authorization", "Bearer " + token)
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+
+        // 부모를 DB에 저장하고 다시 읽어와야 여기까지 온다 — 영속성 매핑(toEntity/toDomain) 검증.
+        assertThat(body.at("/data/previousDiagnosisId").asText()).isEqualTo(originalId);
+        assertThat(body.at("/data/diagnosisId").asText()).isEqualTo(newId);
+        assertThat(body.at("/data/comparable").asBoolean()).isTrue();
+        // 재진단은 원본 입력을 그대로 복사하므로 같은 룰셋에서는 점수가 변하지 않는다.
+        assertThat(body.at("/data/percentagePointChange").asInt()).isZero();
+        assertThat(body.at("/data/baselineDiffers").asBoolean()).isFalse();
+        assertThat(body.at("/data/notice").asText()).contains("사전 점검 지표");
+    }
+
+    @Test
+    @DisplayName("최초 진단은 비교할 원 진단이 없어 409로 거부한다")
+    void 최초_진단은_비교할_수_없다() {
+        String token = signUpAndLogin("compare-first-user");
+        String originalId = diagnose(token);
+
+        client.get().uri("/api/v1/diagnoses/{id}/compare", originalId)
+                .header("Authorization", "Bearer " + token)
+                .exchange().expectStatus().isEqualTo(org.springframework.http.HttpStatus.CONFLICT)
+                .expectBody().jsonPath("$.error.code").isEqualTo("CM-DIAG-006");
+    }
+
+    @Test
+    @DisplayName("남의 재진단은 존재를 감춰 404로 응답한다")
+    void 남의_재진단은_비교할_수_없다() {
+        String owner = signUpAndLogin("compare-owner");
+        String stranger = signUpAndLogin("compare-stranger");
+        String newId = rediagnose(owner, diagnose(owner));
+
+        client.get().uri("/api/v1/diagnoses/{id}/compare", newId)
+                .header("Authorization", "Bearer " + stranger)
+                .exchange().expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("비로그인은 비교할 수 없다 — SecurityConfig가 permitAll보다 먼저 매칭된다")
+    void 비로그인은_비교할_수_없다() {
+        String token = signUpAndLogin("compare-anon-user");
+        String newId = rediagnose(token, diagnose(token));
+
+        client.get().uri("/api/v1/diagnoses/{id}/compare", newId)
+                .exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("이력 목록에 원 진단 id가 함께 나와 앱이 비교 진입점을 그릴 수 있다")
+    void 이력_목록에_원_진단_id가_나온다() {
+        String token = signUpAndLogin("summary-parent-user");
+        String originalId = diagnose(token);
+        String newId = rediagnose(token, originalId);
+
+        JsonNode mine = listMine(token).at("/data");
+
+        JsonNode rediagnosis = findById(mine, newId);
+        JsonNode original = findById(mine, originalId);
+        assertThat(rediagnosis.at("/previousDiagnosisId").asText()).isEqualTo(originalId);
+        // 최초 진단은 부모가 없다. default-property-inclusion=non_null이라 필드가 아예 빠지므로
+        // "null 값"이 아니라 "키 부재"로 나간다 — 앱은 부재를 최초 진단으로 읽어야 한다.
+        assertThat(original.hasNonNull("previousDiagnosisId")).isFalse();
+    }
+
+    private JsonNode findById(JsonNode list, String id) {
+        for (JsonNode item : list) {
+            if (id.equals(item.at("/id").asText())) {
+                return item;
+            }
+        }
+        throw new AssertionError("이력 목록에 진단 " + id + "이(가) 없습니다.");
+    }
 }
