@@ -4,8 +4,8 @@ import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
+import com.certimakers.diagnosis.application.port.in.CompareDiagnosisQuery;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
-import com.certimakers.diagnosis.domain.model.ProductProfile;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
 import com.certimakers.diagnosis.application.port.in.DiagnosisHistoryUseCase;
 import com.certimakers.diagnosis.application.port.in.ExportReportPdfQuery;
@@ -13,6 +13,7 @@ import com.certimakers.diagnosis.application.port.in.GetDiagnosisReportQuery;
 import com.certimakers.diagnosis.application.port.in.GetRemediationPlanQuery;
 import com.certimakers.diagnosis.application.port.in.SimulateCommand;
 import com.certimakers.diagnosis.application.port.in.SimulateDiagnosisUseCase;
+import com.certimakers.diagnosis.domain.model.ProductProfile;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import jakarta.validation.Valid;
@@ -47,6 +48,7 @@ public class DiagnosisController {
     private final SimulateDiagnosisUseCase simulateDiagnosisUseCase;
     private final GetRemediationPlanQuery getRemediationPlanQuery;
     private final ExportReportPdfQuery exportReportPdfQuery;
+    private final CompareDiagnosisQuery compareDiagnosisQuery;
     private final DiagnosisWebMapper webMapper;
     private final SimulationWebMapper simulationWebMapper;
     private final TimeProvider timeProvider;
@@ -58,6 +60,7 @@ public class DiagnosisController {
             SimulateDiagnosisUseCase simulateDiagnosisUseCase,
             GetRemediationPlanQuery getRemediationPlanQuery,
             ExportReportPdfQuery exportReportPdfQuery,
+            CompareDiagnosisQuery compareDiagnosisQuery,
             DiagnosisWebMapper webMapper,
             SimulationWebMapper simulationWebMapper,
             TimeProvider timeProvider) {
@@ -67,6 +70,7 @@ public class DiagnosisController {
         this.simulateDiagnosisUseCase = simulateDiagnosisUseCase;
         this.getRemediationPlanQuery = getRemediationPlanQuery;
         this.exportReportPdfQuery = exportReportPdfQuery;
+        this.compareDiagnosisQuery = compareDiagnosisQuery;
         this.webMapper = webMapper;
         this.simulationWebMapper = simulationWebMapper;
         this.timeProvider = timeProvider;
@@ -116,6 +120,17 @@ public class DiagnosisController {
         return currentUserId(principal)
                 .flatMap(userId -> diagnosisHistoryUseCase.rediagnose(DiagnosisId.of(id), userId))
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
+    }
+
+    /** 재진단 결과 비교(F-APP-048). 원 진단은 서버가 previous_id로 찾는다(본인 소유만). */
+    @GetMapping("/{id}/compare")
+    public Mono<ResponseEntity<ApiResponse<DiagnosisComparisonResponse>>> compare(
+            @PathVariable Long id, Mono<Principal> principal) {
+        return currentUserId(principal)
+                .flatMap(userId -> compareDiagnosisQuery.compare(DiagnosisId.of(id), userId))
+                .map(DiagnosisComparisonResponse::from)
+                .flatMap(body -> TraceId.current().map(traceId -> ResponseEntity.ok(
+                        ApiResponse.success(body, traceId, timeProvider.now()))));
     }
 
     /** 진단 삭제(F-APP-035). 본인 소유 진단만 지운다. */
