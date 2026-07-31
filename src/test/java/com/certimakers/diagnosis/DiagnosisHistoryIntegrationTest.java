@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -117,11 +118,7 @@ class DiagnosisHistoryIntegrationTest {
         String token = signUpAndLogin("rediagnose-user");
         String originalId = diagnose(token);
 
-        JsonNode result = client.post().uri("/api/v1/diagnoses/{id}/rediagnose", originalId)
-                .header("Authorization", "Bearer " + token)
-                .exchange().expectStatus().isCreated()
-                .expectBody(JsonNode.class).returnResult().getResponseBody();
-        String newId = result.at("/data/id").asText();
+        String newId = rediagnose(token, originalId);
 
         assertThat(newId).isNotEqualTo(originalId);
         String mine = listMine(token).at("/data").toString();
@@ -160,10 +157,23 @@ class DiagnosisHistoryIntegrationTest {
 
     // ── 재진단 비교(F-APP-048) ────────────────────────────────────
 
-    /** 재진단을 실행하고 새 진단 id를 돌려준다. */
+    /** 서류를 바꾸지 않고 재진단한다 — 앱이 이전 입력을 그대로 다시 제출하는 경우. */
     private String rediagnose(String token, String originalId) {
+        return rediagnose(token, originalId, List.of());
+    }
+
+    /**
+     * 보유 서류를 지정해 재진단하고 새 진단 id를 돌려준다.
+     *
+     * <p>재진단은 본문이 필수다 — 앱이 {@code GET /{id}/input}으로 채운 폼을 제출하는 구조라,
+     * 테스트도 같은 입력을 실어 보낸다.
+     */
+    private String rediagnose(String token, String originalId, List<String> heldDocuments) {
+        Map<String, Object> body = new HashMap<>(hairDryer());
+        body.put("heldDocuments", heldDocuments);
         JsonNode result = client.post().uri("/api/v1/diagnoses/{id}/rediagnose", originalId)
                 .header("Authorization", "Bearer " + token)
+                .bodyValue(body)
                 .exchange().expectStatus().isCreated()
                 .expectBody(JsonNode.class).returnResult().getResponseBody();
         return result.at("/data/id").asText();
@@ -199,7 +209,7 @@ class DiagnosisHistoryIntegrationTest {
 
         client.get().uri("/api/v1/diagnoses/{id}/compare", originalId)
                 .header("Authorization", "Bearer " + token)
-                .exchange().expectStatus().isEqualTo(org.springframework.http.HttpStatus.CONFLICT)
+                .exchange().expectStatus().isEqualTo(HttpStatus.CONFLICT)
                 .expectBody().jsonPath("$.error.code").isEqualTo("CM-DIAG-006");
     }
 
@@ -249,5 +259,91 @@ class DiagnosisHistoryIntegrationTest {
             }
         }
         throw new AssertionError("이력 목록에 진단 " + id + "이(가) 없습니다.");
+    }
+
+    // ── 재진단 입력 갱신(F-APP-034) ────────────────────────────────
+
+    private JsonNode getInput(String token, String id) {
+        return client.get().uri("/api/v1/diagnoses/{id}/input", id)
+                .header("Authorization", "Bearer " + token)
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+    }
+
+    @Test
+    @DisplayName("이전 입력을 조회하면 진단할 때 보낸 값이 그대로 나와 앱이 폼을 채울 수 있다")
+    void 이전_입력을_조회한다() {
+        String token = signUpAndLogin("input-user");
+        String id = diagnose(token);
+
+        JsonNode input = getInput(token, id).at("/data");
+
+        // diagnose()가 보낸 hairDryer() 본문과 같은 값이어야 한다.
+        assertThat(input.at("/productName").asText()).isEqualTo("가정용 헤어드라이어");
+        assertThat(input.at("/productGroup").asText()).isEqualTo("SMALL_APPLIANCE");
+        assertThat(input.at("/ratedVoltage").asInt()).isEqualTo(220);
+        assertThat(input.at("/powerConsumption").asInt()).isEqualTo(1200);
+        assertThat(input.at("/usesElectricity").asBoolean()).isTrue();
+        assertThat(input.at("/targetUser").asText()).isEqualTo("GENERAL");
+        assertThat(input.at("/materials").toString()).contains("PLASTIC").contains("METAL");
+    }
+
+    @Test
+    @DisplayName("서류를 갖춰 재진단하면 준비도가 오르고 비교에 신규 충족 항목이 잡힌다")
+    void 서류를_갖추면_준비도가_오른다() {
+        String token = signUpAndLogin("improve-user");
+        String originalId = diagnose(token);                                    // 보유 서류 없음
+        String newId = rediagnose(token, originalId, List.of("TEST_REPORT"));   // 시험성적서 확보
+
+        JsonNode body = client.get().uri("/api/v1/diagnoses/{id}/compare", newId)
+                .header("Authorization", "Bearer " + token)
+                .exchange().expectStatus().isOk()
+                .expectBody(JsonNode.class).returnResult().getResponseBody();
+
+        // 입력을 갱신할 통로가 없던 때는 이 값이 항상 0·빈 배열이었다(F-APP-034 미완).
+        assertThat(body.at("/data/percentagePointChange").asInt()).isPositive();
+        assertThat(body.at("/data/newlyHeldDocuments").toString()).contains("TEST_REPORT");
+        assertThat(body.at("/data/stillMissingDocuments").toString())
+                .doesNotContain("TEST_REPORT");
+        // 룰셋·가중치는 그대로이므로 점수 상승은 온전히 서류 확보 덕이다.
+        assertThat(body.at("/data/baselineDiffers").asBoolean()).isFalse();
+    }
+
+    @Test
+    @DisplayName("재진단에서 제품군을 바꾸면 409로 거부한다 — 다른 제품군은 새 진단이어야 한다")
+    void 제품군을_바꾸면_재진단할_수_없다() {
+        String token = signUpAndLogin("group-change-user");
+        String originalId = diagnose(token);
+
+        Map<String, Object> body = new HashMap<>(hairDryer());
+        body.put("productGroup", "ELECTRIC_HEATING_PAD");
+
+        client.post().uri("/api/v1/diagnoses/{id}/rediagnose", originalId)
+                .header("Authorization", "Bearer " + token)
+                .bodyValue(body)
+                .exchange().expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectBody().jsonPath("$.error.code").isEqualTo("CM-DIAG-007");
+    }
+
+    @Test
+    @DisplayName("남의 진단 입력은 존재를 감춰 404로 응답한다")
+    void 남의_입력은_조회할_수_없다() {
+        String owner = signUpAndLogin("input-owner");
+        String stranger = signUpAndLogin("input-stranger");
+        String id = diagnose(owner);
+
+        client.get().uri("/api/v1/diagnoses/{id}/input", id)
+                .header("Authorization", "Bearer " + stranger)
+                .exchange().expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("비로그인은 입력을 조회할 수 없다 — SecurityConfig가 permitAll보다 먼저 매칭된다")
+    void 비로그인은_입력을_조회할_수_없다() {
+        String token = signUpAndLogin("input-anon-user");
+        String id = diagnose(token);
+
+        client.get().uri("/api/v1/diagnoses/{id}/input", id)
+                .exchange().expectStatus().isUnauthorized();
     }
 }
