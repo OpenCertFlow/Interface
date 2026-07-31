@@ -27,7 +27,12 @@ public enum DiagnosisErrorCode implements ErrorCode {
 
     /** 부모가 없거나(최초 진단), 제품군이 다르거나, 평가가 끝나지 않았다(F-APP-048). */
     NOT_COMPARABLE("CM-DIAG-006",
-            "원 진단과 해당 재진단만, 같은 제품군에 한해 비교할 수 있습니다.", ErrorType.CONFLICT);
+            "원 진단과 해당 재진단만, 같은 제품군에 한해 비교할 수 있습니다.", ErrorType.CONFLICT),
+
+    /** 재진단에서 제품군을 바꾸려 했다. 제품군이 다르면 다른 제품이므로 새 진단이어야 한다. */
+    PRODUCT_GROUP_CHANGED("CM-DIAG-007",
+            "재진단에서는 제품군을 바꿀 수 없습니다. 다른 제품군은 새로 진단해 주세요.",
+            ErrorType.CONFLICT);
 
     private final String code;
     private final String defaultMessage;

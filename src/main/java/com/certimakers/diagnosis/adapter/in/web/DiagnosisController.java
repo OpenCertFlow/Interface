@@ -9,6 +9,7 @@ import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
 import com.certimakers.diagnosis.application.port.in.DiagnosisHistoryUseCase;
 import com.certimakers.diagnosis.application.port.in.ExportReportPdfQuery;
+import com.certimakers.diagnosis.application.port.in.GetDiagnosisInputQuery;
 import com.certimakers.diagnosis.application.port.in.GetDiagnosisReportQuery;
 import com.certimakers.diagnosis.application.port.in.GetRemediationPlanQuery;
 import com.certimakers.diagnosis.application.port.in.SimulateCommand;
@@ -49,6 +50,7 @@ public class DiagnosisController {
     private final GetRemediationPlanQuery getRemediationPlanQuery;
     private final ExportReportPdfQuery exportReportPdfQuery;
     private final CompareDiagnosisQuery compareDiagnosisQuery;
+    private final GetDiagnosisInputQuery getDiagnosisInputQuery;
     private final DiagnosisWebMapper webMapper;
     private final SimulationWebMapper simulationWebMapper;
     private final TimeProvider timeProvider;
@@ -61,6 +63,7 @@ public class DiagnosisController {
             GetRemediationPlanQuery getRemediationPlanQuery,
             ExportReportPdfQuery exportReportPdfQuery,
             CompareDiagnosisQuery compareDiagnosisQuery,
+            GetDiagnosisInputQuery getDiagnosisInputQuery,
             DiagnosisWebMapper webMapper,
             SimulationWebMapper simulationWebMapper,
             TimeProvider timeProvider) {
@@ -71,6 +74,7 @@ public class DiagnosisController {
         this.getRemediationPlanQuery = getRemediationPlanQuery;
         this.exportReportPdfQuery = exportReportPdfQuery;
         this.compareDiagnosisQuery = compareDiagnosisQuery;
+        this.getDiagnosisInputQuery = getDiagnosisInputQuery;
         this.webMapper = webMapper;
         this.simulationWebMapper = simulationWebMapper;
         this.timeProvider = timeProvider;
@@ -113,13 +117,33 @@ public class DiagnosisController {
                 });
     }
 
-    /** 재진단(F-APP-034). 기존 진단의 입력을 그대로 다시 평가해 새 진단을 만든다(본인 소유만). */
+    /**
+     * 재진단(F-APP-034). 본인 소유 진단만.
+     *
+     * <p>앱은 {@code GET /{id}/input}으로 이전 입력을 받아 폼을 채운 뒤 그 내용을 그대로
+     * 제출한다. 사용자가 고치지 않았으면 원 진단과 같은 입력이 오므로 결과도 같다.
+     */
     @PostMapping("/{id}/rediagnose")
     public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> rediagnose(
+            @PathVariable Long id,
+            @Valid @RequestBody DiagnoseRequest request,
+            Mono<Principal> principal) {
+        ProductProfile updated = webMapper.toProfile(request);
+        return currentUserId(principal)
+                .flatMap(userId ->
+                        diagnosisHistoryUseCase.rediagnose(DiagnosisId.of(id), userId, updated))
+                .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
+    }
+
+    /** 재진단 화면 프리필용 이전 입력 조회(F-APP-034). 본인 소유만. */
+    @GetMapping("/{id}/input")
+    public Mono<ResponseEntity<ApiResponse<DiagnoseRequest>>> getInput(
             @PathVariable Long id, Mono<Principal> principal) {
         return currentUserId(principal)
-                .flatMap(userId -> diagnosisHistoryUseCase.rediagnose(DiagnosisId.of(id), userId))
-                .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
+                .flatMap(userId -> getDiagnosisInputQuery.getInput(DiagnosisId.of(id), userId))
+                .map(webMapper::toRequest)
+                .flatMap(body -> TraceId.current().map(traceId -> ResponseEntity.ok(
+                        ApiResponse.success(body, traceId, timeProvider.now()))));
     }
 
     /** 재진단 결과 비교(F-APP-048). 원 진단은 서버가 previous_id로 찾는다(본인 소유만). */

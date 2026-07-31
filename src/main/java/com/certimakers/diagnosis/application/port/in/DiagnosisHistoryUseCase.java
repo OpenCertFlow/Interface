@@ -3,6 +3,7 @@ package com.certimakers.diagnosis.application.port.in;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import com.certimakers.diagnosis.domain.model.DiagnosisSummary;
+import com.certimakers.diagnosis.domain.model.ProductProfile;
 import java.util.List;
 import reactor.core.publisher.Mono;
 
@@ -15,8 +16,13 @@ public interface DiagnosisHistoryUseCase {
     /** 내 진단을 최신순으로 조회한다. */
     Mono<List<DiagnosisSummary>> listMine(String ownerUserId);
 
-    /** 기존 진단의 입력을 그대로 다시 평가해 새 진단을 만든다(재진단). 새 진단도 요청자 소유다. */
-    Mono<Diagnosis> rediagnose(DiagnosisId id, String requesterUserId);
+    /**
+     * 확인·수정한 입력으로 기존 진단을 다시 평가해 새 진단을 만든다(재진단). 새 진단도 요청자 소유다.
+     *
+     * @param updatedProfile 앱이 이전 입력을 채운 폼에서 제출한 입력. 제품군은 원 진단과 같아야 한다
+     */
+    Mono<Diagnosis> rediagnose(
+            DiagnosisId id, String requesterUserId, ProductProfile updatedProfile);
 
     /** 내 진단을 삭제한다. 소유자가 아니거나 없으면 찾을 수 없음으로 다룬다. */
     Mono<Void> delete(DiagnosisId id, String requesterUserId);
