@@ -9,6 +9,7 @@ import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.simulation.ScoreDelta;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +36,12 @@ public class DiagnosisComparator {
             throw new BusinessException(DiagnosisErrorCode.NOT_COMPARABLE);
         }
 
+        // 제품군 검증(정의서): 제품군이 다르면 요구 서류 집합 자체가 달라 비교가 성립하지 않는다.
+        // 재진단은 입력을 복사하므로 실제로는 항상 같지만, 정의서에 명시된 거부 조건이라 둔다.
+        if (previous.profile().productGroup() != current.profile().productGroup()) {
+            throw new BusinessException(DiagnosisErrorCode.NOT_COMPARABLE);
+        }
+
         // 원본에서 '없던' 서류들. 이 집합에 있던 게 지금 held=true면 새로 갖춘 것이다.
         Set<DocumentCode> previouslyMissing = previous.checklist().stream()
                 .filter(ChecklistItem::isMissing)
@@ -53,9 +60,11 @@ public class DiagnosisComparator {
                 .sorted(Comparator.comparing(DocumentCode::value))
                 .toList();
 
+        // 기준 차이 = 룰셋 버전 차이 또는 가중치 기준표 변경(정의서: "Rule 또는 점수버전").
         // ruleSetVersion은 null일 수 있어 Objects.equals로 비교한다(NPE 회피).
-        boolean baselineDiffers =
+        boolean ruleSetDiffers =
                 !Objects.equals(previous.ruleSetVersion(), current.ruleSetVersion());
+        boolean baselineDiffers = ruleSetDiffers || weightsChanged(previous, current);
 
         return new DiagnosisComparison(
                 previous.id(),
@@ -64,5 +73,20 @@ public class DiagnosisComparator {
                 newlyHeld,
                 stillMissing,
                 baselineDiffers);
+    }
+
+    /**
+     * 같은 서류의 가중치가 두 진단에서 다르면 기준표(ScoreRubric)가 바뀐 것이다.
+     *
+     * <p>{@code ScoreRubric}에는 버전이 없지만 {@link ChecklistItem#weight()}가 평가 시점의
+     * 스냅샷이라, 값을 맞대보면 컬럼 추가 없이 기준표 변경을 감지할 수 있다.
+     */
+    private boolean weightsChanged(Diagnosis previous, Diagnosis current) {
+        Map<DocumentCode, Integer> previousWeights = previous.checklist().stream()
+                .collect(Collectors.toMap(ChecklistItem::documentCode, ChecklistItem::weight));
+        return current.checklist().stream().anyMatch(item -> {
+            Integer before = previousWeights.get(item.documentCode());
+            return before != null && before != item.weight();  // 양쪽에 있는 서류만 비교
+        });
     }
 }
