@@ -13,6 +13,8 @@ import java.time.Instant;
  * @param readinessScore 준비도 점수(%). 산정 불가면 null
  * @param scoreApplicable 점수 산정이 가능했는지
  * @param createdAt      진단 시각
+ * @param previousDiagnosisId 재진단이면 원 진단 id, 최초 진단이면 null.
+ *                            앱이 재진단 여부를 판별해 비교 진입점을 그린다
  */
 public record DiagnosisSummary(
         long id,
@@ -21,5 +23,6 @@ public record DiagnosisSummary(
         DiagnosisStatus status,
         Integer readinessScore,
         boolean scoreApplicable,
-        Instant createdAt) {
+        Instant createdAt,
+        Long previousDiagnosisId) {
 }
