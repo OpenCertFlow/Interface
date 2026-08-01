@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/diagnoses/drafts/**").authenticated()
                         .pathMatchers(HttpMethod.GET, "/api/v1/diagnoses/mine").authenticated()
                         .pathMatchers(HttpMethod.POST, "/api/v1/diagnoses/*/rediagnose").authenticated()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/diagnoses/*/compare").authenticated()
                         .pathMatchers(HttpMethod.DELETE, "/api/v1/diagnoses/**").authenticated()
                         // 진단 실행·조회·시뮬레이션은 비로그인도 가능(진단은 기본 익명)
                         .pathMatchers("/api/v1/diagnoses/**").permitAll()

@@ -52,7 +52,9 @@ public class DiagnosisHistoryService implements DiagnosisHistoryUseCase {
     public Mono<Diagnosis> rediagnose(DiagnosisId id, String requesterUserId) {
         return loadOwned(id, requesterUserId)
                 .flatMap(diagnosis -> diagnoseProductUseCase.diagnose(
-                        new DiagnoseCommand(diagnosis.profile(), requesterUserId)));
+                        // 원 진단을 부모로 기록한다 — 이 한 줄이 있어야 나중에 비교가 가능하다.
+                        DiagnoseCommand.rediagnosis(
+                                diagnosis.profile(), requesterUserId, diagnosis.id())));
     }
 
     @Override

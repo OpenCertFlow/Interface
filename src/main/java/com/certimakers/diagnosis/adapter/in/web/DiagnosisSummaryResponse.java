@@ -11,7 +11,8 @@ public record DiagnosisSummaryResponse(
         String status,
         Integer readinessScore,
         boolean scoreApplicable,
-        Instant createdAt) {
+        Instant createdAt,
+        String previousDiagnosisId) {
 
     public static DiagnosisSummaryResponse from(DiagnosisSummary summary) {
         return new DiagnosisSummaryResponse(
@@ -21,6 +22,8 @@ public record DiagnosisSummaryResponse(
                 summary.status().name(),
                 summary.readinessScore(),
                 summary.scoreApplicable(),
-                summary.createdAt());
+                summary.createdAt(),
+                summary.previousDiagnosisId() == null
+                        ? null : Long.toString(summary.previousDiagnosisId()));
     }
 }

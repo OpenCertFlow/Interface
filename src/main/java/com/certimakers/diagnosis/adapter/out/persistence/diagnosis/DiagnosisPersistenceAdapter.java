@@ -73,6 +73,7 @@ public class DiagnosisPersistenceAdapter
                 DiagnosisStatus.valueOf(entity.getStatus()),
                 entity.getReadinessScore(),
                 entity.isScoreApplicable(),
-                entity.getCreatedAt());
+                entity.getCreatedAt(),
+                entity.getPreviousId());
     }
 }
