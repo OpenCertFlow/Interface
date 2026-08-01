@@ -68,6 +68,49 @@ public class DiagnosisWebMapper {
     }
 
     /**
+     * 저장된 입력을 진단 요청 형태로 되돌린다(재진단 화면 프리필용).
+     *
+     * <p>{@code toProfile}의 역이다. 응답 형태를 요청 DTO와 같게 두면 앱이 받은 값을 그대로
+     * 폼에 채우고 다시 제출할 수 있어, 두 형태가 어긋날 일이 없다.
+     */
+    public DiagnoseRequest toRequest(ProductProfile profile) {
+        ElectricalSpec electrical = profile.electrical();
+        HeatingSpec heating = profile.heating();
+        return new DiagnoseRequest(
+                profile.productName(),
+                profile.productGroup().name(),
+                electrical.usesElectricity(),
+                electrical.ratedVoltage(),
+                electrical.powerConsumption(),
+                electrical.hasBattery(),
+                profile.targetUser().name(),
+                profile.salesChannel().name(),
+                profile.materials().stream().map(Enum::name).toList(),
+                profile.heldDocuments().stream().map(DocumentCode::value).toList(),
+                profile.manufacturingType().name(),
+                profile.modifiedModel(),
+                // 발열 사양은 제품군에 따라 없을 수 있다 — null 안전하게 꺼낸다.
+                heating != null ? heating.bodyContactType().name() : null,
+                heating != null ? heating.controllerStatus().name() : null,
+                heating != null ? heating.adjustmentSteps() : null,
+                heating != null && heating.adjustmentMode() != null
+                        ? heating.adjustmentMode().name() : null,
+                heating != null ? heating.maxSurfaceTemperatureCelsius() : null,
+                heating != null ? heating.temperatureSource().name() : null,
+                heating != null ? heating.medicalUseClaim() : null,
+                heating != null ? heating.autoShutOff() : null,
+                heating != null ? heating.autoShutOffMinutes() : null,
+                heating != null ? heating.overheatProtection() : null,
+                heating != null ? heating.temperatureLimitDevice() : null,
+                heating != null ? heating.removableCover() : null,
+                heating != null ? heating.washable() : null,
+                heating != null ? heating.separableElectricParts() : null,
+                heating != null ? heating.hasSeparateAdapter() : null,
+                heating != null ? heating.adapterExternallyAttached() : null,
+                heating != null ? heating.adapterCertified() : null);
+    }
+
+    /**
      * 발열 사양을 만든다. 관련 입력이 하나도 없으면 발열 제품이 아닌 것으로 보고 null을 준다.
      *
      * <p>불리언 두 항목은 발열 제품이라면 답이 있어야 하므로, 누락 시 false로 채우지 않고

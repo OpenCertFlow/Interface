@@ -3,6 +3,7 @@ package com.certimakers.diagnosis.application.service;
 import com.certimakers.common.application.annotation.UseCase;
 import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
+import com.certimakers.common.domain.model.Guard;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
 import com.certimakers.diagnosis.application.port.in.DiagnosisHistoryUseCase;
@@ -12,6 +13,7 @@ import com.certimakers.diagnosis.domain.error.DiagnosisErrorCode;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
 import com.certimakers.diagnosis.domain.model.DiagnosisId;
 import com.certimakers.diagnosis.domain.model.DiagnosisSummary;
+import com.certimakers.diagnosis.domain.model.ProductProfile;
 import java.util.List;
 import reactor.core.publisher.Mono;
 
@@ -49,12 +51,20 @@ public class DiagnosisHistoryService implements DiagnosisHistoryUseCase {
     }
 
     @Override
-    public Mono<Diagnosis> rediagnose(DiagnosisId id, String requesterUserId) {
+    public Mono<Diagnosis> rediagnose(
+            DiagnosisId id, String requesterUserId, ProductProfile updatedProfile) {
+        Guard.notNull(updatedProfile, "updatedProfile");
         return loadOwned(id, requesterUserId)
-                .flatMap(diagnosis -> diagnoseProductUseCase.diagnose(
-                        // 원 진단을 부모로 기록한다 — 이 한 줄이 있어야 나중에 비교가 가능하다.
-                        DiagnoseCommand.rediagnosis(
-                                diagnosis.profile(), requesterUserId, diagnosis.id())));
+                .flatMap(diagnosis -> {
+                    // 제품군은 바꿀 수 없다 — 다르면 요구 서류 집합 자체가 달라 '같은 제품을 다시
+                    // 진단한 것'이 아니고, 비교(F-APP-048)도 동일 제품군을 요구한다.
+                    if (updatedProfile.productGroup() != diagnosis.profile().productGroup()) {
+                        throw new BusinessException(DiagnosisErrorCode.PRODUCT_GROUP_CHANGED);
+                    }
+                    // 원 진단을 부모로 기록한다 — 이 한 줄이 있어야 나중에 비교가 가능하다.
+                    return diagnoseProductUseCase.diagnose(DiagnoseCommand.rediagnosis(
+                            updatedProfile, requesterUserId, diagnosis.id()));
+                });
     }
 
     @Override
