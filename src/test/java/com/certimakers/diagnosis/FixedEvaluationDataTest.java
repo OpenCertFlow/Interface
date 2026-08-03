@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
 @Testcontainers
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FixedEvaluationDataTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -89,7 +87,8 @@ class FixedEvaluationDataTest {
             return;
         }
 
-        JsonNode body = response.expectStatus().isOk()
+        // 진단 생성은 201을 돌려준다. 케이스가 상태코드를 명시하지 않았다면 성공 여부만 본다.
+        JsonNode body = response.expectStatus().is2xxSuccessful()
                 .expectBody(JsonNode.class).returnResult().getResponseBody();
         assertThat(body).as("%s: 응답 본문", id).isNotNull();
         JsonNode data = body.path("data");
@@ -100,8 +99,13 @@ class FixedEvaluationDataTest {
     private void assertExpectations(String id, JsonNode data, JsonNode expect) {
         if (expect.hasNonNull("minCandidates")) {
             assertThat(data.path("candidates").size())
-                    .as("%s: 인증 검토 후보 수", id)
+                    .as("%s: 인증 검토 후보 수 하한", id)
                     .isGreaterThanOrEqualTo(expect.get("minCandidates").asInt());
+        }
+        if (expect.hasNonNull("maxCandidates")) {
+            assertThat(data.path("candidates").size())
+                    .as("%s: 인증 검토 후보 수 상한", id)
+                    .isLessThanOrEqualTo(expect.get("maxCandidates").asInt());
         }
         if (expect.hasNonNull("scoreApplicable")) {
             assertThat(data.path("score").path("applicable").asBoolean())
@@ -138,12 +142,23 @@ class FixedEvaluationDataTest {
                     .as("%s: 근거 저하 플래그", id)
                     .isEqualTo(expect.get("evidenceDegraded").asBoolean());
         }
-        // 근거가 비었으면 반드시 그 사실이 표시되어야 한다. 근거란이 조용히 비는 것을 막는 규칙이다.
-        if (expect.path("evidenceDegradedWhenEmpty").asBoolean(false)
-                && data.path("evidences").isEmpty()) {
-            assertThat(data.path("degraded").path("evidence").asBoolean())
-                    .as("%s: 근거 0건이면 degraded.evidence가 참이어야 한다", id)
-                    .isTrue();
+        assertEvidenceInvariant(id, data);
+    }
+
+    /**
+     * 케이스가 무엇을 기대하든 항상 지켜야 하는 규칙: <b>근거를 붙였어야 하는데 못 붙였으면
+     * 그 사실이 응답에 드러나야 한다.</b>
+     *
+     * <p>후보가 없으면 검색할 것이 없으므로 저하가 아니다. 후보가 있는데 근거가 비었다면
+     * 검색이 실패했거나 색인에 그 제품군 문서가 없는 것이고, 둘 다 사용자에게 알려야 한다.
+     * 근거란이 조용히 비면 "근거가 필요 없는 제품"으로 오해된다.
+     */
+    private void assertEvidenceInvariant(String id, JsonNode data) {
+        if (data.path("candidates").isEmpty() || !data.path("evidences").isEmpty()) {
+            return;
         }
+        assertThat(data.path("degraded").path("evidence").asBoolean())
+                .as("%s: 후보가 있는데 근거가 0건이면 degraded.evidence가 참이어야 한다", id)
+                .isTrue();
     }
 }

@@ -57,6 +57,7 @@ public class ProductProfileEntity {
     private String heldDocuments;
 
     /** '모름'으로 체크한 서류. 생성자 인자를 더 늘리지 않고 설정자로 받는다. */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "unknown_documents", nullable = false)
     private String unknownDocuments = "[]";
 

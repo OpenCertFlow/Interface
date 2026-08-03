@@ -12,8 +12,14 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["PLASTIC"],
-      "heldDocuments": ["TEST_REPORT", "BIZ_LICENSE", "CIRCUIT_DIAGRAM"]
+      "materials": [
+        "PLASTIC"
+      ],
+      "heldDocuments": [
+        "TEST_REPORT",
+        "BIZ_LICENSE",
+        "CIRCUIT_DIAGRAM"
+      ]
     },
     "expect": {
       "minCandidates": 1,
@@ -35,7 +41,9 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["PLASTIC"],
+      "materials": [
+        "PLASTIC"
+      ],
       "heldDocuments": []
     },
     "expect": {
@@ -58,9 +66,15 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["PLASTIC"],
-      "heldDocuments": ["BIZ_LICENSE"],
-      "unknownDocuments": ["TEST_REPORT"]
+      "materials": [
+        "PLASTIC"
+      ],
+      "heldDocuments": [
+        "BIZ_LICENSE"
+      ],
+      "unknownDocuments": [
+        "TEST_REPORT"
+      ]
     },
     "expect": {
       "minCandidates": 1,
@@ -71,7 +85,7 @@
   {
     "id": "UNKNOWN-SPEC-01",
     "category": "미확인",
-    "description": "전기방석 최고 표면온도를 모름으로 입력 — 임의 판정 대신 전문가 확인으로 전환",
+    "description": "전기방석 온도조절기·표면온도를 모름으로 입력 — 임의 판정 대신 전문가 확인으로 전환",
     "request": {
       "productName": "일반 보온용 전기방석",
       "productGroup": "ELECTRIC_HEATING_PAD",
@@ -81,15 +95,26 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["TEXTILE"],
+      "materials": [
+        "TEXTILE"
+      ],
       "heldDocuments": [],
       "bodyContactType": "DIRECT_SKIN",
       "controllerStatus": "UNKNOWN",
+      "maxSurfaceTemperatureCelsius": null,
       "temperatureSource": "UNKNOWN",
-      "medicalUseClaim": false
+      "medicalUseClaim": false,
+      "autoShutOff": true,
+      "autoShutOffMinutes": 30,
+      "overheatProtection": true,
+      "temperatureLimitDevice": true,
+      "removableCover": true,
+      "washable": true,
+      "separableElectricParts": true,
+      "hasSeparateAdapter": false
     },
     "expect": {
-      "minCandidates": 1,
+      "maxCandidates": 0,
       "minExpertReviewItems": 1
     }
   },
@@ -106,9 +131,15 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["PLASTIC"],
-      "heldDocuments": ["TEST_REPORT"],
-      "unknownDocuments": ["TEST_REPORT"]
+      "materials": [
+        "PLASTIC"
+      ],
+      "heldDocuments": [
+        "TEST_REPORT"
+      ],
+      "unknownDocuments": [
+        "TEST_REPORT"
+      ]
     },
     "expect": {
       "minCandidates": 1,
@@ -128,7 +159,9 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["PLASTIC"],
+      "materials": [
+        "PLASTIC"
+      ],
       "heldDocuments": []
     },
     "expect": {
@@ -136,11 +169,11 @@
     }
   },
   {
-    "id": "NO-EVIDENCE-01",
-    "category": "근거부족",
-    "description": "색인에 해당 제품군 문서가 없는 상태 — 근거 0건이 응답에 표시되어야 한다",
+    "id": "NO-GRADE-01",
+    "category": "미확인",
+    "description": "전기방석은 인증 등급이 공식 확인 전이라 후보를 단정하지 않고 전문가 확인으로 보낸다 (이슈 #23)",
     "request": {
-      "productName": "일반 보온용 전기방석(근거 없음)",
+      "productName": "일반 보온용 전기방석(등급 미확정)",
       "productGroup": "ELECTRIC_HEATING_PAD",
       "usesElectricity": true,
       "ratedVoltage": 220,
@@ -148,17 +181,29 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["TEXTILE"],
+      "materials": [
+        "TEXTILE"
+      ],
       "heldDocuments": [],
       "bodyContactType": "DIRECT_SKIN",
       "controllerStatus": "PRESENT",
+      "maxSurfaceTemperatureCelsius": 45,
       "temperatureSource": "MEASURED",
-      "maxSurfaceTemperature": 45,
-      "medicalUseClaim": false
+      "medicalUseClaim": false,
+      "autoShutOff": true,
+      "autoShutOffMinutes": 30,
+      "overheatProtection": true,
+      "temperatureLimitDevice": true,
+      "removableCover": true,
+      "washable": true,
+      "separableElectricParts": true,
+      "hasSeparateAdapter": false,
+      "adjustmentMode": "STEP",
+      "adjustmentSteps": 3
     },
     "expect": {
-      "minCandidates": 1,
-      "evidenceDegradedWhenEmpty": true
+      "maxCandidates": 0,
+      "minExpertReviewItems": 1
     }
   },
   {
@@ -174,8 +219,12 @@
       "hasBattery": false,
       "targetUser": "GENERAL",
       "salesChannel": "ONLINE",
-      "materials": ["PLASTIC"],
-      "heldDocuments": ["TEST_REPORT"]
+      "materials": [
+        "PLASTIC"
+      ],
+      "heldDocuments": [
+        "TEST_REPORT"
+      ]
     },
     "expect": {
       "minCandidates": 1,
