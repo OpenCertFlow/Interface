@@ -127,7 +127,14 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         return diagnosis;
     }
 
-    /** ③ 근거 검색. 후보가 없으면 검색할 것이 없고, 실패·타임아웃이면 근거 없이 진행한다. */
+    /**
+     * ③ 근거 검색. 후보가 없으면 검색할 것이 없고, 실패·타임아웃이면 근거 없이 진행한다.
+     *
+     * <p><b>검색이 성공했는데 근거가 0건인 경우도 저하로 본다.</b> 사용자 입장에서는 워커가 죽어
+     * 근거가 없는 것과 색인에 그 제품군 문서가 없어 근거가 없는 것이 구별되지 않는다. 둘 다
+     * "공식 근거를 붙이지 못한 리포트"이므로 화면에 그 사실을 알려야 한다 — 근거란이 조용히
+     * 비어 있으면 사용자는 "근거가 필요 없는 제품"으로 오해한다(기획서 2.4).
+     */
     private Mono<Diagnosis> attachEvidence(Diagnosis diagnosis) {
         if (diagnosis.candidates().isEmpty()) {
             return Mono.just(diagnosis);
@@ -146,7 +153,16 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
                             diagnosis.id().value(), error.toString());
                     diagnosis.markEvidenceDegraded();
                     return Mono.just(diagnosis);
-                });
+                })
+                .doOnNext(this::markDegradedWhenNoEvidence);
+    }
+
+    private void markDegradedWhenNoEvidence(Diagnosis diagnosis) {
+        if (diagnosis.evidences().isEmpty() && !diagnosis.degraded().isEvidenceDegraded()) {
+            log.info("근거 0건 — 해당 제품군의 공식 문서 색인을 확인하세요. diagnosisId={}, group={}",
+                    diagnosis.id().value(), diagnosis.profile().productGroup());
+            diagnosis.markEvidenceDegraded();
+        }
     }
 
     /** ④ 문장화. 실패·타임아웃이면 템플릿 문장으로 대체한다. */
