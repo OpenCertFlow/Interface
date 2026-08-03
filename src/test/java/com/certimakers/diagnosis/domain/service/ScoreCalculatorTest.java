@@ -88,4 +88,41 @@ class ScoreCalculatorTest {
         assertThat(result.checklist().get(0).weight()).isEqualTo(10);
         assertThat(result.score().percentage()).isEqualTo(100);
     }
+
+    @Test
+    @DisplayName("'모름'으로 체크한 서류는 보유로 치지 않되 '없음'과 구분해 기록한다")
+    void 모름은_없음과_구분된다() {
+        List<RequiredDocument> required = List.of(
+                new RequiredDocument(DocumentCode.of("TEST_REPORT"), Requirement.REQUIRED),
+                new RequiredDocument(DocumentCode.of("BIZ_LICENSE"), Requirement.REQUIRED),
+                new RequiredDocument(DocumentCode.of("CIRCUIT_DIAGRAM"), Requirement.REQUIRED));
+
+        ScoreResult result = new ScoreCalculator().calculate(
+                required,
+                Set.of(DocumentCode.of("TEST_REPORT")),
+                Set.of(DocumentCode.of("BIZ_LICENSE")),
+                ScoreRubric.defaultsOnly());
+
+        assertThat(result.absentCount()).as("만들어야 하는 서류").isEqualTo(1);
+        assertThat(result.unknownCount()).as("확인해야 하는 서류").isEqualTo(1);
+        assertThat(result.score().earnedWeight())
+                .as("'모름'은 획득 가중치에 들어가지 않는다")
+                .isLessThan(result.score().totalWeight());
+    }
+
+    @Test
+    @DisplayName("보유와 모름에 동시에 체크된 모순 입력은 보유로 본다")
+    void 모순입력은_보유가_우선() {
+        List<RequiredDocument> required = List.of(
+                new RequiredDocument(DocumentCode.of("TEST_REPORT"), Requirement.REQUIRED));
+
+        ScoreResult result = new ScoreCalculator().calculate(
+                required,
+                Set.of(DocumentCode.of("TEST_REPORT")),
+                Set.of(DocumentCode.of("TEST_REPORT")),
+                ScoreRubric.defaultsOnly());
+
+        assertThat(result.unknownCount()).isZero();
+        assertThat(result.checklist().get(0).held()).isTrue();
+    }
 }

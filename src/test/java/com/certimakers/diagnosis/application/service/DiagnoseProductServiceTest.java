@@ -220,6 +220,49 @@ class DiagnoseProductServiceTest {
     }
 
     @Test
+    @DisplayName("검색은 성공했지만 근거가 0건이면 저하로 표시한다 — 근거란이 조용히 비지 않는다")
+    void 근거_0건도_저하로_표시() {
+        DiagnoseProductService service = service(
+                ruleSetFound(),
+                query -> Mono.just(List.of()), // 색인에 해당 제품군 문서가 없는 상황
+                request -> Mono.just(llmNarration()),
+                captureSave);
+
+        StepVerifier.create(service.diagnose(dryerCommand()))
+                .assertNext(diagnosis -> {
+                    assertThat(diagnosis.evidences()).isEmpty();
+                    assertThat(diagnosis.degraded().isEvidenceDegraded())
+                            .as("근거를 붙이지 못했으면 이유와 무관하게 사용자에게 알려야 한다")
+                            .isTrue();
+                    assertThat(diagnosis.status()).isEqualTo(DiagnosisStatus.COMPLETED_DEGRADED);
+                    assertThat(diagnosis.score().applicable())
+                            .as("근거가 없어도 판정과 점수는 유효하다")
+                            .isTrue();
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("후보가 없으면 검색 자체를 하지 않으므로 저하가 아니다")
+    void 후보_없으면_저하_아님() {
+        DiagnoseProductService service = service(
+                group -> RuleSetFixtures.smallApplianceV1(),
+                query -> Mono.error(new IllegalStateException("호출되면 안 된다")),
+                request -> Mono.just(llmNarration()),
+                captureSave);
+
+        DiagnoseCommand noCandidate = DiagnoseCommand.anonymous(
+                ProductProfileFixtures.nonElectricProduct());
+
+        StepVerifier.create(service.diagnose(noCandidate))
+                .assertNext(diagnosis -> {
+                    assertThat(diagnosis.candidates()).isEmpty();
+                    assertThat(diagnosis.degraded().isEvidenceDegraded()).isFalse();
+                })
+                .verifyComplete();
+    }
+
+    @Test
     @DisplayName("생성된 진단 ID는 IdGenerator에서 온다 — 도메인이 Long를 직접 만들지 않는다")
     void 진단ID는_포트에서_온다() {
         DiagnoseProductService service = service(

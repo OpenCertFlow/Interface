@@ -32,4 +32,14 @@ public record ScoreResult(ReadinessScore score, List<ChecklistItem> checklist) {
                         .thenComparing(item -> item.documentCode().value()))
                 .toList();
     }
+
+    /** 사용자가 만들어야 하는 서류 수. 리포트의 '누락자료 n건'. */
+    public long absentCount() {
+        return checklist.stream().filter(ChecklistItem::isAbsent).count();
+    }
+
+    /** 사용자가 확인해야 하는 서류 수. 리포트의 '확인 중 n건'. */
+    public long unknownCount() {
+        return checklist.stream().filter(ChecklistItem::isUnknown).count();
+    }
 }

@@ -56,6 +56,11 @@ public class ProductProfileEntity {
     @Column(name = "held_documents", nullable = false)
     private String heldDocuments;
 
+    /** '모름'으로 체크한 서류. 생성자 인자를 더 늘리지 않고 설정자로 받는다. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "unknown_documents", nullable = false)
+    private String unknownDocuments = "[]";
+
     @Column(name = "manufacturing_type")
     private String manufacturingType;
 
@@ -201,6 +206,14 @@ public class ProductProfileEntity {
 
     public String getMaterials() {
         return materials;
+    }
+
+    public void setUnknownDocuments(String unknownDocuments) {
+        this.unknownDocuments = unknownDocuments == null ? "[]" : unknownDocuments;
+    }
+
+    public String getUnknownDocuments() {
+        return unknownDocuments == null ? "[]" : unknownDocuments;
     }
 
     public String getHeldDocuments() {

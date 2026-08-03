@@ -133,6 +133,7 @@ public class SimulationWebMapper {
 
     private ChecklistView toChecklistView(ChecklistItem item) {
         return new ChecklistView(
-                item.documentCode().value(), item.requirement().name(), item.weight(), item.held());
+                item.documentCode().value(), item.requirement().name(), item.weight(),
+                item.status().name());
     }
 }

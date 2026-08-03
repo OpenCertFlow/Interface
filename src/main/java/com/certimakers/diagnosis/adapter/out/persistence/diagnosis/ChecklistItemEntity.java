@@ -34,17 +34,19 @@ public class ChecklistItemEntity {
     @Column(nullable = false)
     private int weight;
 
-    @Column(nullable = false)
-    private boolean held;
+    /** HELD · MISSING · UNKNOWN. '모름'을 '없음'으로 뭉개지 않기 위해 boolean이 아니다. */
+    @Column(nullable = false, length = 16)
+    private String status;
 
     protected ChecklistItemEntity() {
     }
 
-    public ChecklistItemEntity(String documentCode, String requirement, int weight, boolean held) {
+    public ChecklistItemEntity(
+            String documentCode, String requirement, int weight, String status) {
         this.documentCode = documentCode;
         this.requirement = requirement;
         this.weight = weight;
-        this.held = held;
+        this.status = status;
     }
 
     void setDiagnosis(DiagnosisEntity diagnosis) {
@@ -63,7 +65,7 @@ public class ChecklistItemEntity {
         return weight;
     }
 
-    public boolean isHeld() {
-        return held;
+    public String getStatus() {
+        return status;
     }
 }

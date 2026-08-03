@@ -49,7 +49,8 @@ public record NarrateRequestDto(
                         .map(c -> new CandidateDto(c.schemeCode().value(), c.type().name()))
                         .toList(),
                 request.checklist().stream()
-                        .map(i -> new DocumentDto(i.documentCode().value(), i.requirement().name(), i.held()))
+                        .map(i -> new DocumentDto(
+                                i.documentCode().value(), i.requirement().name(), i.held()))
                         .toList(),
                 missing,
                 request.expertReviewItems().stream()
