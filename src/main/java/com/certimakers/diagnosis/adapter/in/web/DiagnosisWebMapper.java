@@ -60,6 +60,9 @@ public class DiagnosisWebMapper {
                 request.heldDocuments().stream()
                         .map(DocumentCode::of)
                         .collect(Collectors.toUnmodifiableSet()),
+                request.unknownDocuments().stream()
+                        .map(DocumentCode::of)
+                        .collect(Collectors.toUnmodifiableSet()),
                 // 제조형태·변경모델은 선택 입력이다. 미입력이면 '모름'·false로 두어 기존 요청과 호환.
                 request.manufacturingType() == null || request.manufacturingType().isBlank()
                         ? ManufacturingType.UNKNOWN
@@ -87,6 +90,7 @@ public class DiagnosisWebMapper {
                 profile.salesChannel().name(),
                 profile.materials().stream().map(Enum::name).toList(),
                 profile.heldDocuments().stream().map(DocumentCode::value).toList(),
+                profile.unknownDocuments().stream().map(DocumentCode::value).toList(),
                 profile.manufacturingType().name(),
                 profile.modifiedModel(),
                 // 발열 사양은 제품군에 따라 없을 수 있다 — null 안전하게 꺼낸다.
@@ -197,6 +201,7 @@ public class DiagnosisWebMapper {
                 diagnosis.candidates().stream().map(this::toCandidateView).toList(),
                 diagnosis.checklist().stream().map(this::toChecklistView).toList(),
                 diagnosis.remediationOrder().stream().map(this::toChecklistView).toList(),
+                toDocumentSummary(diagnosis.checklist()),
                 diagnosis.labelingChecks().stream().map(item -> item.label()).toList(),
                 diagnosis.expertReviewItems().stream()
                         .map(item -> new ExpertReviewView(item.question(), item.reason().name()))
@@ -230,7 +235,20 @@ public class DiagnosisWebMapper {
     private ChecklistView toChecklistView(
             com.certimakers.diagnosis.domain.model.ChecklistItem item) {
         return new ChecklistView(
-                item.documentCode().value(), item.requirement().name(), item.weight(), item.held());
+                item.documentCode().value(), item.requirement().name(), item.weight(),
+                item.status().name());
+    }
+
+    private DiagnosisReportResponse.DocumentSummaryView toDocumentSummary(
+            java.util.List<com.certimakers.diagnosis.domain.model.ChecklistItem> checklist) {
+        int held = (int) checklist.stream()
+                .filter(com.certimakers.diagnosis.domain.model.ChecklistItem::held).count();
+        int absent = (int) checklist.stream()
+                .filter(com.certimakers.diagnosis.domain.model.ChecklistItem::isAbsent).count();
+        int unknown = (int) checklist.stream()
+                .filter(com.certimakers.diagnosis.domain.model.ChecklistItem::isUnknown).count();
+        return new DiagnosisReportResponse.DocumentSummaryView(
+                checklist.size(), held, absent, unknown);
     }
 
     private NarrationView toNarrationView(com.certimakers.diagnosis.domain.model.Narration narration) {

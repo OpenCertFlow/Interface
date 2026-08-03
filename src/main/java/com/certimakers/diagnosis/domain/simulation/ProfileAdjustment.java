@@ -104,6 +104,11 @@ public record ProfileAdjustment(
                 salesChannel != null ? salesChannel : base.salesChannel(),
                 base.materials(),
                 held,
+                // 보유로 가정한 서류는 더 이상 '모름'이 아니다 — 가정이 확인을 대신한 셈이므로
+                // 확인 목록에서 뺀다. 그러지 않으면 같은 서류가 보유이면서 확인 중으로 잡힌다.
+                base.unknownDocuments().stream()
+                        .filter(code -> !held.contains(code))
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet()),
                 base.manufacturingType(),
                 base.modifiedModel());
     }

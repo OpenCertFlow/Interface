@@ -24,6 +24,12 @@ public record DiagnoseRequest(
         List<String> materials,
         List<String> heldDocuments,
 
+        /**
+         * 보유 여부를 '모름'으로 체크한 서류. 보유로도 미보유로도 해석하지 않고
+         * '확인 중'으로 분류한다(운영지침 §9).
+         */
+        List<String> unknownDocuments,
+
         /** 제조 형태(ManufacturingType: SELF_MADE/IMPORTED/OEM/ODM/UNKNOWN, F-APP-006) */
         String manufacturingType,
 
@@ -87,6 +93,7 @@ public record DiagnoseRequest(
     public DiagnoseRequest {
         materials = materials != null ? materials : List.of();
         heldDocuments = heldDocuments != null ? heldDocuments : List.of();
+        unknownDocuments = unknownDocuments != null ? unknownDocuments : List.of();
     }
 
     /**

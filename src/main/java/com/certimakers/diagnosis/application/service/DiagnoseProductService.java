@@ -116,7 +116,10 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
 
         RuleEvaluationResult ruleResult = ruleEvaluator.evaluate(profile, ruleSet);
         ScoreResult scoreResult = scoreCalculator.calculate(
-                ruleResult.requiredDocuments(), profile.heldDocuments(), rubric);
+                ruleResult.requiredDocuments(),
+                profile.heldDocuments(),
+                profile.unknownDocuments(),
+                rubric);
 
         Diagnosis diagnosis = Diagnosis.request(
                 DiagnosisId.of(idGenerator.nextId()), profile, command.ownerUserId(), command.previousDiagnosisId(), timeProvider.now());

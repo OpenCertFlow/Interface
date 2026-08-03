@@ -1,6 +1,7 @@
 package com.certimakers.diagnosis.domain.service;
 
 import com.certimakers.diagnosis.domain.model.ChecklistItem;
+import com.certimakers.diagnosis.domain.model.ChecklistStatus;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import com.certimakers.diagnosis.domain.model.ReadinessScore;
 import java.util.List;
@@ -11,6 +12,10 @@ import java.util.Set;
  *
  * <p>점수 = round(보유한 요구 서류의 가중치 합 / 전체 요구 서류의 가중치 합 × 100).
  * 요구 서류가 없으면 0%가 아니라 <b>산정 불가</b>다(불변식 2, {@link ReadinessScore}).
+ *
+ * <p>'모름'으로 체크한 서류는 보유로 치지 않는다. 다만 '없음'과도 구분해 기록한다 —
+ * 미확인을 정상으로도 부적합으로도 해석하지 않는 것이 서비스 원칙이고(운영지침 §9),
+ * 사용자가 할 다음 행동이 다르기 때문이다.
  */
 public class ScoreCalculator {
 
@@ -18,9 +23,18 @@ public class ScoreCalculator {
             List<RequiredDocument> requiredDocuments,
             Set<DocumentCode> heldDocuments,
             ScoreRubric rubric) {
+        return calculate(requiredDocuments, heldDocuments, Set.of(), rubric);
+    }
+
+    public ScoreResult calculate(
+            List<RequiredDocument> requiredDocuments,
+            Set<DocumentCode> heldDocuments,
+            Set<DocumentCode> unknownDocuments,
+            ScoreRubric rubric) {
 
         List<ChecklistItem> checklist = requiredDocuments.stream()
-                .map(required -> toChecklistItem(required, heldDocuments, rubric))
+                .map(required ->
+                        toChecklistItem(required, heldDocuments, unknownDocuments, rubric))
                 .toList();
 
         int totalWeight = checklist.stream().mapToInt(ChecklistItem::weight).sum();
@@ -34,10 +48,23 @@ public class ScoreCalculator {
     }
 
     private ChecklistItem toChecklistItem(
-            RequiredDocument required, Set<DocumentCode> held, ScoreRubric rubric) {
+            RequiredDocument required,
+            Set<DocumentCode> held,
+            Set<DocumentCode> unknown,
+            ScoreRubric rubric) {
 
         int weight = rubric.weightOf(required.documentCode(), required.requirement());
-        boolean isHeld = held.contains(required.documentCode());
-        return new ChecklistItem(required.documentCode(), required.requirement(), weight, isHeld);
+        return new ChecklistItem(
+                required.documentCode(), required.requirement(), weight,
+                statusOf(required.documentCode(), held, unknown));
+    }
+
+    /** 보유가 '모름'을 이긴다 — 양쪽에 체크된 모순 입력은 보유로 본다. */
+    private ChecklistStatus statusOf(
+            DocumentCode code, Set<DocumentCode> held, Set<DocumentCode> unknown) {
+        if (held.contains(code)) {
+            return ChecklistStatus.HELD;
+        }
+        return unknown.contains(code) ? ChecklistStatus.UNKNOWN : ChecklistStatus.MISSING;
     }
 }

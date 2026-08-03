@@ -6,6 +6,7 @@ import com.certimakers.diagnosis.domain.model.BodyContactType;
 import com.certimakers.diagnosis.domain.model.CertificationCandidate;
 import com.certimakers.diagnosis.domain.model.CertificationType;
 import com.certimakers.diagnosis.domain.model.ChecklistItem;
+import com.certimakers.diagnosis.domain.model.ChecklistStatus;
 import com.certimakers.diagnosis.domain.model.ControllerStatus;
 import com.certimakers.diagnosis.domain.model.TemperatureSource;
 import com.certimakers.diagnosis.domain.model.DegradedFlags;
@@ -80,7 +81,7 @@ public class DiagnosisMapper {
         ElectricalSpec electrical = profile.electrical();
         HeatingSpec heating = profile.heating();
 
-        return new ProductProfileEntity(
+        ProductProfileEntity entity = new ProductProfileEntity(
                 profile.productName(),
                 profile.productGroup().name(),
                 electrical.usesElectricity(),
@@ -112,6 +113,9 @@ public class DiagnosisMapper {
                 heating != null ? heating.temperatureLimitDevice() : null,
                 profile.manufacturingType().name(),
                 profile.modifiedModel());
+        entity.setUnknownDocuments(JsonColumns.writeStringList(
+                profile.unknownDocuments().stream().map(DocumentCode::value).toList()));
+        return entity;
     }
 
     private CertificationCandidateEntity toCandidateEntity(CertificationCandidate candidate) {
@@ -123,7 +127,8 @@ public class DiagnosisMapper {
 
     private ChecklistItemEntity toChecklistEntity(ChecklistItem item) {
         return new ChecklistItemEntity(
-                item.documentCode().value(), item.requirement().name(), item.weight(), item.held());
+                item.documentCode().value(), item.requirement().name(), item.weight(),
+                item.status().name());
     }
 
     private LabelingCheckItemEntity toLabelingEntity(LabelingCheckItem item) {
@@ -218,6 +223,9 @@ public class DiagnosisMapper {
                 SalesChannel.valueOf(entity.getSalesChannel()),
                 materials,
                 heldDocuments,
+                JsonColumns.readStringList(entity.getUnknownDocuments()).stream()
+                        .map(DocumentCode::of)
+                        .collect(Collectors.toUnmodifiableSet()),
                 entity.getManufacturingType() != null
                         ? ManufacturingType.valueOf(entity.getManufacturingType())
                         : ManufacturingType.UNKNOWN,
@@ -247,7 +255,7 @@ public class DiagnosisMapper {
                 DocumentCode.of(entity.getDocumentCode()),
                 Requirement.valueOf(entity.getRequirement()),
                 entity.getWeight(),
-                entity.isHeld());
+                ChecklistStatus.valueOf(entity.getStatus()));
     }
 
     private LabelingCheckItem toLabelingItem(LabelingCheckItemEntity entity) {
