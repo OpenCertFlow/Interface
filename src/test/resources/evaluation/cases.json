@@ -1,0 +1,212 @@
+[
+  {
+    "id": "NORMAL-01",
+    "category": "정상",
+    "description": "필수 서류를 대부분 보유한 모발건조기 — 후보·점수·체크리스트가 모두 나온다",
+    "request": {
+      "productName": "가정용 헤어드라이어",
+      "productGroup": "SMALL_APPLIANCE",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 1200,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["PLASTIC"],
+      "heldDocuments": ["TEST_REPORT", "BIZ_LICENSE", "CIRCUIT_DIAGRAM"]
+    },
+    "expect": {
+      "minCandidates": 1,
+      "scoreApplicable": true,
+      "minScore": 1,
+      "unknownDocuments": 0
+    }
+  },
+  {
+    "id": "NORMAL-02",
+    "category": "정상",
+    "description": "보유 서류가 하나도 없는 모발건조기 — 점수는 산정되지만 낮고 누락이 잡힌다",
+    "request": {
+      "productName": "저가형 헤어드라이어",
+      "productGroup": "SMALL_APPLIANCE",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 800,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["PLASTIC"],
+      "heldDocuments": []
+    },
+    "expect": {
+      "minCandidates": 1,
+      "scoreApplicable": true,
+      "maxScore": 0,
+      "unknownDocuments": 0
+    }
+  },
+  {
+    "id": "UNKNOWN-DOC-01",
+    "category": "모름",
+    "description": "시험성적서 보유 여부를 '모름'으로 체크 — 보유로도 미보유로도 해석하지 않는다",
+    "request": {
+      "productName": "헤어드라이어(자료 미확인)",
+      "productGroup": "SMALL_APPLIANCE",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 1000,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["PLASTIC"],
+      "heldDocuments": ["BIZ_LICENSE"],
+      "unknownDocuments": ["TEST_REPORT"]
+    },
+    "expect": {
+      "minCandidates": 1,
+      "scoreApplicable": true,
+      "unknownDocuments": 1
+    }
+  },
+  {
+    "id": "UNKNOWN-SPEC-01",
+    "category": "미확인",
+    "description": "전기방석 최고 표면온도를 모름으로 입력 — 임의 판정 대신 전문가 확인으로 전환",
+    "request": {
+      "productName": "일반 보온용 전기방석",
+      "productGroup": "ELECTRIC_HEATING_PAD",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 60,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["TEXTILE"],
+      "heldDocuments": [],
+      "bodyContactType": "DIRECT_SKIN",
+      "controllerStatus": "UNKNOWN",
+      "temperatureSource": "UNKNOWN",
+      "medicalUseClaim": false
+    },
+    "expect": {
+      "minCandidates": 1,
+      "minExpertReviewItems": 1
+    }
+  },
+  {
+    "id": "CONTRADICTION-01",
+    "category": "모순",
+    "description": "같은 서류를 보유와 모름 양쪽에 체크 — 보유가 우선하고 확인 중으로 중복 계상하지 않는다",
+    "request": {
+      "productName": "헤어드라이어(모순 입력)",
+      "productGroup": "SMALL_APPLIANCE",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 1000,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["PLASTIC"],
+      "heldDocuments": ["TEST_REPORT"],
+      "unknownDocuments": ["TEST_REPORT"]
+    },
+    "expect": {
+      "minCandidates": 1,
+      "unknownDocuments": 0
+    }
+  },
+  {
+    "id": "CONTRADICTION-02",
+    "category": "모순",
+    "description": "전기를 쓰지 않는다면서 정격전압을 보냄 — 전기 사양이 무시되고 후보가 잡히지 않는다",
+    "request": {
+      "productName": "수동 빗",
+      "productGroup": "SMALL_APPLIANCE",
+      "usesElectricity": false,
+      "ratedVoltage": 220,
+      "powerConsumption": 1000,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["PLASTIC"],
+      "heldDocuments": []
+    },
+    "expect": {
+      "scoreApplicable": false
+    }
+  },
+  {
+    "id": "NO-EVIDENCE-01",
+    "category": "근거부족",
+    "description": "색인에 해당 제품군 문서가 없는 상태 — 근거 0건이 응답에 표시되어야 한다",
+    "request": {
+      "productName": "일반 보온용 전기방석(근거 없음)",
+      "productGroup": "ELECTRIC_HEATING_PAD",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 60,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["TEXTILE"],
+      "heldDocuments": [],
+      "bodyContactType": "DIRECT_SKIN",
+      "controllerStatus": "PRESENT",
+      "temperatureSource": "MEASURED",
+      "maxSurfaceTemperature": 45,
+      "medicalUseClaim": false
+    },
+    "expect": {
+      "minCandidates": 1,
+      "evidenceDegradedWhenEmpty": true
+    }
+  },
+  {
+    "id": "AI-DOWN-01",
+    "category": "AI 장애",
+    "description": "AI 워커가 없어도 규칙 결과와 준비도는 유효하다 — 진단 자체는 성공해야 한다",
+    "request": {
+      "productName": "헤어드라이어(AI 장애 가정)",
+      "productGroup": "SMALL_APPLIANCE",
+      "usesElectricity": true,
+      "ratedVoltage": 220,
+      "powerConsumption": 1200,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": ["PLASTIC"],
+      "heldDocuments": ["TEST_REPORT"]
+    },
+    "expect": {
+      "minCandidates": 1,
+      "scoreApplicable": true
+    }
+  },
+  {
+    "id": "INVALID-01",
+    "category": "권한오류",
+    "description": "존재하지 않는 제품군 — 400으로 거절하고 임의 해석하지 않는다",
+    "request": {
+      "productName": "테스트",
+      "productGroup": "NOT_A_GROUP",
+      "usesElectricity": false,
+      "hasBattery": false,
+      "targetUser": "GENERAL",
+      "salesChannel": "ONLINE",
+      "materials": [],
+      "heldDocuments": []
+    },
+    "expect": {
+      "httpStatus": 400
+    }
+  },
+  {
+    "id": "INVALID-02",
+    "category": "권한오류",
+    "description": "존재하지 않는 진단 조회 — 404. 남의 자원을 짐작해 열어 주지 않는다",
+    "lookupOnly": "999999999",
+    "expect": {
+      "httpStatus": 404
+    }
+  }
+]
