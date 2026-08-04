@@ -9,6 +9,7 @@ import com.certimakers.diagnosis.application.DiagnosisPolicy;
 import com.certimakers.diagnosis.application.port.in.DiagnoseCommand;
 import com.certimakers.diagnosis.application.port.in.DiagnoseProductUseCase;
 import com.certimakers.diagnosis.application.port.out.AiFallbackSwitchPort;
+import com.certimakers.diagnosis.application.port.out.DiagnosisMetricsPort;
 import com.certimakers.diagnosis.application.port.out.EvidenceQuery;
 import com.certimakers.diagnosis.application.port.out.LoadRuleSetPort;
 import com.certimakers.diagnosis.application.port.out.LoadScoreRubricPort;
@@ -28,6 +29,7 @@ import com.certimakers.diagnosis.domain.service.ScoreCalculator;
 import com.certimakers.diagnosis.domain.service.ScoreResult;
 import com.certimakers.diagnosis.domain.service.ScoreRubric;
 import com.certimakers.diagnosis.domain.service.TemplateNarrator;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -59,6 +61,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
     private final NarrateReportPort narrateReportPort;
     private final SaveDiagnosisPort saveDiagnosisPort;
     private final AiFallbackSwitchPort aiFallbackSwitch;
+    private final DiagnosisMetricsPort metrics;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
@@ -71,6 +74,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
             NarrateReportPort narrateReportPort,
             SaveDiagnosisPort saveDiagnosisPort,
             AiFallbackSwitchPort aiFallbackSwitch,
+            DiagnosisMetricsPort metrics,
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider,
@@ -81,6 +85,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         this.narrateReportPort = narrateReportPort;
         this.saveDiagnosisPort = saveDiagnosisPort;
         this.aiFallbackSwitch = aiFallbackSwitch;
+        this.metrics = metrics;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -104,7 +109,14 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
                 .flatMap(this::attachEvidence)                     // ③ 근거 (폴백)
                 .flatMap(this::attachNarration)                    // ④ 문장화 (폴백)
                 .map(this::complete)
-                .flatMap(this::persist);                           // ⑤ 저장 (폴백 없음)
+                .flatMap(this::persist)                            // ⑤ 저장 (폴백 없음)
+                // 지표는 흐름 밖에서 붙인다. 재는 일이 진단을 바꾸지 않아야 한다.
+                .elapsed()
+                .doOnNext(timed -> metrics.diagnosisCompleted(
+                        timed.getT2(), Duration.ofMillis(timed.getT1())))
+                .map(reactor.util.function.Tuple2::getT2)
+                .doOnError(error -> metrics.diagnosisFailed(
+                        group.name(), error.getClass().getSimpleName()));
     }
 
     /** ② 룰 평가와 점수 산정. 순수 함수. 이 시점에 판정이 확정된다. */

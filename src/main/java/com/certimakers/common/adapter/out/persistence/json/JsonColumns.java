@@ -29,6 +29,28 @@ public final class JsonColumns {
         }
     }
 
+    /** 임의 객체 목록을 jsonb 문자열로. 룰 트레이스처럼 구조가 있는 값에 쓴다. */
+    public static String write(Object value) {
+        try {
+            return MAPPER.writeValueAsString(value);
+        } catch (Exception e) {
+            throw new BusinessException(CommonErrorCode.INTERNAL_ERROR, "JSON 직렬화 실패", java.util.Map.of(), e);
+        }
+    }
+
+    /** {@link #write}로 저장한 목록을 되돌린다. 빈 값·잘못된 값은 빈 목록으로 본다. */
+    public static <T> List<T> readList(String json, Class<T> elementType) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return MAPPER.readValue(json, MAPPER.getTypeFactory()
+                    .constructCollectionType(List.class, elementType));
+        } catch (Exception e) {
+            throw new BusinessException(CommonErrorCode.INTERNAL_ERROR, "JSON 역직렬화 실패", java.util.Map.of(), e);
+        }
+    }
+
     public static List<String> readStringList(String json) {
         if (json == null || json.isBlank()) {
             return List.of();

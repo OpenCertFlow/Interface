@@ -39,6 +39,17 @@ public class OfficialDocumentEntity {
     @Column(name = "source_url", nullable = false)
     private String sourceUrl;
 
+    /** 마지막으로 확인한 원문 본문의 SHA-256. 아직 한 번도 못 가져왔으면 null. */
+    @Column(name = "content_hash")
+    private String contentHash;
+
+    @Column(name = "content_checked_at")
+    private Instant contentCheckedAt;
+
+    /** 해시가 달라진 것을 감지한 시각. 관리자가 재검토를 마치면 비운다. */
+    @Column(name = "change_detected_at")
+    private Instant changeDetectedAt;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
@@ -110,5 +121,32 @@ public class OfficialDocumentEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getContentHash() {
+        return contentHash;
+    }
+
+    public Instant getContentCheckedAt() {
+        return contentCheckedAt;
+    }
+
+    public Instant getChangeDetectedAt() {
+        return changeDetectedAt;
+    }
+
+    /** 원문을 확인한 결과를 반영한다. 해시가 달라졌으면 감지 시각을 남긴다. */
+    public void recordContentCheck(String hash, Instant checkedAt) {
+        boolean changed = contentHash != null && hash != null && !contentHash.equals(hash);
+        this.contentHash = hash;
+        this.contentCheckedAt = checkedAt;
+        if (changed) {
+            this.changeDetectedAt = checkedAt;
+        }
+    }
+
+    /** 관리자가 재검토를 마쳤다. 변경 표시를 지운다. */
+    public void clearChangeFlag() {
+        this.changeDetectedAt = null;
     }
 }

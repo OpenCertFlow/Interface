@@ -5,6 +5,7 @@ import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
 import com.certimakers.consulting.application.port.in.ConsultingMessageUseCase;
+import com.certimakers.consulting.application.port.in.ExportBriefingPdfQuery;
 import com.certimakers.consulting.application.port.in.ConsultingMessageUseCase.MessageView;
 import com.certimakers.consulting.application.port.in.ManageConsultingUseCase;
 import com.certimakers.consulting.application.port.in.ManageConsultingUseCase.LeadDetail;
@@ -12,7 +13,11 @@ import com.certimakers.consulting.application.port.in.ManageConsultingUseCase.Le
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,13 +41,17 @@ public class ConsultingManagementController {
 
     private final ManageConsultingUseCase manageConsultingUseCase;
     private final ConsultingMessageUseCase consultingMessageUseCase;
+    private final ExportBriefingPdfQuery exportBriefingPdfQuery;
     private final TimeProvider timeProvider;
 
     public ConsultingManagementController(
             ManageConsultingUseCase manageConsultingUseCase,
-            ConsultingMessageUseCase consultingMessageUseCase, TimeProvider timeProvider) {
+            ConsultingMessageUseCase consultingMessageUseCase,
+            ExportBriefingPdfQuery exportBriefingPdfQuery,
+            TimeProvider timeProvider) {
         this.manageConsultingUseCase = manageConsultingUseCase;
         this.consultingMessageUseCase = consultingMessageUseCase;
+        this.exportBriefingPdfQuery = exportBriefingPdfQuery;
         this.timeProvider = timeProvider;
     }
 
@@ -104,6 +113,24 @@ public class ConsultingManagementController {
     public record MessageRequest(
             @NotBlank(message = "메시지 종류가 필요합니다.") String kind,
             @NotBlank(message = "메시지 내용이 필요합니다.") String body) {
+    }
+
+    /**
+     * 상담 준비 브리핑 PDF(F-WCON-012).
+     *
+     * <p>진단 리포트 PDF는 소공인용이고 이것은 컨설턴트용이다. "무엇이 부족한가 → 왜 그렇게
+     * 판정됐는가 → 무엇을 물어야 하는가" 순으로 담아 상담 첫 5분을 줄이는 것이 목적이다.
+     */
+    @GetMapping(value = "/{id}/briefing.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public Mono<ResponseEntity<byte[]>> briefingPdf(@PathVariable String id) {
+        return exportBriefingPdfQuery.render(id).map(bytes -> ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(bytes.length)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename("상담브리핑-" + id + ".pdf", StandardCharsets.UTF_8)
+                                .build().toString())
+                .body(bytes));
     }
 
     private Mono<String> currentUserId() {

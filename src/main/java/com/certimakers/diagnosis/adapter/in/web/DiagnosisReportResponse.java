@@ -17,6 +17,7 @@ public record DiagnosisReportResponse(
         List<String> labelingChecks,
         List<ExpertReviewView> expertReviewItems,
         List<EvidenceView> evidences,
+        List<RuleTraceView> ruleTraces,
         NarrationView narration,
         DegradedView degraded) {
 
@@ -44,6 +45,21 @@ public record DiagnosisReportResponse(
     }
 
     public record ExpertReviewView(String question, String reason) {
+    }
+
+    /**
+     * 룰이 발동한 이유. "R-EH-001이 걸렸다"가 아니라 "전기 사용=예, 신체접촉=직접피부여서 걸렸다"를
+     * 보여 주기 위한 것이다(기획서 3.2 설명가능성).
+     */
+    public record RuleTraceView(
+            String ruleCode, int priority, List<FactView> facts, List<String> effects) {
+    }
+
+    /**
+     * @param negated 부정 조건으로 만족했는지. "직접 접촉이 아닐 것"처럼 읽어야 하는 경우 참
+     */
+    public record FactView(
+            String attribute, String operator, String expected, String actual, boolean negated) {
     }
 
     public record EvidenceView(String sectionType, String snippet, String sourceUrl, double relevance) {

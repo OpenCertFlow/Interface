@@ -62,8 +62,24 @@ public interface ManageRuleSetUseCase {
                     String description) {
     }
 
-    /** 검증 결과. {@code valid}가 참이면 배포 가능. */
-    record ValidationResult(boolean valid, List<RuleIssue> issues) {
+    /**
+     * 검증 결과.
+     *
+     * @param valid       문법 오류와 정합성 ERROR가 모두 없으면 참. 배포 가능 여부다
+     * @param issues      문법(파싱) 오류
+     * @param consistency 의미 검사 결과. WARNING은 배포를 막지 않는다
+     */
+    record ValidationResult(
+            boolean valid, List<RuleIssue> issues, List<ConsistencyIssue> consistency) {
+
+        /** 정합성 검사가 없던 호출부를 그대로 두기 위한 생성자. */
+        public ValidationResult(boolean valid, List<RuleIssue> issues) {
+            this(valid, issues, List.of());
+        }
+    }
+
+    /** @param severity ERROR면 배포를 막는다. WARNING은 알리기만 한다 */
+    record ConsistencyIssue(String severity, String ruleCode, String kind, String message) {
     }
 
     /** 룰 하나의 검증 오류. {@code ruleCode}가 어느 룰인지 가리킨다. */

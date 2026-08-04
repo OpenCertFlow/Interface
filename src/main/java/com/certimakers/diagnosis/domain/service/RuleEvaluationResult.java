@@ -5,6 +5,7 @@ import com.certimakers.diagnosis.domain.model.CertificationCandidate;
 import com.certimakers.diagnosis.domain.model.ExpertReviewItem;
 import com.certimakers.diagnosis.domain.model.LabelingCheckItem;
 import com.certimakers.diagnosis.domain.rule.RuleCode;
+import com.certimakers.diagnosis.domain.rule.RuleTrace;
 import com.certimakers.diagnosis.domain.rule.RuleSetVersion;
 import java.util.List;
 import java.util.Set;
@@ -20,13 +21,15 @@ import java.util.stream.Collectors;
  * @param requiredDocuments 요구 서류 (가중치·보유 여부 미결합)
  * @param labelingChecks   표시·라벨링 확인 항목
  * @param expertReviewItems 전문가 확인 필요 항목
+ * @param traces           발동한 룰과 그 이유. 결과를 되짚기 위한 기록이다
  */
 public record RuleEvaluationResult(
         RuleSetVersion ruleSetVersion,
         List<CertificationCandidate> candidates,
         List<RequiredDocument> requiredDocuments,
         List<LabelingCheckItem> labelingChecks,
-        List<ExpertReviewItem> expertReviewItems) {
+        List<ExpertReviewItem> expertReviewItems,
+        List<RuleTrace> traces) {
 
     public RuleEvaluationResult {
         Guard.notNull(ruleSetVersion, "ruleSetVersion");
@@ -34,6 +37,18 @@ public record RuleEvaluationResult(
         requiredDocuments = List.copyOf(Guard.notNull(requiredDocuments, "requiredDocuments"));
         labelingChecks = List.copyOf(Guard.notNull(labelingChecks, "labelingChecks"));
         expertReviewItems = List.copyOf(Guard.notNull(expertReviewItems, "expertReviewItems"));
+        traces = traces == null ? List.of() : List.copyOf(traces);
+    }
+
+    /** 트레이스 개념이 없던 호출부·테스트를 그대로 두기 위한 생성자. */
+    public RuleEvaluationResult(
+            RuleSetVersion ruleSetVersion,
+            List<CertificationCandidate> candidates,
+            List<RequiredDocument> requiredDocuments,
+            List<LabelingCheckItem> labelingChecks,
+            List<ExpertReviewItem> expertReviewItems) {
+        this(ruleSetVersion, candidates, requiredDocuments, labelingChecks,
+                expertReviewItems, List.of());
     }
 
     public boolean hasCandidate() {

@@ -18,7 +18,26 @@ public interface RuleDefinitionValidatorPort {
     record Definition(String ruleCode, String conditionJson, String effectsJson) {
     }
 
+    /**
+     * 파싱은 되지만 <b>의미가 깨진</b> 룰을 찾는다. 절대 발동하지 않는 조건, 중복 코드,
+     * 완전히 같은 조건, 효과 없는 룰, 아무도 쓰지 않는 입력 속성.
+     *
+     * <p>파싱에 실패한 룰은 여기서 건너뛴다 — 문법 오류는 {@link #validate}가 이미 보고했고,
+     * 같은 룰을 두 번 지적하면 어느 쪽을 먼저 고쳐야 할지 흐려진다.
+     */
+    List<ConsistencyIssue> checkConsistency(List<Definition> definitions);
+
     /** 파싱 실패 항목. */
     record Issue(String ruleCode, String message) {
+    }
+
+    /**
+     * 정합성 문제 하나.
+     *
+     * @param severity {@code ERROR}면 룰이 의도대로 동작하지 않는다. {@code WARNING}은 유지보수 위험
+     * @param ruleCode 대상 룰. 비어 있으면 룰셋 전체에 대한 지적
+     * @param kind     문제 종류 (UNSATISFIABLE · DUPLICATE_CODE · DUPLICATE_CONDITION 등)
+     */
+    record ConsistencyIssue(String severity, String ruleCode, String kind, String message) {
     }
 }
