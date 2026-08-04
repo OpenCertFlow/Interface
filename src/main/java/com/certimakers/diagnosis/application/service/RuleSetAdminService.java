@@ -4,6 +4,7 @@ import com.certimakers.common.application.annotation.UseCase;
 import com.certimakers.common.application.support.BlockingBridge;
 import com.certimakers.common.domain.error.BusinessException;
 import com.certimakers.diagnosis.application.port.in.ManageRuleSetUseCase;
+import com.certimakers.diagnosis.application.port.in.ManageRuleSetUseCase.ConsistencyIssue;
 import com.certimakers.diagnosis.application.port.out.RuleDefinitionValidatorPort;
 import com.certimakers.diagnosis.application.port.out.RuleDefinitionValidatorPort.Definition;
 import com.certimakers.diagnosis.application.port.out.RuleDefinitionValidatorPort.Issue;
@@ -70,7 +71,7 @@ public class RuleSetAdminService implements ManageRuleSetUseCase {
             ValidationResult result = runValidation(command.rules());
             if (!result.valid()) {
                 throw BusinessException.invalid(
-                        "룰 정의가 올바르지 않습니다: " + describe(result.issues()));
+                        "룰 정의가 올바르지 않습니다: " + describeAll(result));
             }
             return productGroup;
         }).flatMap(productGroup -> blockingBridge.mono(() -> {
@@ -106,7 +107,25 @@ public class RuleSetAdminService implements ManageRuleSetUseCase {
         List<RuleIssue> mapped = issues.stream()
                 .map(i -> new RuleIssue(i.ruleCode(), i.message()))
                 .toList();
-        return new ValidationResult(mapped.isEmpty(), mapped);
+
+        // 문법이 맞아도 의미가 깨진 룰은 통과시키지 않는다. ERROR는 배포를 막고 WARNING은 알린다.
+        List<ConsistencyIssue> consistency = validator.checkConsistency(definitions).stream()
+                .map(i -> new ConsistencyIssue(i.severity(), i.ruleCode(), i.kind(), i.message()))
+                .toList();
+        boolean blocking = consistency.stream().anyMatch(i -> "ERROR".equals(i.severity()));
+
+        return new ValidationResult(mapped.isEmpty() && !blocking, mapped, consistency);
+    }
+
+    /** 배포를 막은 이유를 한 줄로 모은다. 문법 오류와 정합성 ERROR를 함께 보여 준다. */
+    private String describeAll(ValidationResult result) {
+        List<String> reasons = new java.util.ArrayList<>();
+        result.issues().forEach(i -> reasons.add(i.ruleCode() + ": " + i.message()));
+        result.consistency().stream()
+                .filter(i -> "ERROR".equals(i.severity()))
+                .forEach(i -> reasons.add(
+                        (i.ruleCode().isBlank() ? "룰셋" : i.ruleCode()) + ": " + i.message()));
+        return String.join(" / ", reasons);
     }
 
     private ProductGroup parseProductGroup(String raw) {
@@ -120,10 +139,4 @@ public class RuleSetAdminService implements ManageRuleSetUseCase {
         }
     }
 
-    private String describe(List<RuleIssue> issues) {
-        return issues.stream()
-                .map(i -> "[%s] %s".formatted(i.ruleCode(), i.message()))
-                .reduce((a, b) -> a + "; " + b)
-                .orElse("");
-    }
 }

@@ -1,6 +1,9 @@
 package com.certimakers.diagnosis.adapter.out.persistence.rule;
 
 import com.certimakers.diagnosis.application.port.out.RuleDefinitionValidatorPort;
+import com.certimakers.diagnosis.domain.rule.Rule;
+import com.certimakers.diagnosis.domain.rule.RuleCode;
+import com.certimakers.diagnosis.domain.rule.RuleConsistencyChecker;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -28,6 +31,27 @@ public class RuleDefinitionValidatorAdapter implements RuleDefinitionValidatorPo
             validateOne(definition, issues);
         }
         return issues;
+    }
+
+    @Override
+    public List<ConsistencyIssue> checkConsistency(List<Definition> definitions) {
+        List<Rule> parsed = new ArrayList<>();
+        for (Definition definition : definitions) {
+            try {
+                parsed.add(new Rule(
+                        RuleCode.of(definition.ruleCode()),
+                        0, // 우선순위는 정합성 판단에 쓰이지 않는다
+                        codec.parseCondition(definition.conditionJson()),
+                        codec.parseEffects(definition.effectsJson())));
+            } catch (RuntimeException e) {
+                // 문법 오류는 validate()가 이미 보고했다. 여기서 또 지적하지 않는다.
+            }
+        }
+        return RuleConsistencyChecker.check(parsed).stream()
+                .map(finding -> new ConsistencyIssue(
+                        finding.severity().name(), finding.ruleCode(),
+                        finding.kind(), finding.message()))
+                .toList();
     }
 
     private void validateOne(Definition definition, List<Issue> issues) {
