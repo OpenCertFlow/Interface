@@ -14,10 +14,13 @@ import com.certimakers.diagnosis.domain.rule.Effect;
 import com.certimakers.diagnosis.domain.rule.FlagExpertReview;
 import com.certimakers.diagnosis.domain.rule.RequireDocument;
 import com.certimakers.diagnosis.domain.rule.Rule;
+import com.certimakers.diagnosis.domain.rule.ConditionExplainer;
 import com.certimakers.diagnosis.domain.rule.RuleCode;
+import com.certimakers.diagnosis.domain.rule.RuleTrace;
 import com.certimakers.diagnosis.domain.rule.RuleSet;
 import com.certimakers.diagnosis.domain.model.DocumentCode;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,11 +48,18 @@ public class RuleEvaluator {
         var labelingAccumulator = new LabelingAccumulator();
         // (question, reason) 조합으로 중복 제거하되 삽입 순서를 유지한다.
         Set<ExpertReviewItem> expertReviewItems = new LinkedHashSet<>();
+        List<RuleTrace> traces = new ArrayList<>();
 
         for (Rule rule : ruleSet.inPriorityOrder()) {
             if (!rule.matches(profile)) {
                 continue;
             }
+            // 왜 이 룰이 켜졌는지를 결과와 함께 남긴다. 룰 코드만으로는 "왜"에 답할 수 없다(기획서 3.2).
+            traces.add(new RuleTrace(
+                    rule.code().value(),
+                    rule.priority(),
+                    ConditionExplainer.explain(rule.condition(), profile),
+                    describeEffects(rule.effects())));
             for (Effect effect : rule.effects()) {
                 applyEffect(effect, rule.code(), candidateAccumulator, documents,
                         labelingAccumulator, expertReviewItems);
@@ -70,7 +80,30 @@ public class RuleEvaluator {
                 candidates,
                 toRequiredDocuments(documents),
                 labelingAccumulator.toItems(),
-                List.copyOf(expertReviewItems));
+                List.copyOf(expertReviewItems),
+                List.copyOf(traces));
+    }
+
+    /**
+     * 효과를 사람이 읽을 수 있는 한 줄로 옮긴다. 화면과 상담 브리핑에 그대로 쓰이므로 코드가 아니라
+     * 문장으로 만든다 — 컨설턴트도 소공인도 {@code REQUIRE_DOCUMENT}를 읽고 싶어 하지 않는다.
+     */
+    private List<String> describeEffects(List<Effect> effects) {
+        List<String> described = new ArrayList<>(effects.size());
+        for (Effect effect : effects) {
+            if (effect instanceof AddCandidate add) {
+                described.add("인증 검토 후보 추가: " + add.schemeCode().value()
+                        + " (" + add.type().name() + ")");
+            } else if (effect instanceof RequireDocument require) {
+                described.add("서류 요구: " + require.documentCode().value()
+                        + " (" + require.requirement().name() + ")");
+            } else if (effect instanceof AddLabelingCheck label) {
+                described.add("표시·라벨 확인: " + label.label());
+            } else if (effect instanceof FlagExpertReview flag) {
+                described.add("전문가 확인 필요: " + flag.question());
+            }
+        }
+        return described;
     }
 
     private void applyEffect(

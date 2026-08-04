@@ -8,6 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,11 @@ public class DiagnosisEntity {
 
     @Column(name = "rule_set_id")
     private Long ruleSetId;
+
+    /** 발동한 룰과 그 이유(RuleTrace 목록)를 직렬화해 둔다. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "rule_trace", nullable = false)
+    private String ruleTrace = "[]";
 
     @Column(name = "rule_set_version")
     private Integer ruleSetVersion;
@@ -227,5 +234,13 @@ public class DiagnosisEntity {
 
     public List<EvidenceEntity> getEvidences() {
         return evidences;
+    }
+
+    public void setRuleTrace(String ruleTrace) {
+        this.ruleTrace = ruleTrace == null ? "[]" : ruleTrace;
+    }
+
+    public String getRuleTrace() {
+        return ruleTrace == null ? "[]" : ruleTrace;
     }
 }

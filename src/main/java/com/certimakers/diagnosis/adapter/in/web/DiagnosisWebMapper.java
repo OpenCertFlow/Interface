@@ -211,6 +211,7 @@ public class DiagnosisWebMapper {
                                 evidence.sectionType(), evidence.snippet(),
                                 evidence.sourceUrl().toString(), evidence.relevance()))
                         .toList(),
+                diagnosis.ruleTraces().stream().map(this::toRuleTraceView).toList(),
                 diagnosis.narration().map(this::toNarrationView).orElse(null),
                 new DegradedView(
                         diagnosis.degraded().isEvidenceDegraded(),
@@ -249,6 +250,19 @@ public class DiagnosisWebMapper {
                 .filter(com.certimakers.diagnosis.domain.model.ChecklistItem::isUnknown).count();
         return new DiagnosisReportResponse.DocumentSummaryView(
                 checklist.size(), held, absent, unknown);
+    }
+
+    private DiagnosisReportResponse.RuleTraceView toRuleTraceView(
+            com.certimakers.diagnosis.domain.rule.RuleTrace trace) {
+        return new DiagnosisReportResponse.RuleTraceView(
+                trace.ruleCode(),
+                trace.priority(),
+                trace.facts().stream()
+                        .map(fact -> new DiagnosisReportResponse.FactView(
+                                fact.attribute(), fact.operator(), fact.expected(),
+                                fact.actual(), fact.negated()))
+                        .toList(),
+                trace.effects());
     }
 
     private NarrationView toNarrationView(com.certimakers.diagnosis.domain.model.Narration narration) {

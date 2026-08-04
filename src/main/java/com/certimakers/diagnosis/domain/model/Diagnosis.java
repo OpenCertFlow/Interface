@@ -5,6 +5,7 @@ import com.certimakers.common.domain.model.AggregateRoot;
 import com.certimakers.common.domain.model.Guard;
 import com.certimakers.diagnosis.domain.error.DiagnosisErrorCode;
 import com.certimakers.diagnosis.domain.rule.RuleSetVersion;
+import com.certimakers.diagnosis.domain.rule.RuleTrace;
 import com.certimakers.diagnosis.domain.service.RuleEvaluationResult;
 import com.certimakers.diagnosis.domain.service.ScoreResult;
 import java.time.Instant;
@@ -42,6 +43,8 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
     private final List<ChecklistItem> checklist = new ArrayList<>();
     private final List<LabelingCheckItem> labelingChecks = new ArrayList<>();
     private final List<ExpertReviewItem> expertReviewItems = new ArrayList<>();
+    /** 발동한 룰과 그 이유. 룰셋이 개정돼도 이 진단의 근거는 남아야 한다. */
+    private final List<RuleTrace> ruleTraces = new ArrayList<>();
     private final List<Evidence> evidences = new ArrayList<>();
     private Narration narration;
     private final DegradedFlags degraded = new DegradedFlags();
@@ -105,8 +108,32 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
             List<Evidence> evidences,
             Narration narration,
             DegradedFlags degraded) {
+        return reconstitute(id, profile, ownerUserId, previousDiagnosisId, createdAt, status,
+                ruleSetVersion, score, candidates, checklist, labelingChecks, expertReviewItems,
+                evidences, narration, degraded, List.of());
+    }
+
+    /** 룰 트레이스까지 복원하는 형태. 트레이스가 없던 시절의 데이터는 위 오버로드로 들어온다. */
+    public static Diagnosis reconstitute(
+            DiagnosisId id,
+            ProductProfile profile,
+            String ownerUserId,
+            DiagnosisId previousDiagnosisId,
+            Instant createdAt,
+            DiagnosisStatus status,
+            RuleSetVersion ruleSetVersion,
+            ReadinessScore score,
+            List<CertificationCandidate> candidates,
+            List<ChecklistItem> checklist,
+            List<LabelingCheckItem> labelingChecks,
+            List<ExpertReviewItem> expertReviewItems,
+            List<Evidence> evidences,
+            Narration narration,
+            DegradedFlags degraded,
+            List<RuleTrace> ruleTraces) {
 
         Diagnosis diagnosis = new Diagnosis(id, profile, ownerUserId, previousDiagnosisId, createdAt);
+        diagnosis.ruleTraces.addAll(ruleTraces == null ? List.of() : ruleTraces);
         diagnosis.status = Guard.notNull(status, "status");
         diagnosis.ruleSetVersion = ruleSetVersion;
         diagnosis.score = score;
@@ -141,6 +168,7 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
         this.checklist.addAll(scoreResult.checklist());
         this.labelingChecks.addAll(ruleResult.labelingChecks());
         this.expertReviewItems.addAll(ruleResult.expertReviewItems());
+        this.ruleTraces.addAll(ruleResult.traces());
         this.score = scoreResult.score();
         this.status = DiagnosisStatus.RULE_EVALUATED;
     }
@@ -229,6 +257,10 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
 
     public List<LabelingCheckItem> labelingChecks() {
         return Collections.unmodifiableList(labelingChecks);
+    }
+
+    public List<RuleTrace> ruleTraces() {
+        return Collections.unmodifiableList(ruleTraces);
     }
 
     public List<ExpertReviewItem> expertReviewItems() {

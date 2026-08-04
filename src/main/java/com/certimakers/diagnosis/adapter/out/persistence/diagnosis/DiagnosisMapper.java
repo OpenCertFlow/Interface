@@ -31,6 +31,7 @@ import com.certimakers.diagnosis.domain.model.SalesChannel;
 import com.certimakers.diagnosis.domain.model.SchemeCode;
 import com.certimakers.diagnosis.domain.model.TargetUser;
 import com.certimakers.diagnosis.domain.rule.RuleCode;
+import com.certimakers.diagnosis.domain.rule.RuleTrace;
 import com.certimakers.diagnosis.domain.rule.RuleSetVersion;
 import java.net.URI;
 import java.util.List;
@@ -66,6 +67,7 @@ public class DiagnosisMapper {
                 // DiagnosisId(값 객체) → Long(컬럼). 없으면 null이 그대로 들어간다.
                 diagnosis.previousDiagnosisId().map(DiagnosisId::value).orElse(null));
 
+        entity.setRuleTrace(JsonColumns.write(diagnosis.ruleTraces()));
         entity.attachProfile(toProfileEntity(diagnosis.profile()));
         entity.attachCandidates(diagnosis.candidates().stream().map(this::toCandidateEntity).toList());
         entity.attachChecklist(diagnosis.checklist().stream().map(this::toChecklistEntity).toList());
@@ -176,7 +178,8 @@ public class DiagnosisMapper {
                 entity.getExpertReviewItems().stream().map(this::toExpertItem).toList(),
                 entity.getEvidences().stream().map(this::toEvidence).toList(),
                 entity.getNarration() != null ? toNarration(entity.getNarration()) : null,
-                DegradedFlags.of(entity.isDegradedEvidence(), entity.isDegradedNarration()));
+                DegradedFlags.of(entity.isDegradedEvidence(), entity.isDegradedNarration()),
+                JsonColumns.readList(entity.getRuleTrace(), RuleTrace.class));
     }
 
     private ProductProfile toProfile(ProductProfileEntity entity) {
