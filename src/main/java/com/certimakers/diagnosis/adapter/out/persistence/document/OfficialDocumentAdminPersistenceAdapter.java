@@ -35,6 +35,30 @@ public class OfficialDocumentAdminPersistenceAdapter implements OfficialDocument
 
     @Override
     @Transactional
+    public void recordContentCheck(Long id, String contentHash, java.time.Instant checkedAt) {
+        repository.findById(id).ifPresent(entity -> entity.recordContentCheck(contentHash, checkedAt));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DocumentRow> findChangeDetected() {
+        return repository.findAllByOrderByCreatedAtDesc().stream()
+                .filter(entity -> entity.getChangeDetectedAt() != null)
+                .map(this::toRow)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public boolean clearChangeFlag(Long id) {
+        return repository.findById(id).map(entity -> {
+            entity.clearChangeFlag();
+            return true;
+        }).orElse(false);
+    }
+
+    @Override
+    @Transactional
     public Long register(DocumentData data) {
         OfficialDocumentEntity entity = new OfficialDocumentEntity(
                 idGenerator.nextId(), data.title(), data.issuer(), data.publishedAt(),
@@ -62,6 +86,7 @@ public class OfficialDocumentAdminPersistenceAdapter implements OfficialDocument
         return new DocumentRow(
                 entity.getId(), entity.getTitle(), entity.getIssuer(), entity.getPublishedAt(),
                 entity.getVerifiedAt(), entity.getProductGroup(), entity.getCertificationType(),
-                entity.getSchemeName(), entity.getSourceUrl(), entity.getCreatedAt());
+                entity.getSchemeName(), entity.getSourceUrl(), entity.getCreatedAt(),
+                entity.getContentCheckedAt(), entity.getChangeDetectedAt());
     }
 }

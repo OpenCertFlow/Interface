@@ -54,6 +54,12 @@ spring:
       fail-on-unknown-properties: false
 
 certimakers:
+  # 공식 문서 원문 변경 감지. 갱신은 하지 않고 감지만 한다(운영지침 9.2).
+  # 외부 사이트를 주기적으로 두드리는 동작이라 기본은 꺼 두고, 운영에서 명시적으로 켠다.
+  document-freshness:
+    enabled: ${CERTIMAKERS_DOCUMENT_FRESHNESS_ENABLED:false}
+    cron: "0 0 4 * * MON"
+
   blocking:
     jdbc-pool-size: 10           # ← spring.datasource.hikari.maximum-pool-size와 동일하게
     queue-capacity: 1000

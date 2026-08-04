@@ -16,9 +16,19 @@ public interface OfficialDocumentAdminPort {
 
     boolean update(Long id, DocumentData data);
 
+    /** 원문 확인 결과를 반영한다. 해시가 이전과 다르면 변경 감지 시각이 남는다. */
+    void recordContentCheck(Long id, String contentHash, Instant checkedAt);
+
+    /** 변경이 감지되어 재검토가 필요한 문서. 관리자 큐다. */
+    List<DocumentRow> findChangeDetected();
+
+    /** 재검토 완료 표시. 변경 플래그를 지운다. */
+    boolean clearChangeFlag(Long id);
+
     record DocumentRow(Long id, String title, String issuer, LocalDate publishedAt,
                        LocalDate verifiedAt, String productGroup, String certificationType,
-                       String schemeName, String sourceUrl, Instant createdAt) {
+                       String schemeName, String sourceUrl, Instant createdAt,
+                       Instant contentCheckedAt, Instant changeDetectedAt) {
     }
 
     record DocumentData(String title, String issuer, LocalDate publishedAt, LocalDate verifiedAt,
