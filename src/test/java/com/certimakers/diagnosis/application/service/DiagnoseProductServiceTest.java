@@ -15,6 +15,7 @@ import com.certimakers.diagnosis.application.port.out.LoadScoreRubricPort;
 import com.certimakers.diagnosis.application.port.out.NarrateReportPort;
 import com.certimakers.diagnosis.application.port.out.SaveDiagnosisPort;
 import com.certimakers.diagnosis.application.port.out.AiFallbackSwitchPort;
+import com.certimakers.diagnosis.application.port.out.DiagnosisMetricsPort;
 import com.certimakers.diagnosis.application.port.out.SearchEvidencePort;
 import com.certimakers.diagnosis.domain.error.DiagnosisErrorCode;
 import com.certimakers.diagnosis.domain.model.Diagnosis;
@@ -96,13 +97,23 @@ class DiagnoseProductServiceTest {
         }
     };
 
+    /** 지표는 이 테스트의 관심사가 아니다. 호출돼도 아무 일도 하지 않는다. */
+    private final DiagnosisMetricsPort noMetrics = new DiagnosisMetricsPort() {
+        @Override public void diagnosisCompleted(Diagnosis diagnosis, java.time.Duration elapsed) {
+        }
+        @Override public void diagnosisFailed(String productGroup, String reason) {
+        }
+        @Override public void externalCall(String target, java.time.Duration elapsed, boolean ok) {
+        }
+    };
+
     private DiagnoseProductService service(
             LoadRuleSetPort loadRuleSet,
             SearchEvidencePort search,
             NarrateReportPort narrate,
             SaveDiagnosisPort save) {
         return new DiagnoseProductService(
-                loadRuleSet, rubricDefaults, search, narrate, save, fallbackOff,
+                loadRuleSet, rubricDefaults, search, narrate, save, fallbackOff, noMetrics,
                 blockingBridge, idGenerator, timeProvider, policy);
     }
 
