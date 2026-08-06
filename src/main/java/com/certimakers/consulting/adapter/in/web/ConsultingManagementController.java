@@ -1,6 +1,7 @@
 package com.certimakers.consulting.adapter.in.web;
 
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
@@ -35,6 +36,7 @@ import reactor.core.publisher.Mono;
  * <p>배정은 요청자(현재 로그인한 컨설턴트)를 담당으로 지정한다 — 담당 id는 본문이 아니라 인증
  * 주체에서 읽는다.
  */
+@Tag(name = "상담 처리(컨설턴트)", description = "상담 배정·상태·메모·추가정보 요청")
 @WebAdapter
 @RequestMapping("/api/v1/consulting/leads")
 public class ConsultingManagementController {

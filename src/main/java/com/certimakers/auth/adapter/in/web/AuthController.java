@@ -8,6 +8,7 @@ import com.certimakers.auth.application.port.in.PasswordResetUseCase;
 import com.certimakers.auth.application.port.in.RefreshTokenUseCase;
 import com.certimakers.auth.application.port.in.SignUpUseCase;
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Mono;
  *
  * <p>요청 검증·변환과 응답 봉투 조립만 하고 비즈니스 판단은 하지 않는다(헥사고날 인바운드 어댑터).
  */
+@Tag(name = "인증", description = "회원가입·로그인·토큰 재발급·소셜 로그인")
 @WebAdapter
 @RequestMapping("/api/v1/auth")
 public class AuthController {

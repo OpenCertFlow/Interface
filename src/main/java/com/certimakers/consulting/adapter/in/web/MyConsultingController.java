@@ -1,6 +1,7 @@
 package com.certimakers.consulting.adapter.in.web;
 
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 /** 소공인의 내 상담 조회(F-APP-041). /api/v1/me/** 는 인증이 필요하다. */
+@Tag(name = "내 상담", description = "내가 신청한 상담 내역")
 @WebAdapter
 @RequestMapping("/api/v1/me/consulting-leads")
 public class MyConsultingController {

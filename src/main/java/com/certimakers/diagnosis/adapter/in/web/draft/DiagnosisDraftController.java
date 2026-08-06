@@ -1,6 +1,7 @@
 package com.certimakers.diagnosis.adapter.in.web.draft;
 
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
@@ -25,6 +26,7 @@ import reactor.core.publisher.Mono;
  * 진단 입력 초안 API(F-APP-004). 모든 경로가 로그인 사용자 본인 소유로 한정된다
  * (SecurityConfig가 인증을 강제한다).
  */
+@Tag(name = "진단 초안", description = "미완성 입력 저장·조회·수정·삭제(본인만)")
 @WebAdapter
 @RequestMapping("/api/v1/diagnoses/drafts")
 public class DiagnosisDraftController {

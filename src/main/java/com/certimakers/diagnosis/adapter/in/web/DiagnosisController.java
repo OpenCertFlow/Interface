@@ -1,6 +1,7 @@
 package com.certimakers.diagnosis.adapter.in.web;
 
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
@@ -39,6 +40,7 @@ import reactor.core.publisher.Mono;
 /**
  * 진단 API. 요청 검증·변환과 응답 봉투 조립만 하고 비즈니스 판단은 하지 않는다(헥사고날 인바운드 어댑터).
  */
+@Tag(name = "진단", description = "제품 입력→진단 실행·조회·재진단·비교·이력·삭제")
 @WebAdapter
 @RequestMapping("/api/v1/diagnoses")
 public class DiagnosisController {

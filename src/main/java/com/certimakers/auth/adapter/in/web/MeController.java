@@ -5,6 +5,7 @@ import com.certimakers.auth.application.port.in.MyProfileUseCase;
 import com.certimakers.auth.application.port.in.WithdrawAccountUseCase;
 import com.certimakers.auth.domain.error.AuthErrorCode;
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.error.BusinessException;
@@ -26,6 +27,7 @@ import reactor.core.publisher.Mono;
  * <p>사용자 식별자는 요청 본문이 아니라 인증 주체({@link Principal})에서 가져온다. 본문으로 받으면
  * 남의 userId를 넣어 다른 사람의 정보를 조회·수정할 수 있다.
  */
+@Tag(name = "마이페이지", description = "내 정보·비밀번호·로그아웃·계정 탈퇴")
 @WebAdapter
 @RequestMapping("/api/v1/me")
 public class MeController {

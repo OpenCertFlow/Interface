@@ -1,6 +1,7 @@
 package com.certimakers.consulting.adapter.in.web;
 
 import com.certimakers.common.adapter.in.web.annotation.WebAdapter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.certimakers.common.adapter.in.web.response.ApiResponse;
 import com.certimakers.common.adapter.in.web.trace.TraceId;
 import com.certimakers.common.domain.port.TimeProvider;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /** 컨설팅 연결 API. "진단 → 이해 → 보완 → 상담"의 마지막 단계(기획서). */
+@Tag(name = "상담 신청(공개)", description = "소공인 상담 접수·공개 메시지 조회")
 @WebAdapter
 @RequestMapping("/api/v1/consulting-leads")
 public class ConsultingController {
