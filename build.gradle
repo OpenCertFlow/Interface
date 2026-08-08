@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.16'
+	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	// 커버리지. 룰 엔진은 이 프로젝트의 핵심 자산이라 무엇이 검증되지 않았는지 보여야 한다.
 	id 'jacoco'
