@@ -5,9 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,13 +77,14 @@ class OpenApiSpecTest {
     void openapi_스펙이_최신이다() throws IOException {
         JsonNode live = fetchSpec();
 
-        // 정렬된 형태로 직렬화한다. 키 순서가 흔들리면 매번 diff가 나서 드리프트 검출이 무의미해진다.
+        // 키를 재귀적으로 정렬해서 쓴다.
+        //
+        // springdoc이 내보내는 키 순서는 실행마다 달라질 수 있다. 정렬하지 않으면 코드가 그대로여도
+        // 검사가 무작위로 실패하고, 그러면 팀은 이 검사를 꺼 버린다 — 드리프트 검출을 스스로
+        // 무력화하는 셈이다. (SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS는 Map에만 적용되고
+        // 이미 만들어진 ObjectNode에는 듣지 않는다.)
         String rendered = mapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(mapper.readTree(
-                        mapper.writer().withFeatures(
-                                com.fasterxml.jackson.databind.SerializationFeature
-                                        .ORDER_MAP_ENTRIES_BY_KEYS)
-                                .writeValueAsString(live)))
+                .writeValueAsString(sortKeys(live))
                 + System.lineSeparator();
 
         if (UPDATE) {
@@ -101,6 +107,30 @@ class OpenApiSpecTest {
     /** 줄바꿈 차이(CRLF/LF)로 실패하지 않게 한다. 그건 드리프트가 아니다. */
     private String normalize(String json) {
         return json.replace("\r\n", "\n").trim();
+    }
+
+    /**
+     * 객체의 키를 재귀적으로 사전순 정렬한 사본을 만든다.
+     *
+     * <p>배열의 순서는 건드리지 않는다 — OpenAPI에서 배열 순서는 의미를 갖는 경우가 있고
+     * (파라미터 순서 등), 정렬하면 실제 변경을 가려 버린다.
+     */
+    private JsonNode sortKeys(JsonNode node) {
+        if (node.isObject()) {
+            List<String> names = new ArrayList<>();
+            node.fieldNames().forEachRemaining(names::add);
+            Collections.sort(names);
+
+            ObjectNode sorted = mapper.createObjectNode();
+            names.forEach(name -> sorted.set(name, sortKeys(node.get(name))));
+            return sorted;
+        }
+        if (node.isArray()) {
+            ArrayNode copy = mapper.createArrayNode();
+            node.forEach(element -> copy.add(sortKeys(element)));
+            return copy;
+        }
+        return node;
     }
 
     private JsonNode fetchSpec() {

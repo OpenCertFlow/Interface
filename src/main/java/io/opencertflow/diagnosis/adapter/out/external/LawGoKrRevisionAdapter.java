@@ -3,6 +3,7 @@ package io.opencertflow.diagnosis.adapter.out.external;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.opencertflow.common.adapter.out.external.annotation.ExternalAdapter;
 import io.opencertflow.diagnosis.application.port.out.LawRevisionPort;
+import java.net.URI;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -69,7 +70,15 @@ public class LawGoKrRevisionAdapter implements LawRevisionPort {
         }
     }
 
-    private String searchUri(String lawName) {
+    /**
+     * 검색 요청 URI.
+     *
+     * <p><b>{@link URI}로 돌려주는 것이 중요하다.</b> 같은 값을 {@code String}으로 넘기면 WebClient가
+     * 이미 퍼센트 인코딩된 문자열을 한 번 더 인코딩해({@code %EC} → {@code %25EC}) 법령명이 깨지고,
+     * 서버는 조용히 "검색 결과 0건"을 돌려준다 — 오류가 아니라 빈 결과라서 원인을 찾기 어렵다.
+     * {@code URI} 오버로드는 값을 그대로 쓴다.
+     */
+    private URI searchUri(String lawName) {
         return UriComponentsBuilder.fromUriString(properties.baseUrl())
                 .path("/DRF/lawSearch.do")
                 .queryParam("OC", properties.oc())
@@ -79,7 +88,7 @@ public class LawGoKrRevisionAdapter implements LawRevisionPort {
                 .queryParam("query", lawName)
                 .build()
                 .encode()
-                .toUriString();
+                .toUri();
     }
 
     /**
@@ -104,7 +113,27 @@ public class LawGoKrRevisionAdapter implements LawRevisionPort {
                 text(first, "공포번호", null),
                 date(first, "공포일자"),
                 date(first, "시행일자"),
-                text(first, "법령상세링크", null)));
+                publicLink(first)));
+    }
+
+    /**
+     * 사람이 열어 볼 수 있는 국가법령정보센터 링크를 만든다.
+     *
+     * <p><b>응답의 {@code 법령상세링크}를 그대로 쓰면 안 된다.</b> 그 값은
+     * {@code /DRF/lawService.do?OC=<우리 인증키>&MST=...} 형태로 <b>인증키를 포함</b>한다.
+     * 저장하거나 화면에 노출하는 순간 키가 함께 새어 나간다.
+     *
+     * <p>대신 법령일련번호로 공개 페이지 주소를 조립한다. 키가 없고, 로그인 없이 열리며,
+     * 시행일자를 붙이면 그 시점의 조문을 보여 준다.
+     */
+    private String publicLink(JsonNode law) {
+        String sequence = text(law, "법령일련번호", null);
+        if (sequence == null) {
+            return null;
+        }
+        String effective = text(law, "시행일자", null);
+        String link = properties.baseUrl() + "/lsInfoP.do?lsiSeq=" + sequence;
+        return effective == null ? link : link + "&efYd=" + effective;
     }
 
     private String text(JsonNode node, String field, String fallback) {
