@@ -74,6 +74,15 @@ opencertflow:
     oc: ${OPENCERTFLOW_LAW_OC:}
     base-url: https://www.law.go.kr
 
+  # 제품안전정보센터(safetykorea) KC 인증 등록 현황. 룰의 인증 등급 근거를 확인할 때 쓴다.
+  # 인증키는 자동 발급이 아니다 — safetykorea.kr/release/openapi2 에서 신청서를 받아
+  # safetykorea@korea.kr 로 보내면 승인 후 이메일로 온다. 키가 없으면 조용히 꺼진다.
+  # 인증은 쿼리 파라미터가 아니라 AuthKey 헤더로 보낸다.
+  safetykorea:
+    enabled: ${OPENCERTFLOW_SAFETYKOREA_ENABLED:false}
+    auth-key: ${OPENCERTFLOW_SAFETYKOREA_KEY:}
+    base-url: https://www.safetykorea.kr
+
   blocking:
     jdbc-pool-size: 10           # ← spring.datasource.hikari.maximum-pool-size와 동일하게
     queue-capacity: 1000
