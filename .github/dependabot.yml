@@ -1,12 +1,58 @@
+# Dependabot 설정.
+#
+# 기본 설정으로 두면 의존성 하나마다 PR이 하나씩 열린다. 이 저장소에서 실제로 5개가 동시에
+# 열렸고, 그중 3개는 메이저 업그레이드라 그대로 머지할 수 없는 것이었다. 검토할 수 없는 양의
+# PR은 결국 아무도 보지 않게 되고, 그러면 정작 중요한 보안 패치도 함께 묻힌다.
+#
+# 그래서 두 가지를 건다.
+#   1. 묶는다(groups)   — 패치·마이너를 주 1회 PR 하나로 모은다
+#   2. 메이저는 뺀다     — 프레임워크 메이저 업그레이드는 마이그레이션 작업이지 의존성 갱신이 아니다
 version: 2
 updates:
-- package-ecosystem: gradle
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    # 묶어서 올리므로 여러 개가 열릴 이유가 없다.
+    open-pull-requests-limit: 3
+    commit-message:
+      # 저장소 커밋 규칙(TYPE: 내용)에 맞춘다.
+      prefix: "CHORE"
+    groups:
+      # 패치·마이너는 한 PR로. 대부분 그대로 머지된다.
+      gradle-minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+      # 보안 패치는 묶더라도 즉시 열리고, 메이저여도 올라온다.
+      gradle-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      # 메이저는 Dependabot이 열지 않는다. 아래는 실제로 막힌 사유이며,
+      # 해소되면 이 항목을 지우고 별도 마이그레이션 PR로 진행한다.
+      #
+      # - Spring Boot 4.x: BOM에서 Testcontainers 버전 관리가 빠져 testCompileClasspath가 깨진다.
+      #                    springdoc 3.x와 함께 올려야 하는 커플링도 있다.
+      # - springdoc 3.x  : Spring Boot 4 전용.
+      # - openPdf 3.x    : 클래스 파일 버전 65(Java 21) — 이 프로젝트는 Java 17이다.
+      #                    패키지도 com.lowagie → org.openpdf로 바뀐다.
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "CHORE"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
