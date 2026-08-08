@@ -5,12 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: certimakers-backend
+    container_name: opencertflow-backend
     environment:
       # 컨테이너 네트워크에서는 호스트가 서비스명이다(localhost 아님).
-      DB_URL: jdbc:postgresql://postgres:5432/certimakers
-      DB_USERNAME: certimakers
-      DB_PASSWORD: certimakers
+      DB_URL: jdbc:postgresql://postgres:5432/opencertflow
+      DB_USERNAME: opencertflow
+      DB_PASSWORD: opencertflow
       REDIS_HOST: redis
       REDIS_PORT: 6379
       # AI 워커가 없어도 진단은 성립한다(DegradedFlags 폴백) — 하드 의존하지 않는다.
@@ -27,25 +27,25 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: certimakers-postgres
+    container_name: opencertflow-postgres
     environment:
-      POSTGRES_DB: certimakers
-      POSTGRES_USER: certimakers
-      POSTGRES_PASSWORD: certimakers
+      POSTGRES_DB: opencertflow
+      POSTGRES_USER: opencertflow
+      POSTGRES_PASSWORD: opencertflow
       TZ: UTC
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U certimakers -d certimakers"]
+      test: ["CMD-SHELL", "pg_isready -U opencertflow -d opencertflow"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: certimakers-redis
+    container_name: opencertflow-redis
     ports:
       - "6379:6379"
     volumes:
@@ -58,7 +58,7 @@ services:
 
   qdrant:
     image: qdrant/qdrant:latest
-    container_name: certimakers-qdrant
+    container_name: opencertflow-qdrant
     ports:
       - "6333:6333"   # REST
       - "6334:6334"   # gRPC
@@ -66,15 +66,15 @@ services:
       - qdrant-data:/qdrant/storage
 
   ai-worker:
-    # AI 워커는 별도 저장소(CertiMakers/MiddleWare)에서 빌드·배포된다.
+    # AI 워커는 별도 저장소(OpenCertFlow/MiddleWare)에서 빌드·배포된다.
     # 로컬 풀스택 실행 시에는 그 저장소에서 이미지를 빌드해 태그를 맞춘다:
-    #   (MiddleWare) docker build -t certimakers/ai-worker:latest .
-    image: certimakers/ai-worker:latest
-    container_name: certimakers-ai-worker
+    #   (MiddleWare) docker build -t opencertflow/ai-worker:latest .
+    image: opencertflow/ai-worker:latest
+    container_name: opencertflow-ai-worker
     environment:
       # 키가 없으면 문장화는 템플릿으로 폴백한다. 운영에서는 반드시 주입.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CERTIMAKERS_QDRANT_URL: http://qdrant:6333
+      OPENCERTFLOW_QDRANT_URL: http://qdrant:6333
     ports:
       - "8000:8000"
     depends_on:
