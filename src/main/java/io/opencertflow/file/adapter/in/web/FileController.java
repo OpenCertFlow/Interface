@@ -1,5 +1,6 @@
 package io.opencertflow.file.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -61,7 +62,7 @@ public class FileController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<ApiResponse<FileResponses.Uploaded>>> upload(
             @RequestPart("file") FilePart filePart,
-            Mono<Principal> principal) {
+            @Parameter(hidden = true) Mono<Principal> principal) {
 
         return principal.map(Principal::getName)
                 .flatMap(ownerId -> uploadFileUseCase.upload(new UploadFileUseCase.UploadCommand(
@@ -85,7 +86,7 @@ public class FileController {
      */
     @GetMapping("/{id}")
     public Mono<ResponseEntity<Flux<DataBuffer>>> download(
-            @PathVariable String id, Mono<Authentication> authentication) {
+            @PathVariable String id, @Parameter(hidden = true) Mono<Authentication> authentication) {
 
         return authentication
                 .flatMap(auth -> downloadFileQuery.download(id, auth.getName(), hasAdminRole(auth)))
@@ -100,7 +101,7 @@ public class FileController {
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<Void>>> delete(
-            @PathVariable String id, Mono<Authentication> authentication) {
+            @PathVariable String id, @Parameter(hidden = true) Mono<Authentication> authentication) {
 
         return authentication
                 .flatMap(auth -> deleteFileUseCase.delete(new DeleteFileUseCase.DeleteCommand(

@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.draft;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
@@ -45,7 +46,7 @@ public class DiagnosisDraftController {
 
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<DraftResponse>>> create(
-            @Valid @RequestBody DraftRequest request, Mono<Principal> principal) {
+            @Valid @RequestBody DraftRequest request, @Parameter(hidden = true) Mono<Principal> principal) {
         return userId(principal)
                 .flatMap(owner -> draftUseCase.create(
                         owner, request.productGroup(), request.input().toString()))
@@ -53,7 +54,7 @@ public class DiagnosisDraftController {
     }
 
     @GetMapping
-    public Mono<ResponseEntity<ApiResponse<List<DraftResponse>>>> listMine(Mono<Principal> principal) {
+    public Mono<ResponseEntity<ApiResponse<List<DraftResponse>>>> listMine(@Parameter(hidden = true) Mono<Principal> principal) {
         return userId(principal)
                 .flatMap(draftUseCase::listMine)
                 .flatMap(drafts -> {
@@ -66,7 +67,7 @@ public class DiagnosisDraftController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<DraftResponse>>> get(
-            @PathVariable long id, Mono<Principal> principal) {
+            @PathVariable long id, @Parameter(hidden = true) Mono<Principal> principal) {
         return userId(principal)
                 .flatMap(owner -> draftUseCase.get(id, owner))
                 .flatMap(draft -> wrap(draft, HttpStatus.OK));
@@ -75,7 +76,7 @@ public class DiagnosisDraftController {
     @PutMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<DraftResponse>>> update(
             @PathVariable long id, @Valid @RequestBody DraftRequest request,
-            Mono<Principal> principal) {
+            @Parameter(hidden = true) Mono<Principal> principal) {
         return userId(principal)
                 .flatMap(owner -> draftUseCase.update(
                         id, owner, request.productGroup(), request.input().toString()))
@@ -84,7 +85,7 @@ public class DiagnosisDraftController {
 
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<Void>>> delete(
-            @PathVariable long id, Mono<Principal> principal) {
+            @PathVariable long id, @Parameter(hidden = true) Mono<Principal> principal) {
         return userId(principal)
                 .flatMap(owner -> draftUseCase.delete(id, owner))
                 .then(TraceId.current().map(traceId -> ResponseEntity.status(HttpStatus.NO_CONTENT)

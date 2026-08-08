@@ -1,5 +1,6 @@
 package io.opencertflow.document.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -50,7 +51,7 @@ public class DocumentController {
     @PostMapping("/issues")
     public Mono<ResponseEntity<ApiResponse<DocumentResponses.Issued>>> issue(
             @Valid @RequestBody DocumentRequests.Issue request,
-            Mono<Principal> principal) {
+            @Parameter(hidden = true) Mono<Principal> principal) {
 
         return principal.map(Principal::getName)
                 .flatMap(issuerId -> documentUseCase.issue(new DocumentUseCase.IssueCommand(
@@ -61,7 +62,7 @@ public class DocumentController {
 
     @GetMapping("/issues")
     public Mono<ResponseEntity<ApiResponse<List<DocumentResponses.IssuedSummary>>>> myDocuments(
-            Mono<Principal> principal,
+            @Parameter(hidden = true) Mono<Principal> principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
@@ -76,7 +77,7 @@ public class DocumentController {
     @GetMapping("/issues/{documentId}")
     public Mono<ResponseEntity<ApiResponse<DocumentResponses.IssuedDetail>>> get(
             @PathVariable String documentId,
-            Mono<Authentication> authentication) {
+            @Parameter(hidden = true) Mono<Authentication> authentication) {
 
         return authentication
                 .flatMap(auth -> documentUseCase.get(documentId, auth.getName(), hasAdminRole(auth)))

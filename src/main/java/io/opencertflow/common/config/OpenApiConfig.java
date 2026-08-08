@@ -6,8 +6,11 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import java.security.Principal;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.Authentication;
 
 /**
  * API 명세는 산출물 목록에 포함되어 있다. 코드에서 자동 생성하여 문서와 구현이 어긋나지 않게 한다.
@@ -21,6 +24,20 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     private static final String BEARER_SCHEME = "bearerAuth";
+
+    static {
+        // 프레임워크가 주입하는 인증 객체를 명세에서 제외한다.
+        //
+        // springdoc은 컨트롤러의 {@code Principal}·{@code Authentication} 파라미터를 클라이언트가
+        // 채워야 하는 <b>쿼리 파라미터</b>로 오해해 명세에 넣는다. 그러면 Swagger UI에 존재하지
+        // 않는 입력란이 뜨고, 생성된 SDK에는 아무도 쓸 수 없는 인자가 생긴다.
+        //
+        // <p><b>이 설정만으로는 부족하다.</b> 이 프로젝트의 컨트롤러는 대부분 {@code Mono<Principal>}
+        // 형태로 받는데, springdoc은 그 리액티브 래퍼를 벗기지 않아 여기 등록한 타입과 매칭하지
+        // 못한다. 그래서 해당 파라미터에는 {@code @Parameter(hidden = true)}를 직접 붙였다.
+        // 여기 등록은 래핑되지 않은 경우를 위한 것이다.
+        SpringDocUtils.getConfig().addRequestWrapperToIgnore(Principal.class, Authentication.class);
+    }
 
     @Bean
     public OpenAPI openCertFlowOpenApi() {

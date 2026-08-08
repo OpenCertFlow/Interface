@@ -1,5 +1,6 @@
 package io.opencertflow.auth.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.auth.application.port.in.LogoutUseCase;
 import io.opencertflow.auth.application.port.in.MyProfileUseCase;
 import io.opencertflow.auth.application.port.in.WithdrawAccountUseCase;
@@ -50,7 +51,7 @@ public class MeController {
 
     @GetMapping
     public Mono<ResponseEntity<ApiResponse<AuthResponses.Profile>>> getProfile(
-            Mono<Principal> principal) {
+            @Parameter(hidden = true) Mono<Principal> principal) {
 
         return currentUserId(principal)
                 .flatMap(myProfileUseCase::getProfile)
@@ -60,7 +61,7 @@ public class MeController {
 
     @PatchMapping("/nickname")
     public Mono<ResponseEntity<ApiResponse<AuthResponses.Profile>>> updateNickname(
-            Mono<Principal> principal,
+            @Parameter(hidden = true) Mono<Principal> principal,
             @Valid @RequestBody AuthRequests.UpdateNickname request) {
 
         return currentUserId(principal)
@@ -72,7 +73,7 @@ public class MeController {
 
     @PatchMapping("/password")
     public Mono<ResponseEntity<ApiResponse<Void>>> changePassword(
-            Mono<Principal> principal,
+            @Parameter(hidden = true) Mono<Principal> principal,
             @Valid @RequestBody AuthRequests.ChangePassword request) {
 
         return currentUserId(principal)
@@ -88,7 +89,7 @@ public class MeController {
      */
     @DeleteMapping("/session")
     public Mono<ResponseEntity<ApiResponse<Void>>> logout(
-            Mono<Principal> principal, @Valid @RequestBody AuthRequests.Logout request) {
+            @Parameter(hidden = true) Mono<Principal> principal, @Valid @RequestBody AuthRequests.Logout request) {
         return currentUserId(principal)
                 .flatMap(userId -> logoutUseCase.logout(userId, request.refreshToken()))
                 .then(wrap(null, HttpStatus.NO_CONTENT));
@@ -96,7 +97,7 @@ public class MeController {
 
     /** 계정 탈퇴(F-AUTH-018). 계정을 삭제하고 세션을 폐기한다. 인증 주체 본인만 자신을 지운다. */
     @DeleteMapping
-    public Mono<ResponseEntity<ApiResponse<Void>>> withdraw(Mono<Principal> principal) {
+    public Mono<ResponseEntity<ApiResponse<Void>>> withdraw(@Parameter(hidden = true) Mono<Principal> principal) {
         return currentUserId(principal)
                 .flatMap(withdrawAccountUseCase::withdraw)
                 .then(wrap(null, HttpStatus.NO_CONTENT));

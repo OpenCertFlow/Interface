@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
@@ -88,7 +89,7 @@ public class DiagnosisController {
      */
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> diagnose(
-            @Valid @RequestBody DiagnoseRequest request, Mono<Authentication> authentication) {
+            @Valid @RequestBody DiagnoseRequest request, @Parameter(hidden = true) Mono<Authentication> authentication) {
         ProductProfile profile = webMapper.toProfile(request);
         return authentication
                 .filter(auth -> auth.isAuthenticated()
@@ -109,7 +110,7 @@ public class DiagnosisController {
     /** 내 진단 이력 목록(F-APP-032). 로그인 사용자 본인의 진단만 최신순으로. */
     @GetMapping("/mine")
     public Mono<ResponseEntity<ApiResponse<java.util.List<DiagnosisSummaryResponse>>>> listMine(
-            Mono<Principal> principal) {
+            @Parameter(hidden = true) Mono<Principal> principal) {
         return currentUserId(principal)
                 .flatMap(diagnosisHistoryUseCase::listMine)
                 .flatMap(summaries -> {
@@ -129,7 +130,7 @@ public class DiagnosisController {
     public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> rediagnose(
             @PathVariable Long id,
             @Valid @RequestBody DiagnoseRequest request,
-            Mono<Principal> principal) {
+            @Parameter(hidden = true) Mono<Principal> principal) {
         ProductProfile updated = webMapper.toProfile(request);
         return currentUserId(principal)
                 .flatMap(userId ->
@@ -140,7 +141,7 @@ public class DiagnosisController {
     /** 재진단 화면 프리필용 이전 입력 조회(F-APP-034). 본인 소유만. */
     @GetMapping("/{id}/input")
     public Mono<ResponseEntity<ApiResponse<DiagnoseRequest>>> getInput(
-            @PathVariable Long id, Mono<Principal> principal) {
+            @PathVariable Long id, @Parameter(hidden = true) Mono<Principal> principal) {
         return currentUserId(principal)
                 .flatMap(userId -> getDiagnosisInputQuery.getInput(DiagnosisId.of(id), userId))
                 .map(webMapper::toRequest)
@@ -151,7 +152,7 @@ public class DiagnosisController {
     /** 재진단 결과 비교(F-APP-048). 원 진단은 서버가 previous_id로 찾는다(본인 소유만). */
     @GetMapping("/{id}/compare")
     public Mono<ResponseEntity<ApiResponse<DiagnosisComparisonResponse>>> compare(
-            @PathVariable Long id, Mono<Principal> principal) {
+            @PathVariable Long id, @Parameter(hidden = true) Mono<Principal> principal) {
         return currentUserId(principal)
                 .flatMap(userId -> compareDiagnosisQuery.compare(DiagnosisId.of(id), userId))
                 .map(DiagnosisComparisonResponse::from)
@@ -162,7 +163,7 @@ public class DiagnosisController {
     /** 진단 삭제(F-APP-035). 본인 소유 진단만 지운다. */
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<Void>>> delete(
-            @PathVariable Long id, Mono<Principal> principal) {
+            @PathVariable Long id, @Parameter(hidden = true) Mono<Principal> principal) {
         return currentUserId(principal)
                 .flatMap(userId -> diagnosisHistoryUseCase.delete(DiagnosisId.of(id), userId))
                 .then(TraceId.current().map(traceId -> ResponseEntity.status(HttpStatus.NO_CONTENT)
