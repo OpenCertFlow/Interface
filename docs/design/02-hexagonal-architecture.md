@@ -77,8 +77,8 @@ flowchart LR
 ## 2.3 패키지 구조
 
 ```
-backend/src/main/java/com/certimakers/
-├── CertiMakersApplication.java
+backend/src/main/java/io/opencertflow/
+├── OpenCertFlowApplication.java
 │
 ├── common/                        ← 이번 단계에서 구현
 │   ├── domain/

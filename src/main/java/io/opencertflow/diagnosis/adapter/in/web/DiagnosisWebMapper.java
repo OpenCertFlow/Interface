@@ -1,0 +1,273 @@
+package io.opencertflow.diagnosis.adapter.in.web;
+
+import io.opencertflow.common.domain.error.BusinessException;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.CandidateView;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ChecklistView;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.DegradedView;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.EvidenceView;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ExpertReviewView;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.NarrationView;
+import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ScoreView;
+import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
+import io.opencertflow.diagnosis.domain.model.BodyContactType;
+import io.opencertflow.diagnosis.domain.model.ControllerStatus;
+import io.opencertflow.diagnosis.domain.model.Diagnosis;
+import io.opencertflow.diagnosis.domain.model.DocumentCode;
+import io.opencertflow.diagnosis.domain.model.ElectricalSpec;
+import io.opencertflow.diagnosis.domain.model.HeatingSpec;
+import io.opencertflow.diagnosis.domain.model.TemperatureSource;
+import io.opencertflow.diagnosis.domain.model.ManufacturingType;
+import io.opencertflow.diagnosis.domain.model.MaterialType;
+import io.opencertflow.diagnosis.domain.model.ProductGroup;
+import io.opencertflow.diagnosis.domain.model.ProductProfile;
+import io.opencertflow.diagnosis.domain.model.ReadinessScore;
+import io.opencertflow.diagnosis.domain.model.SalesChannel;
+import io.opencertflow.diagnosis.domain.model.TargetUser;
+import io.opencertflow.diagnosis.domain.rule.RuleCode;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Component;
+
+/**
+ * 웹 DTO ↔ 도메인 변환. 문자열을 enum으로 옮기는 것이 이 어댑터의 책임이다.
+ *
+ * <p>잘못된 enum 문자열은 여기서 {@code VALIDATION} 오류로 바뀐다 — 도메인까지 내려가 모호한
+ * 예외가 되기 전에 사용자가 고칠 수 있는 메시지를 준다.
+ */
+@Component
+public class DiagnosisWebMapper {
+
+    // ── 요청 → 도메인 ─────────────────────────────────────────────
+
+    public ProductProfile toProfile(DiagnoseRequest request) {
+        boolean usesElectricity = request.usesElectricity();
+        ElectricalSpec electrical = new ElectricalSpec(
+                usesElectricity,
+                usesElectricity ? request.ratedVoltage() : null,
+                usesElectricity ? request.powerConsumption() : null,
+                request.hasBattery());
+
+        return new ProductProfile(
+                request.productName(),
+                parse(ProductGroup.class, request.productGroup(), "productGroup"),
+                electrical,
+                toHeatingSpec(request),
+                parse(TargetUser.class, request.targetUser(), "targetUser"),
+                parse(SalesChannel.class, request.salesChannel(), "salesChannel"),
+                request.materials().stream()
+                        .map(value -> parse(MaterialType.class, value, "materials"))
+                        .collect(Collectors.toUnmodifiableSet()),
+                request.heldDocuments().stream()
+                        .map(DocumentCode::of)
+                        .collect(Collectors.toUnmodifiableSet()),
+                request.unknownDocuments().stream()
+                        .map(DocumentCode::of)
+                        .collect(Collectors.toUnmodifiableSet()),
+                // 제조형태·변경모델은 선택 입력이다. 미입력이면 '모름'·false로 두어 기존 요청과 호환.
+                request.manufacturingType() == null || request.manufacturingType().isBlank()
+                        ? ManufacturingType.UNKNOWN
+                        : parse(ManufacturingType.class, request.manufacturingType(), "manufacturingType"),
+                Boolean.TRUE.equals(request.isModifiedModel()));
+    }
+
+    /**
+     * 저장된 입력을 진단 요청 형태로 되돌린다(재진단 화면 프리필용).
+     *
+     * <p>{@code toProfile}의 역이다. 응답 형태를 요청 DTO와 같게 두면 앱이 받은 값을 그대로
+     * 폼에 채우고 다시 제출할 수 있어, 두 형태가 어긋날 일이 없다.
+     */
+    public DiagnoseRequest toRequest(ProductProfile profile) {
+        ElectricalSpec electrical = profile.electrical();
+        HeatingSpec heating = profile.heating();
+        return new DiagnoseRequest(
+                profile.productName(),
+                profile.productGroup().name(),
+                electrical.usesElectricity(),
+                electrical.ratedVoltage(),
+                electrical.powerConsumption(),
+                electrical.hasBattery(),
+                profile.targetUser().name(),
+                profile.salesChannel().name(),
+                profile.materials().stream().map(Enum::name).toList(),
+                profile.heldDocuments().stream().map(DocumentCode::value).toList(),
+                profile.unknownDocuments().stream().map(DocumentCode::value).toList(),
+                profile.manufacturingType().name(),
+                profile.modifiedModel(),
+                // 발열 사양은 제품군에 따라 없을 수 있다 — null 안전하게 꺼낸다.
+                heating != null ? heating.bodyContactType().name() : null,
+                heating != null ? heating.controllerStatus().name() : null,
+                heating != null ? heating.adjustmentSteps() : null,
+                heating != null && heating.adjustmentMode() != null
+                        ? heating.adjustmentMode().name() : null,
+                heating != null ? heating.maxSurfaceTemperatureCelsius() : null,
+                heating != null ? heating.temperatureSource().name() : null,
+                heating != null ? heating.medicalUseClaim() : null,
+                heating != null ? heating.autoShutOff() : null,
+                heating != null ? heating.autoShutOffMinutes() : null,
+                heating != null ? heating.overheatProtection() : null,
+                heating != null ? heating.temperatureLimitDevice() : null,
+                heating != null ? heating.removableCover() : null,
+                heating != null ? heating.washable() : null,
+                heating != null ? heating.separableElectricParts() : null,
+                heating != null ? heating.hasSeparateAdapter() : null,
+                heating != null ? heating.adapterExternallyAttached() : null,
+                heating != null ? heating.adapterCertified() : null);
+    }
+
+    /**
+     * 발열 사양을 만든다. 관련 입력이 하나도 없으면 발열 제품이 아닌 것으로 보고 null을 준다.
+     *
+     * <p>불리언 두 항목은 발열 제품이라면 답이 있어야 하므로, 누락 시 false로 채우지 않고
+     * 명시적으로 요구한다 — "모른다"를 "아니다"로 바꾸면 화상 위험 판단이 조용히 뒤집힌다.
+     */
+    private HeatingSpec toHeatingSpec(DiagnoseRequest request) {
+        if (!request.hasHeatingInput()) {
+            return null;
+        }
+        // 발열 제품이라면 신체접촉 방식·온도조절기·온도출처와 안전·세탁 항목은 답이 있어야 한다.
+        // 누락 시 기본값으로 뭉개지 않고 명시적으로 요구한다 — "모름"을 "없음"으로 바꾸면 판정이 뒤집힌다.
+        BodyContactType bodyContactType = parse(
+                BodyContactType.class, request.bodyContactType(), "bodyContactType");
+        ControllerStatus controllerStatus = parse(
+                ControllerStatus.class, request.controllerStatus(), "controllerStatus");
+        TemperatureSource temperatureSource = parse(
+                TemperatureSource.class, request.temperatureSource(), "temperatureSource");
+        requireBoolean(request.medicalUseClaim(), "의료적 표현 여부");
+        requireBoolean(request.autoShutOff(), "자동 전원 차단 여부");
+        requireBoolean(request.overheatProtection(), "과열 방지 여부");
+        requireBoolean(request.temperatureLimitDevice(), "온도제한장치 여부");
+        requireBoolean(request.removableCover(), "커버 분리 가능 여부");
+
+        // 조절 방식은 온도조절기가 있을 때만 요구한다. 없거나 모름이면 null이어야 불변식을 지킨다.
+        AdjustmentMode adjustmentMode = null;
+        if (controllerStatus == ControllerStatus.PRESENT) {
+            adjustmentMode = parse(AdjustmentMode.class, request.adjustmentMode(), "온도 조절 방식");
+        }
+        requireBoolean(request.washable(), "세탁 가능 여부");
+        requireBoolean(request.separableElectricParts(), "전기부 분리 가능 여부");
+        requireBoolean(request.hasSeparateAdapter(), "별도 어댑터 사용 여부");
+
+        // 어댑터 세부 항목은 어댑터가 있을 때만 요구한다. 없으면 null이어야 HeatingSpec 불변식을 지킨다.
+        Boolean adapterExternallyAttached = null;
+        Boolean adapterCertified = null;
+        if (Boolean.TRUE.equals(request.hasSeparateAdapter())) {
+            requireBoolean(request.adapterExternallyAttached(), "어댑터 외장 여부");
+            requireBoolean(request.adapterCertified(), "어댑터 인증 여부");
+            adapterExternallyAttached = request.adapterExternallyAttached();
+            adapterCertified = request.adapterCertified();
+        }
+
+        // 조절단계·자동꺼짐 시간·표면온도와 출처의 짝 규칙은 HeatingSpec 생성자가 강제한다.
+        // 위반 시 도메인의 IllegalArgumentException을 400 메시지로 바꿔 사용자가 고칠 수 있게 한다.
+        try {
+            return new HeatingSpec(
+                    bodyContactType, controllerStatus, request.adjustmentSteps(),
+                    request.maxSurfaceTemperatureCelsius(), temperatureSource,
+                    request.medicalUseClaim(), request.autoShutOff(), request.autoShutOffMinutes(),
+                    request.overheatProtection(), request.removableCover(), request.washable(),
+                    request.separableElectricParts(), request.hasSeparateAdapter(),
+                    adapterExternallyAttached, adapterCertified,
+                    adjustmentMode, request.temperatureLimitDevice());
+        } catch (IllegalArgumentException e) {
+            throw BusinessException.invalid(e.getMessage());
+        }
+    }
+
+    private void requireBoolean(Boolean value, String label) {
+        if (value == null) {
+            throw BusinessException.invalid("발열 제품은 %s을(를) 입력해야 합니다.".formatted(label));
+        }
+    }
+
+    private <E extends Enum<E>> E parse(Class<E> type, String raw, String field) {
+        if (raw == null || raw.isBlank()) {
+            throw BusinessException.invalid("%s 값이 필요합니다.".formatted(field));
+        }
+        try {
+            return Enum.valueOf(type, raw);
+        } catch (IllegalArgumentException e) {
+            throw BusinessException.invalid(
+                    "%s 값이 올바르지 않습니다: %s".formatted(field, raw));
+        }
+    }
+
+    // ── 도메인 → 응답 ─────────────────────────────────────────────
+
+    public DiagnosisReportResponse toResponse(Diagnosis diagnosis) {
+        return new DiagnosisReportResponse(
+                diagnosis.id().value().toString(),
+                diagnosis.status().name(),
+                toScoreView(diagnosis.score()),
+                diagnosis.candidates().stream().map(this::toCandidateView).toList(),
+                diagnosis.checklist().stream().map(this::toChecklistView).toList(),
+                diagnosis.remediationOrder().stream().map(this::toChecklistView).toList(),
+                toDocumentSummary(diagnosis.checklist()),
+                diagnosis.labelingChecks().stream().map(item -> item.label()).toList(),
+                diagnosis.expertReviewItems().stream()
+                        .map(item -> new ExpertReviewView(item.question(), item.reason().name()))
+                        .toList(),
+                diagnosis.evidences().stream()
+                        .map(evidence -> new EvidenceView(
+                                evidence.sectionType(), evidence.snippet(),
+                                evidence.sourceUrl().toString(), evidence.relevance()))
+                        .toList(),
+                diagnosis.ruleTraces().stream().map(this::toRuleTraceView).toList(),
+                diagnosis.narration().map(this::toNarrationView).orElse(null),
+                new DegradedView(
+                        diagnosis.degraded().isEvidenceDegraded(),
+                        diagnosis.degraded().isNarrationDegraded()));
+    }
+
+    private ScoreView toScoreView(ReadinessScore score) {
+        if (score == null) {
+            return new ScoreView(false, 0, 0, 0);
+        }
+        return new ScoreView(
+                score.applicable(), score.percentage(), score.earnedWeight(), score.totalWeight());
+    }
+
+    private CandidateView toCandidateView(
+            io.opencertflow.diagnosis.domain.model.CertificationCandidate candidate) {
+        List<String> rules = candidate.matchedRules().stream()
+                .map(RuleCode::value).sorted().toList();
+        return new CandidateView(candidate.schemeCode().value(), candidate.type().name(), rules);
+    }
+
+    private ChecklistView toChecklistView(
+            io.opencertflow.diagnosis.domain.model.ChecklistItem item) {
+        return new ChecklistView(
+                item.documentCode().value(), item.requirement().name(), item.weight(),
+                item.status().name());
+    }
+
+    private DiagnosisReportResponse.DocumentSummaryView toDocumentSummary(
+            java.util.List<io.opencertflow.diagnosis.domain.model.ChecklistItem> checklist) {
+        int held = (int) checklist.stream()
+                .filter(io.opencertflow.diagnosis.domain.model.ChecklistItem::held).count();
+        int absent = (int) checklist.stream()
+                .filter(io.opencertflow.diagnosis.domain.model.ChecklistItem::isAbsent).count();
+        int unknown = (int) checklist.stream()
+                .filter(io.opencertflow.diagnosis.domain.model.ChecklistItem::isUnknown).count();
+        return new DiagnosisReportResponse.DocumentSummaryView(
+                checklist.size(), held, absent, unknown);
+    }
+
+    private DiagnosisReportResponse.RuleTraceView toRuleTraceView(
+            io.opencertflow.diagnosis.domain.rule.RuleTrace trace) {
+        return new DiagnosisReportResponse.RuleTraceView(
+                trace.ruleCode(),
+                trace.priority(),
+                trace.facts().stream()
+                        .map(fact -> new DiagnosisReportResponse.FactView(
+                                fact.attribute(), fact.operator(), fact.expected(),
+                                fact.actual(), fact.negated()))
+                        .toList(),
+                trace.effects());
+    }
+
+    private NarrationView toNarrationView(io.opencertflow.diagnosis.domain.model.Narration narration) {
+        return new NarrationView(
+                narration.summary(), narration.nextActions(), narration.preConsultQuestions(),
+                narration.disclaimer(), narration.isTemplateFallback());
+    }
+}

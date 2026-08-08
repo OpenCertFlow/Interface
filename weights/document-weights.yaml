@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=../schema/document-weights.schema.json
+#
+# 준비도 점수 가중치 기준표
+#
+# 준비도 점수 = (보유한 서류의 가중치 합) / (요구되는 서류의 가중치 합) × 100
+#
+# 가중치를 코드가 아니라 데이터로 두는 이유: 심사·상담 자리에서 "왜 72점인가"에 답하려면
+# 계산 근거가 공개되어 있어야 한다. 이 파일이 그 근거다.
+#
+# 값을 바꾸면 이후 진단의 점수가 바뀐다. 이미 저장된 진단은 평가 시점의 가중치를
+# 스냅샷으로 들고 있으므로 소급해서 바뀌지 않는다(재현성 우선 원칙).
+#
+# 로딩 규칙: 없는 코드만 삽입하고 기존 행은 건드리지 않는다(INSERT ... ON CONFLICT DO NOTHING).
+# 운영 중 관리자 API(F-WADM-011)로 조정한 값이 재기동으로 되돌아가지 않게 하기 위함이다.
+# 즉 이 파일은 "기본값"이고, 운영 중 권위는 관리 API가 갖는다.
+
+weights:
+  - documentCode: BIZ_LICENSE
+    displayName: 사업자등록증
+    requirement: REQUIRED
+    weight: 3
+    note: 필수 제출 서류
+
+  - documentCode: TEST_REPORT
+    displayName: 시험성적서
+    requirement: REQUIRED
+    weight: 3
+    note: 지정 시험기관 발행
+
+  - documentCode: SAFETY_LABEL_SAMPLE
+    displayName: 안전표시 견본
+    requirement: REQUIRED
+    weight: 3
+    note: KC 마크·정격 표시
+
+  - documentCode: CIRCUIT_DIAGRAM
+    displayName: 전기회로도
+    requirement: RECOMMENDED
+    weight: 1
+    note: 상담 시 검토 자료
+
+  - documentCode: PARTS_LIST
+    displayName: 부품명세표
+    requirement: RECOMMENDED
+    weight: 1
+    note: 상담 시 검토 자료

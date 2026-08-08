@@ -1,79 +1,8 @@
--- 소형가전 데모 룰셋 v1 시드. 반복 실행 마이그레이션.
--- JSON 형식은 RuleJsonCodec이 파싱하는 형식과 정확히 일치해야 한다(RuleJsonCodecTest가 검증).
--- 실제 KC 제도를 단순화한 데모 규칙이며, 드라이기류 대표 시나리오를 검증한다(기획서).
-
--- 멱등성: 기존 시드를 지우고 다시 넣는다. rule은 FK CASCADE로 함께 삭제된다.
-DELETE FROM rule_set WHERE product_group = 'SMALL_APPLIANCE' AND version = 1;
-
-INSERT INTO rule_set (id, version, product_group, active, activated_at)
-VALUES (1, 1, 'SMALL_APPLIANCE', true, now());
-
--- R-SA-001: 전기 사용 + 정격전압 > 50V → 안전확인 후보 + 필수/권장 서류
-INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-(1, 'R-SA-001', 10,
- '{"type":"allOf","conditions":[
-     {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
-     {"type":"attr","attribute":"RATED_VOLTAGE","operator":"GT","value":50}
-   ]}',
- '[
-     {"type":"addCandidate","schemeCode":"KC_SAFETY_CONFIRM_ELECTRIC","certificationType":"SAFETY_CONFIRM"},
-     {"type":"requireDocument","documentCode":"BIZ_LICENSE","requirement":"REQUIRED"},
-     {"type":"requireDocument","documentCode":"TEST_REPORT","requirement":"REQUIRED"},
-     {"type":"requireDocument","documentCode":"CIRCUIT_DIAGRAM","requirement":"RECOMMENDED"},
-     {"type":"requireDocument","documentCode":"PARTS_LIST","requirement":"RECOMMENDED"}
-   ]',
- '전기 사용 + 정격전압 50V 초과 소형가전은 안전확인 대상 후보');
-
--- R-SA-002: 전기 사용 + 정격전압 > 50V → 표시·라벨링 확인 + 안전표시 견본
-INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-(1, 'R-SA-002', 20,
- '{"type":"allOf","conditions":[
-     {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
-     {"type":"attr","attribute":"RATED_VOLTAGE","operator":"GT","value":50}
-   ]}',
- '[
-     {"type":"addLabelingCheck","label":"KC 마크 및 안전확인 표시"},
-     {"type":"addLabelingCheck","label":"정격전압·소비전력 표시"},
-     {"type":"requireDocument","documentCode":"SAFETY_LABEL_SAMPLE","requirement":"REQUIRED"}
-   ]',
- '전기용품 표시·라벨링 확인 항목');
-
--- R-SA-010: 어린이용 → 어린이제품 안전인증 후보
-INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-(1, 'R-SA-010', 10,
- '{"type":"attr","attribute":"TARGET_USER","operator":"EQ","value":"CHILD"}',
- '[
-     {"type":"addCandidate","schemeCode":"KC_CHILD_SAFETY_CERT","certificationType":"SAFETY_CERT"}
-   ]',
- '어린이용 제품은 어린이제품 안전인증 대상 후보');
-
--- R-SA-090: 전기 사용인데 정격전압 정보 없음 → 판단 불가, 전문가 확인
-INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-(1, 'R-SA-090', 90,
- '{"type":"allOf","conditions":[
-     {"type":"attr","attribute":"USES_ELECTRICITY","operator":"EQ","value":true},
-     {"type":"attr","attribute":"RATED_VOLTAGE","operator":"EQ","value":null},
-     {"type":"not","condition":{"type":"attr","attribute":"HAS_BATTERY","operator":"EQ","value":true}}
-   ]}',
- '[
-     {"type":"flagExpertReview","question":"정격전압 정보가 없어 안전확인 대상 여부를 판단할 수 없습니다. 정격전압을 확인해 주세요.","reason":"AMBIGUOUS_CONDITION"}
-   ]',
- '정격전압 미상 시 판단 불가 → 전문가 확인');
-
--- ── R-COM-001: 기존 인증 모델 변경 → 기존 인증 범위 확인 (F-APP-008) ────────────
-INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-(1, 'R-COM-001', 50,
- '{"type":"attr","attribute":"IS_MODIFIED_MODEL","operator":"EQ","value":true}',
- '[
-     {"type":"flagExpertReview","question":"기존 인증받은 모델을 변경한 제품입니다. 변경 범위가 기존 인증 범위를 벗어나 재인증·변경신고가 필요한지 확인해 주세요.","reason":"NO_EVIDENCE"}
-   ]',
- '변경 모델 → 기존 인증 범위 확인 필요');
-
--- ── R-COM-002: 수입·OEM·ODM → 제조 책임·서류 확인 (F-APP-006) ──────────────────
-INSERT INTO rule (rule_set_id, rule_code, priority, condition, effects, description) VALUES
-(1, 'R-COM-002', 51,
- '{"type":"attr","attribute":"MANUFACTURING_TYPE","operator":"IN","value":["IMPORTED","OEM","ODM"]}',
- '[
-     {"type":"flagExpertReview","question":"수입·OEM·ODM 제품은 제조 책임 주체와 확보 가능한 제조자 자료(시험성적서·설계자료 등)가 달라집니다. 인증 책임과 필요 서류를 확인해 주세요.","reason":"NO_EVIDENCE"}
-   ]',
- '수입·OEM·ODM → 제조 책임·서류 확인 필요');
+-- 은퇴한 시드. 내용은 rules/small-appliance/v1.yaml로 옮겼다.
+--
+-- 룰이 SQL INSERT 문자열 안에 있으면 커뮤니티가 git diff로 변경을 검토할 수 없다.
+-- 이제 룰은 저장소 루트의 rules/에 YAML로 살고, 기동 시 RuleFileSyncRunner가 반영한다.
+-- 스키마: schema/ruleset.schema.json · 검증: ./gradlew validateRules
+--
+-- 파일 자체를 지우지 않는 이유: 이미 이 마이그레이션을 적용한 DB에서 Flyway가
+-- "적용된 마이그레이션이 로컬에 없다"며 검증에 실패하기 때문이다. 내용만 비운다.

@@ -1,16 +1,59 @@
 # 기여 가이드
 
-팀 육성사이다 / 2026 제8회 K-디지털 트레이닝 해커톤
+OpenCertFlow에 기여해 주셔서 감사합니다. 이 프로젝트는
+[Apache License 2.0](LICENSE)으로 배포되며, 기여물도 같은 라이선스로 배포됩니다.
+행동 규범은 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)를,
+보안 취약점 신고는 [SECURITY.md](SECURITY.md)를 참고하세요.
+
+## 인증 규칙에 기여하기 — 자바를 몰라도 됩니다
+
+이 프로젝트에서 가장 값진 기여는 **규칙의 정확성**입니다. 규칙은 코드가 아니라 데이터이며,
+[`rules/`](rules/)의 YAML만 고치면 됩니다. **DB도 서버도 IDE도 필요 없습니다.**
+
+```bash
+# 1. 규칙을 고친다
+vi rules/electric-heating-pad/v1.yaml
+
+# 2. 검증한다 (구조 · 값 타입 · 의미 3중)
+./gradlew validateRules
+
+# 3. 규칙이 어떻게 읽히는지 확인한다
+./gradlew printRuntimeClasspath   # CP 확보
+java -cp "$CP" io.opencertflow.cli.OpenCertFlowCli explain R-EH-005
+```
+
+편집기가 [`schema/ruleset.schema.json`](schema/ruleset.schema.json)을 읽어 자동완성과 실시간
+검증을 해 줍니다(YAML 파일 첫 줄의 `yaml-language-server` 주석). CI도 같은 스키마를 씁니다.
+
+### 규칙 기여에서 지켜야 할 것
+
+**확인되지 않은 것을 단정하지 마세요.** 이 서비스의 존재 이유는 소공인이 틀린 정보로 재작업하는
+일을 줄이는 것입니다. 인증 등급이나 요구 서류를 공식 자료로 확인하지 못했다면
+`addCandidate`/`requireDocument`가 아니라 `flagExpertReview`로 보내세요. 모른다고 말하는 것은
+실패가 아니라 정상 동작입니다.
+
+```yaml
+# ❌ 확인 안 된 등급을 단정
+- { type: addCandidate, schemeCode: KC_SAFETY_CONFIRM_ELECTRIC, certificationType: SAFETY_CONFIRM }
+
+# ✅ 확인이 필요하다고 말한다
+- type: flagExpertReview
+  reason: NO_EVIDENCE
+  question: 신체에 닿는 발열 제품입니다. 적용되는 인증 제도와 등급을 인증기관에 확인해 주세요.
+```
+
+**근거를 PR 본문에 적어 주세요.** 어느 법령·고시·기관 안내의 몇 조인지 링크와 함께 남기면
+리뷰가 빨라지고, 나중에 법령이 개정됐을 때 무엇을 다시 봐야 하는지 알 수 있습니다.
 
 ## 저장소 구성
 
 | 저장소 | 역할 |
 | --- | --- |
-| [BackEnd](https://github.com/CertiMakers/BackEnd) | Spring WebFlux API 서버 |
-| [MiddleWare](https://github.com/CertiMakers/MiddleWare) | RAG 워커 (색인·검색·서술) |
-| [FrontEnd](https://github.com/CertiMakers/FrontEnd) | Kotlin·Compose Android 앱 |
+| [BackEnd](https://github.com/OpenCertFlow/BackEnd) | Spring WebFlux API 서버 |
+| [MiddleWare](https://github.com/OpenCertFlow/MiddleWare) | RAG 워커 (색인·검색·서술) |
+| [FrontEnd](https://github.com/OpenCertFlow/FrontEnd) | Kotlin·Compose Android 앱 |
 
-작업 현황은 [프로젝트 보드](https://github.com/orgs/CertiMakers/projects/1)에서 확인한다.
+작업 현황은 [프로젝트 보드](https://github.com/orgs/OpenCertFlow/projects/1)에서 확인한다.
 
 ## 작업 흐름
 

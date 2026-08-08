@@ -37,7 +37,7 @@ return blockingBridge.mono(() -> loadRuleSetPort.loadActive(productGroup))
 **스레드 수를 커넥션 풀 크기에 맞추는 이유.** `jdbcScheduler`가 커넥션 수보다 많은 스레드를 가지면, 초과분은 `HikariPool.getConnection()`에서 블로킹된 채 대기합니다. 스레드는 쓰이지도 못하고 메모리만 먹습니다. 반대로 적으면 커넥션이 놉니다. 두 값은 하나의 논리적 설정이며, `application.yml`에서 나란히 둡니다.
 
 ```yaml
-certimakers:
+opencertflow:
   blocking:
     jdbc-pool-size: 10   # ← 아래와 반드시 같은 값
 spring:

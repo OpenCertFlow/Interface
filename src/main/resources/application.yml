@@ -1,16 +1,16 @@
 spring:
   application:
-    name: certimakers-backend
+    name: opencertflow-backend
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/certimakers}
-    username: ${DB_USERNAME:certimakers}
-    password: ${DB_PASSWORD:certimakers}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/opencertflow}
+    username: ${DB_USERNAME:opencertflow}
+    password: ${DB_PASSWORD:opencertflow}
     hikari:
-      # certimakers.blocking.jdbc-pool-size와 반드시 같은 값이어야 한다. ADR-0002 참조.
+      # opencertflow.blocking.jdbc-pool-size와 반드시 같은 값이어야 한다. ADR-0002 참조.
       # 시작 시 BlockingBridgeConfig가 불일치를 경고한다.
       maximum-pool-size: 10
-      pool-name: certimakers-cp
+      pool-name: opencertflow-cp
 
   jpa:
     open-in-view: false          # WebFlux에는 뷰가 없다. 켜져 있으면 커넥션만 오래 잡는다.
@@ -53,12 +53,26 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
-certimakers:
+opencertflow:
   # 공식 문서 원문 변경 감지. 갱신은 하지 않고 감지만 한다(운영지침 9.2).
   # 외부 사이트를 주기적으로 두드리는 동작이라 기본은 꺼 두고, 운영에서 명시적으로 켠다.
   document-freshness:
-    enabled: ${CERTIMAKERS_DOCUMENT_FRESHNESS_ENABLED:false}
+    enabled: ${OPENCERTFLOW_DOCUMENT_FRESHNESS_ENABLED:false}
     cron: "0 0 4 * * MON"
+
+  # 룰·가중치 정의 파일. 저장소의 rules/·weights/가 진실의 원천이고 DB는 런타임 사본이다.
+  rules:
+    sync-enabled: ${OPENCERTFLOW_RULES_SYNC:true}
+    # 비우면 jar에 포함된 rules/를 쓴다. 자신의 룰셋으로 확장하려면 디렉터리를 가리킨다.
+    path: ${OPENCERTFLOW_RULES_PATH:}
+    weights-path: ${OPENCERTFLOW_WEIGHTS_PATH:}
+
+  # 법제처 국가법령정보 공동활용 API. 법령 개정 이력을 원문 해시가 아니라 구조화된 값으로 읽는다.
+  # 이용하려면 open.law.go.kr에서 신청해 이메일 ID를 발급받아야 한다. 키가 없으면 조용히 꺼진다.
+  law:
+    enabled: ${OPENCERTFLOW_LAW_ENABLED:false}
+    oc: ${OPENCERTFLOW_LAW_OC:}
+    base-url: https://www.law.go.kr
 
   blocking:
     jdbc-pool-size: 10           # ← spring.datasource.hikari.maximum-pool-size와 동일하게
@@ -67,11 +81,11 @@ certimakers:
 
   auth:
     jwt:
-      # 운영에서는 반드시 CERTIMAKERS_AUTH_JWT_SECRET로 주입한다. HS256에는 32바이트 이상이 필요하다.
-      secret: ${CERTIMAKERS_AUTH_JWT_SECRET:certimakers-local-development-secret-key-do-not-use-in-production}
+      # 운영에서는 반드시 OPENCERTFLOW_AUTH_JWT_SECRET로 주입한다. HS256에는 32바이트 이상이 필요하다.
+      secret: ${OPENCERTFLOW_AUTH_JWT_SECRET:opencertflow-local-development-secret-key-do-not-use-in-production}
       access-token-ttl-seconds: 1800      # 30분. 짧게 두고 리프레시로 갱신한다
       refresh-token-ttl-seconds: 1209600  # 14일
-      issuer: certimakers
+      issuer: opencertflow
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}
@@ -88,11 +102,11 @@ certimakers:
       code-ttl-seconds: 300         # 인증 코드 5분
       reset-token-ttl-seconds: 1800 # 재설정 링크 30분
       reset-link-base-url: ${PASSWORD_RESET_LINK_BASE_URL:http://localhost:8080/reset-password}
-      from: ${MAIL_FROM:no-reply@certimakers.local}
+      from: ${MAIL_FROM:no-reply@opencertflow.local}
     # 시작 시 관리자로 승격할 계정. 최초 관리자를 만드는 유일한 통로이며,
     # 그 이후 권한 부여는 PATCH /api/v1/admin/users/{id}/role 로 한다.
-    # 쉼표로 구분: CERTIMAKERS_ADMIN_EMAILS=a@x.com,b@x.com
-    bootstrap-admin-emails: ${CERTIMAKERS_ADMIN_EMAILS:}
+    # 쉼표로 구분: OPENCERTFLOW_ADMIN_EMAILS=a@x.com,b@x.com
+    bootstrap-admin-emails: ${OPENCERTFLOW_ADMIN_EMAILS:}
 
   file:
     # 업로드 파일이 저장되는 루트. 이 밖으로는 어떤 경로로도 쓰지 않는다.
@@ -127,7 +141,7 @@ springdoc:
 
 logging:
   level:
-    com.certimakers: INFO
+    io.opencertflow: INFO
 
 ---
 spring:
@@ -143,5 +157,5 @@ spring:
 
 logging:
   level:
-    com.certimakers: DEBUG
+    io.opencertflow: DEBUG
     org.hibernate.SQL: DEBUG

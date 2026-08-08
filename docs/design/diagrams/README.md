@@ -1,6 +1,6 @@
 # draw.io 다이어그램
 
-[certimakers.drawio](certimakers.drawio) — 편집 가능한 네이티브 draw.io(mxGraph) 파일. 6개 페이지.
+[opencertflow.drawio](opencertflow.drawio) — 편집 가능한 네이티브 draw.io(mxGraph) 파일. 6개 페이지.
 
 | 페이지 | 대응 문서 |
 | --- | --- |

@@ -7,7 +7,7 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <conversionRule conversionWord="maskedMsg"
-                    converterClass="com.certimakers.common.adapter.out.logging.MaskingMessageConverter"/>
+                    converterClass="io.opencertflow.common.adapter.out.logging.MaskingMessageConverter"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
