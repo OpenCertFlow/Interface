@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
  */
 public interface ExportReportPdfQuery {
 
-    Mono<ReportPdf> export(String diagnosisId);
+    Mono<ReportPdf> export(String diagnosisId, String viewerUserId);
 
     /**
      * @param fileName 다운로드 시 제안할 파일명

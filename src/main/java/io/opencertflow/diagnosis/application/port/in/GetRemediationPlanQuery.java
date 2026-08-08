@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
 /** 목표 준비도에 도달하기 위한 최소 보완 경로 조회. */
 public interface GetRemediationPlanQuery {
 
-    Mono<RemediationPlan> plan(DiagnosisId diagnosisId, int targetScore);
+    Mono<RemediationPlan> plan(DiagnosisId diagnosisId, int targetScore, String viewerUserId);
 }

@@ -34,11 +34,13 @@ public class ExportReportPdfService implements ExportReportPdfQuery {
     }
 
     @Override
-    public Mono<ReportPdf> export(String diagnosisId) {
+    public Mono<ReportPdf> export(String diagnosisId, String viewerUserId) {
         DiagnosisId id = parseId(diagnosisId);
 
         // 포트는 없으면 null을 돌려주는 계약이다(LoadDiagnosisPort). 빈 Mono가 되므로 switchIfEmpty로 404를 낸다.
         return blockingBridge.mono(() -> loadDiagnosisPort.load(id))
+                // 볼 권한이 없으면 없는 것과 똑같이 다룬다. 403은 그 id가 존재한다는 사실을 알려 준다.
+                .filter(diagnosis -> diagnosis.isVisibleTo(viewerUserId))
                 .switchIfEmpty(Mono.error(
                         new BusinessException(DiagnosisErrorCode.DIAGNOSIS_NOT_FOUND)))
                 .map(diagnosis -> new ReportPdf(

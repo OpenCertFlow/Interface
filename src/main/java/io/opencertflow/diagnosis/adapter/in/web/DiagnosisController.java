@@ -100,10 +100,18 @@ public class DiagnosisController {
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.CREATED));
     }
 
+    /**
+     * 진단 리포트 조회. 인증은 <b>선택</b>이지만, 소유자가 있는 진단은 본인만 볼 수 있다.
+     *
+     * <p>식별자가 전역 시퀀스라 열거 가능하므로, 소유자 검증이 없으면 로그인 사용자의 제품 정보가
+     * 그대로 새어 나간다. 볼 수 없는 진단은 404다 — 403은 존재를 알려 준다.
+     */
     @GetMapping("/{id}")
     public Mono<ResponseEntity<ApiResponse<DiagnosisReportResponse>>> getReport(
-            @PathVariable Long id) {
-        return getDiagnosisReportQuery.getById(DiagnosisId.of(id))
+            @PathVariable Long id, @Parameter(hidden = true) Mono<Authentication> authentication) {
+        return viewerId(authentication)
+                .flatMap(viewer -> getDiagnosisReportQuery.getById(
+                        DiagnosisId.of(id), viewer.orElse(null)))
                 .flatMap(diagnosis -> wrap(diagnosis, HttpStatus.OK));
     }
 
@@ -176,6 +184,20 @@ public class DiagnosisController {
     }
 
     /**
+     * 비로그인도 허용되는 경로에서 요청자를 읽는다. 토큰이 없거나 익명이면 빈 값이다.
+     *
+     * <p>{@code currentUserId}와 달리 주체가 없어도 흐름을 끊지 않는다 — 익명 진단은 비로그인으로
+     * 조회할 수 있어야 하고, 그 판단은 도메인({@code Diagnosis.isVisibleTo})이 한다.
+     */
+    private Mono<java.util.Optional<String>> viewerId(Mono<Authentication> authentication) {
+        return authentication
+                .filter(auth -> auth.isAuthenticated()
+                        && !(auth instanceof AnonymousAuthenticationToken))
+                .map(auth -> java.util.Optional.of(auth.getName()))
+                .defaultIfEmpty(java.util.Optional.empty());
+    }
+
+    /**
      * 반사실 시뮬레이션. "이 서류를 준비하면 / 이 사양을 바꾸면 결과가 어떻게 달라지는가".
      *
      * <p>결과를 저장하지 않으므로 조회 성격이지만, 가정을 본문으로 받아야 해서 POST를 쓴다.
@@ -183,12 +205,16 @@ public class DiagnosisController {
      */
     @PostMapping("/{id}/simulations")
     public Mono<ResponseEntity<ApiResponse<SimulationResponse>>> simulate(
-            @PathVariable Long id, @Valid @RequestBody SimulateRequest request) {
+            @PathVariable Long id,
+            @Valid @RequestBody SimulateRequest request,
+            @Parameter(hidden = true) Mono<Authentication> authentication) {
 
-        SimulateCommand command = new SimulateCommand(
-                DiagnosisId.of(id), simulationWebMapper.toAdjustment(request));
-
-        return simulateDiagnosisUseCase.simulate(command)
+        return viewerId(authentication)
+                .map(viewer -> new SimulateCommand(
+                        DiagnosisId.of(id),
+                        simulationWebMapper.toAdjustment(request),
+                        viewer.orElse(null)))
+                .flatMap(simulateDiagnosisUseCase::simulate)
                 .flatMap(outcome -> TraceId.current().map(traceId -> ResponseEntity.ok(
                         ApiResponse.success(
                                 simulationWebMapper.toResponse(id.toString(), outcome),
@@ -200,9 +226,12 @@ public class DiagnosisController {
     @GetMapping("/{id}/remediation-plan")
     public Mono<ResponseEntity<ApiResponse<RemediationPlanResponse>>> remediationPlan(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "100") int targetScore) {
+            @RequestParam(defaultValue = "100") int targetScore,
+            @Parameter(hidden = true) Mono<Authentication> authentication) {
 
-        return getRemediationPlanQuery.plan(DiagnosisId.of(id), targetScore)
+        return viewerId(authentication)
+                .flatMap(viewer -> getRemediationPlanQuery.plan(
+                        DiagnosisId.of(id), targetScore, viewer.orElse(null)))
                 .flatMap(plan -> TraceId.current().map(traceId -> ResponseEntity.ok(
                         ApiResponse.success(
                                 simulationWebMapper.toResponse(id.toString(), plan),
@@ -216,8 +245,10 @@ public class DiagnosisController {
      * <p>저장하지 않고 매번 다시 그린다 — 표현이 바뀌어도 최신 형식으로 나온다.
      */
     @GetMapping(value = "/{id}/report.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    public Mono<ResponseEntity<byte[]>> exportReportPdf(@PathVariable Long id) {
-        return exportReportPdfQuery.export(id.toString())
+    public Mono<ResponseEntity<byte[]>> exportReportPdf(
+            @PathVariable Long id, @Parameter(hidden = true) Mono<Authentication> authentication) {
+        return viewerId(authentication)
+                .flatMap(viewer -> exportReportPdfQuery.export(id.toString(), viewer.orElse(null)))
                 .map(report -> ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)
                         .contentLength(report.content().length)

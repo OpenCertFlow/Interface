@@ -10,7 +10,12 @@ import io.opencertflow.diagnosis.domain.simulation.ProfileAdjustment;
  * @param diagnosisId 기준이 되는 원본 진단
  * @param adjustment  적용할 반사실 가정
  */
-public record SimulateCommand(DiagnosisId diagnosisId, ProfileAdjustment adjustment) {
+/**
+ * @param viewerUserId 요청자. {@code null}이면 비로그인이다. 소유자가 있는 진단은 본인만
+ *                     시뮬레이션할 수 있다 — 남의 진단으로 가정을 바꿔 보는 것도 열람이다.
+ */
+public record SimulateCommand(
+        DiagnosisId diagnosisId, ProfileAdjustment adjustment, String viewerUserId) {
 
     public SimulateCommand {
         Guard.notNull(diagnosisId, "diagnosisId");

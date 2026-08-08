@@ -57,7 +57,7 @@ public class SimulateDiagnosisService implements SimulateDiagnosisUseCase, GetRe
 
     @Override
     public Mono<SimulationOutcome> simulate(SimulateCommand command) {
-        return loadEvaluated(command.diagnosisId())
+        return loadEvaluated(command.diagnosisId(), command.viewerUserId())
                 .flatMap(diagnosis -> {
                     ProductGroup group = diagnosis.profile().productGroup();
                     return Mono.zip(loadRuleSet(group), loadRubric(group))
@@ -66,8 +66,8 @@ public class SimulateDiagnosisService implements SimulateDiagnosisUseCase, GetRe
     }
 
     @Override
-    public Mono<RemediationPlan> plan(DiagnosisId diagnosisId, int targetScore) {
-        return loadEvaluated(diagnosisId)
+    public Mono<RemediationPlan> plan(DiagnosisId diagnosisId, int targetScore, String viewerUserId) {
+        return loadEvaluated(diagnosisId, viewerUserId)
                 .map(diagnosis -> planner.planFor(
                         new RemediationPlanner.ScoreResultView(
                                 diagnosis.score(), diagnosis.checklist()),
@@ -92,8 +92,10 @@ public class SimulateDiagnosisService implements SimulateDiagnosisUseCase, GetRe
      * <p>평가 전 상태에는 비교 기준이 없어 "무엇이 달라지는가"를 계산할 수 없다. 여기서 막지 않으면
      * 도메인 깊은 곳에서 null로 터진다.
      */
-    private Mono<Diagnosis> loadEvaluated(DiagnosisId id) {
+    private Mono<Diagnosis> loadEvaluated(DiagnosisId id, String viewerUserId) {
         return blockingBridge.mono(() -> loadDiagnosisPort.load(id))
+                // 볼 권한이 없으면 없는 것과 똑같이 다룬다. 403은 그 id가 존재한다는 사실을 알려 준다.
+                .filter(diagnosis -> diagnosis.isVisibleTo(viewerUserId))
                 .switchIfEmpty(Mono.error(
                         new BusinessException(DiagnosisErrorCode.DIAGNOSIS_NOT_FOUND)))
                 .flatMap(diagnosis -> diagnosis.score() == null

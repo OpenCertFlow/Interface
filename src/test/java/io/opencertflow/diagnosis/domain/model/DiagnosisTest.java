@@ -145,4 +145,51 @@ class DiagnosisTest {
                 "template",
                 true);
     }
+
+    // ── 열람 권한 ────────────────────────────────────────────────
+    //
+    // 식별자가 전역 시퀀스라 1, 2, 3…으로 열거된다. 소유자 검증이 없으면 로그인 사용자의
+    // 제품 사양·제조 방식이 그대로 새어 나가므로, 이 판정은 도메인에서 못 박는다.
+
+    private Diagnosis ownedBy(String ownerUserId) {
+        return Diagnosis.request(
+                DiagnosisId.of(io.opencertflow.support.TestIds.next()),
+                ProductProfileFixtures.hairDryer(Set.of()),
+                ownerUserId,
+                null,
+                NOW);
+    }
+
+    @Test
+    @DisplayName("소유자가 있는 진단은 본인만 볼 수 있다")
+    void 소유자_본인만_열람() {
+        Diagnosis diagnosis = ownedBy("42");
+
+        assertThat(diagnosis.isVisibleTo("42")).isTrue();
+    }
+
+    @Test
+    @DisplayName("소유자가 있는 진단은 다른 사용자가 볼 수 없다")
+    void 타인은_열람_불가() {
+        Diagnosis diagnosis = ownedBy("42");
+
+        assertThat(diagnosis.isVisibleTo("43")).isFalse();
+    }
+
+    @Test
+    @DisplayName("소유자가 있는 진단은 비로그인으로 볼 수 없다")
+    void 비로그인은_소유_진단_열람_불가() {
+        Diagnosis diagnosis = ownedBy("42");
+
+        assertThat(diagnosis.isVisibleTo(null)).isFalse();
+    }
+
+    @Test
+    @DisplayName("익명 진단은 누구나 볼 수 있다 — 비로그인 진단 흐름이 성립해야 한다")
+    void 익명_진단은_공개() {
+        Diagnosis diagnosis = ownedBy(null);
+
+        assertThat(diagnosis.isVisibleTo(null)).isTrue();
+        assertThat(diagnosis.isVisibleTo("42")).isTrue();
+    }
 }

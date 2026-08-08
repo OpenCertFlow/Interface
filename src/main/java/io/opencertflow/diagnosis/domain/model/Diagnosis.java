@@ -80,6 +80,21 @@ public class Diagnosis extends AggregateRoot<DiagnosisId> {
         return Optional.ofNullable(ownerUserId);
     }
 
+    /**
+     * 이 진단을 {@code viewerUserId}가 볼 수 있는가. {@code null}이면 비로그인 요청이다.
+     *
+     * <p><b>소유자가 있으면 본인만</b> 볼 수 있다. 식별자가 전역 시퀀스라 1, 2, 3…으로 열거되므로,
+     * 소유자 검증이 없으면 로그인 사용자의 제품 사양·제조 방식·보유 서류가 그대로 새어 나간다.
+     * 소공인에게 그것은 경쟁 정보다.
+     *
+     * <p><b>소유자가 없으면(익명 진단) 누구나</b> 볼 수 있다. 앱 설치 직후 로그인 없이 진단하고
+     * 결과를 다시 여는 흐름이 성립해야 하기 때문이다. 익명 진단에는 신원에 연결되는 정보가 없다.
+     * 다만 열거 가능성 자체는 남으므로, 불투명 접근 토큰 도입은 별도 과제로 남긴다.
+     */
+    public boolean isVisibleTo(String viewerUserId) {
+        return owner().map(owner -> owner.equals(viewerUserId)).orElse(true);
+    }
+
     /** 비면 최초 진단이다 — 비교할 이전 진단이 없다. */
     public Optional<DiagnosisId> previousDiagnosisId() {
         return Optional.ofNullable(previousDiagnosisId);
