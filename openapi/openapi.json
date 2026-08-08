@@ -1029,9 +1029,7 @@
       },
       "ApiResponseVoid" : {
         "properties" : {
-          "data" : {
-            "type" : "object"
-          },
+          "data" : { },
           "error" : {
             "$ref" : "#/components/schemas/ErrorResponse"
           },
@@ -1143,6 +1141,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "currentPassword", "newPassword" ],
         "type" : "object"
       },
       "ChangeRoleRequest" : {
@@ -1152,6 +1151,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "role" ],
         "type" : "object"
       },
       "CheckSummary" : {
@@ -1271,6 +1271,7 @@
             "type" : "array"
           }
         },
+        "required" : [ "productGroup", "rules" ],
         "type" : "object"
       },
       "CreatedView" : {
@@ -1322,9 +1323,7 @@
         },
         "type" : "object"
       },
-      "DataBuffer" : {
-        "type" : "object"
-      },
+      "DataBuffer" : { },
       "DegradedView" : {
         "properties" : {
           "evidence" : {
@@ -1349,6 +1348,7 @@
           },
           "adjustmentSteps" : {
             "format" : "int32",
+            "minimum" : 0,
             "type" : "integer"
           },
           "autoShutOff" : {
@@ -1356,6 +1356,7 @@
           },
           "autoShutOffMinutes" : {
             "format" : "int32",
+            "minimum" : 0,
             "type" : "integer"
           },
           "bodyContactType" : {
@@ -1390,6 +1391,7 @@
           },
           "maxSurfaceTemperatureCelsius" : {
             "format" : "int32",
+            "minimum" : 0,
             "type" : "integer"
           },
           "medicalUseClaim" : {
@@ -1400,6 +1402,7 @@
           },
           "powerConsumption" : {
             "format" : "int32",
+            "minimum" : 0,
             "type" : "integer"
           },
           "productGroup" : {
@@ -1412,6 +1415,7 @@
           },
           "ratedVoltage" : {
             "format" : "int32",
+            "minimum" : 0,
             "type" : "integer"
           },
           "removableCover" : {
@@ -1447,7 +1451,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "hasBattery", "usesElectricity" ],
+        "required" : [ "hasBattery", "productGroup", "productName", "salesChannel", "targetUser", "usesElectricity" ],
         "type" : "object"
       },
       "DiagnosisComparisonResponse" : {
@@ -1645,6 +1649,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "issuer", "productGroup", "sourceUrl", "title" ],
         "type" : "object"
       },
       "DocumentSummaryView" : {
@@ -1747,9 +1752,7 @@
             "type" : "string"
           },
           "details" : {
-            "additionalProperties" : {
-              "type" : "object"
-            },
+            "additionalProperties" : { },
             "type" : "object"
           },
           "fieldErrors" : {
@@ -1852,6 +1855,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "sourceDocumentId", "verdict" ],
         "type" : "object"
       },
       "FieldError" : {
@@ -1862,9 +1866,7 @@
           "reason" : {
             "type" : "string"
           },
-          "rejectedValue" : {
-            "type" : "object"
-          }
+          "rejectedValue" : { }
         },
         "type" : "object"
       },
@@ -1928,6 +1930,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "code" ],
         "type" : "object"
       },
       "Issue" : {
@@ -1943,6 +1946,7 @@
             "type" : "object"
           }
         },
+        "required" : [ "templateCode" ],
         "type" : "object"
       },
       "Issued" : {
@@ -2011,9 +2015,7 @@
         },
         "type" : "object"
       },
-      "JsonNode" : {
-        "type" : "object"
-      },
+      "JsonNode" : { },
       "KakaoLogin" : {
         "properties" : {
           "code" : {
@@ -2021,6 +2023,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "code" ],
         "type" : "object"
       },
       "LeadDetail" : {
@@ -2094,6 +2097,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "email", "password" ],
         "type" : "object"
       },
       "Logout" : {
@@ -2103,6 +2107,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "refreshToken" ],
         "type" : "object"
       },
       "MemoRequest" : {
@@ -2124,6 +2129,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "body", "kind" ],
         "type" : "object"
       },
       "MessageView" : {
@@ -2490,6 +2496,7 @@
             "type" : "array"
           }
         },
+        "required" : [ "productGroup" ],
         "type" : "object"
       },
       "RagCheckResult" : {
@@ -2517,6 +2524,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "refreshToken" ],
         "type" : "object"
       },
       "RemediationPlanResponse" : {
@@ -2596,16 +2604,18 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "diagnosisId" ],
+        "required" : [ "consentVersion", "contactName", "contactPhone", "diagnosisId" ],
         "type" : "object"
       },
       "RequestPasswordReset" : {
         "properties" : {
           "email" : {
+            "format" : "email",
             "minLength" : 1,
             "type" : "string"
           }
         },
+        "required" : [ "email" ],
         "type" : "object"
       },
       "ResetPassword" : {
@@ -2620,6 +2630,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "newPassword", "token" ],
         "type" : "object"
       },
       "RuleDraftRequest" : {
@@ -2644,6 +2655,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "conditionJson", "effectsJson", "ruleCode" ],
         "type" : "object"
       },
       "RuleIssue" : {
@@ -2781,10 +2793,12 @@
       "SendEmailCode" : {
         "properties" : {
           "email" : {
+            "format" : "email",
             "minLength" : 1,
             "type" : "string"
           }
         },
+        "required" : [ "email" ],
         "type" : "object"
       },
       "SignUp" : {
@@ -2796,6 +2810,7 @@
             "type" : "array"
           },
           "email" : {
+            "format" : "email",
             "minLength" : 1,
             "type" : "string"
           },
@@ -2809,6 +2824,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "email", "nickname", "password" ],
         "type" : "object"
       },
       "SignedUp" : {
@@ -2972,6 +2988,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "status" ],
         "type" : "object"
       },
       "StepView" : {
@@ -3066,6 +3083,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "nickname" ],
         "type" : "object"
       },
       "UpdatePhraseRequest" : {
@@ -3078,6 +3096,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "text" ],
         "type" : "object"
       },
       "UpdateQuestionRequest" : {
@@ -3114,6 +3133,7 @@
           },
           "weight" : {
             "format" : "int32",
+            "minimum" : 0,
             "type" : "integer"
           }
         },
@@ -3177,6 +3197,7 @@
             "type" : "array"
           }
         },
+        "required" : [ "rules" ],
         "type" : "object"
       },
       "ValidationResult" : {
@@ -3210,6 +3231,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "code", "email" ],
         "type" : "object"
       },
       "WeightView" : {
@@ -3241,6 +3263,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "body" ],
         "type" : "object"
       },
       "WritePost" : {
@@ -3264,6 +3287,7 @@
             "type" : "string"
           }
         },
+        "required" : [ "body", "title" ],
         "type" : "object"
       }
     },
