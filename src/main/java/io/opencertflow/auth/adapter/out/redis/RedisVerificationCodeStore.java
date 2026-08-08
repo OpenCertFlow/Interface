@@ -3,6 +3,8 @@ package io.opencertflow.auth.adapter.out.redis;
 import io.opencertflow.auth.application.port.out.VerificationCodeStorePort;
 import io.opencertflow.auth.config.AuthProperties;
 import io.opencertflow.auth.domain.model.Email;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -31,10 +33,23 @@ public class RedisVerificationCodeStore implements VerificationCodeStorePort {
         return redis.opsForValue().set(key(email), code, ttl).then();
     }
 
+    /**
+     * 저장된 코드와 대조한다.
+     *
+     * <p>{@link MessageDigest#isEqual}을 쓰는 이유는 비교 시간이 값에 따라 달라지지 않게 하기
+     * 위함이다. {@code String.equals}는 첫 불일치 문자에서 즉시 끝나므로, 이론상 앞자리부터
+     * 한 자리씩 맞춰 나갈 수 있다. 6자리 코드에 원격 타이밍 공격이 현실적이지는 않지만,
+     * 바꾸는 비용이 0이고 "비밀값은 상수 시간으로 비교한다"는 규칙을 예외 없이 두는 편이 낫다.
+     */
     @Override
     public Mono<Boolean> matches(Email email, String code) {
+        if (code == null) {
+            return Mono.just(false);
+        }
         return redis.opsForValue().get(key(email))
-                .map(stored -> stored.equals(code))
+                .map(stored -> MessageDigest.isEqual(
+                        stored.getBytes(StandardCharsets.UTF_8),
+                        code.getBytes(StandardCharsets.UTF_8)))
                 .defaultIfEmpty(false);
     }
 

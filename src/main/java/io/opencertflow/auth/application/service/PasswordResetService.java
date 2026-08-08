@@ -1,6 +1,8 @@
 package io.opencertflow.auth.application.service;
 
 import io.opencertflow.auth.application.port.in.PasswordResetUseCase;
+import io.opencertflow.auth.application.port.out.AttemptLimiterPort;
+import io.opencertflow.auth.application.port.out.AttemptLimiterPort.Limit;
 import io.opencertflow.auth.application.port.out.LoadUserPort;
 import io.opencertflow.auth.application.port.out.PasswordEncoderPort;
 import io.opencertflow.auth.application.port.out.PasswordResetTokenStorePort;
@@ -32,6 +34,7 @@ public class PasswordResetService implements PasswordResetUseCase {
     private final LoadUserPort loadUserPort;
     private final SaveUserPort saveUserPort;
     private final PasswordEncoderPort passwordEncoder;
+    private final AttemptLimiterPort attemptLimiter;
     private final BlockingBridge blockingBridge;
 
     public PasswordResetService(
@@ -41,6 +44,7 @@ public class PasswordResetService implements PasswordResetUseCase {
             LoadUserPort loadUserPort,
             SaveUserPort saveUserPort,
             PasswordEncoderPort passwordEncoder,
+            AttemptLimiterPort attemptLimiter,
             BlockingBridge blockingBridge) {
         this.tokenStore = tokenStore;
         this.codeGenerator = codeGenerator;
@@ -48,14 +52,25 @@ public class PasswordResetService implements PasswordResetUseCase {
         this.loadUserPort = loadUserPort;
         this.saveUserPort = saveUserPort;
         this.passwordEncoder = passwordEncoder;
+        this.attemptLimiter = attemptLimiter;
         this.blockingBridge = blockingBridge;
     }
 
+    /**
+     * 재설정 링크 발송 요청.
+     *
+     * <p>제한을 두는 이유는 두 가지다. 남의 주소로 메일을 반복 발송하는 괴롭힘을 막고, 재설정
+     * 토큰이 짧은 시간에 여러 개 유효해지는 상태를 피한다.
+     */
     @Override
     public Mono<Void> requestReset(String rawEmail) {
         Email email = Email.of(rawEmail);
 
-        return blockingBridge.mono(() -> loadUserPort.findByEmail(email))
+        return attemptLimiter.exceeded("password-reset:" + email.value(), Limit.PASSWORD_RESET)
+                .filter(Boolean::booleanValue)
+                .flatMap(exceeded -> Mono.<java.util.Optional<User>>error(
+                        new BusinessException(AuthErrorCode.TOO_MANY_ATTEMPTS)))
+                .switchIfEmpty(blockingBridge.mono(() -> loadUserPort.findByEmail(email)))
                 // 로컬 계정만 재설정 대상. 소셜 계정·미가입은 조용히 통과시켜 존재 여부를 숨긴다.
                 .filter(found -> found.isPresent() && !found.get().provider().isSocial())
                 .flatMap(found -> {

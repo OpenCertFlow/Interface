@@ -22,6 +22,7 @@ public final class ErrorTypeHttpMapper {
         MAPPING.put(ErrorType.EXTERNAL_SERVICE, HttpStatus.BAD_GATEWAY);
         MAPPING.put(ErrorType.TIMEOUT, HttpStatus.GATEWAY_TIMEOUT);
         MAPPING.put(ErrorType.UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+        MAPPING.put(ErrorType.RATE_LIMITED, HttpStatus.TOO_MANY_REQUESTS);
         MAPPING.put(ErrorType.INTERNAL, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

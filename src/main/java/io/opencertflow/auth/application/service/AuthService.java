@@ -4,6 +4,8 @@ import io.opencertflow.auth.application.port.in.LoginUseCase;
 import io.opencertflow.auth.application.port.in.LogoutUseCase;
 import io.opencertflow.auth.application.port.in.RefreshTokenUseCase;
 import io.opencertflow.auth.application.port.in.SignUpUseCase;
+import io.opencertflow.auth.application.port.out.AttemptLimiterPort;
+import io.opencertflow.auth.application.port.out.AttemptLimiterPort.Limit;
 import io.opencertflow.auth.application.port.out.LoadUserPort;
 import io.opencertflow.auth.application.port.out.PasswordEncoderPort;
 import io.opencertflow.auth.application.port.out.RefreshTokenStorePort;
@@ -44,6 +46,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
     private final TokenProviderPort tokenProvider;
     private final RefreshTokenStorePort refreshTokenStore;
     private final TermsPort termsPort;
+    private final AttemptLimiterPort attemptLimiter;
     private final BlockingBridge blockingBridge;
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
@@ -55,6 +58,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
             TokenProviderPort tokenProvider,
             RefreshTokenStorePort refreshTokenStore,
             TermsPort termsPort,
+            AttemptLimiterPort attemptLimiter,
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider) {
@@ -64,6 +68,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
         this.tokenProvider = tokenProvider;
         this.refreshTokenStore = refreshTokenStore;
         this.termsPort = termsPort;
+        this.attemptLimiter = attemptLimiter;
         this.blockingBridge = blockingBridge;
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
@@ -106,7 +111,25 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
     @Override
     public Mono<IssuedTokens> login(LoginCommand command) {
         Email email = Email.of(command.email());
+        String limiterKey = "login:" + email.value();
 
+        return attemptLimiter.exceeded(limiterKey, Limit.LOGIN)
+                .filter(Boolean::booleanValue)
+                .flatMap(exceeded -> Mono.<User>error(
+                        new BusinessException(AuthErrorCode.TOO_MANY_ATTEMPTS)))
+                .switchIfEmpty(verifyCredentials(email, command))
+                // 성공하면 카운터를 지운다. 오타를 몇 번 낸 사용자가 그 뒤로 막히면 안 된다.
+                .delayUntil(user -> attemptLimiter.reset(limiterKey))
+                .flatMap(this::issueAndStore);
+    }
+
+    /**
+     * 자격 증명 대조.
+     *
+     * <p>BCrypt 대조는 의도적으로 느린 CPU 작업이라 이벤트 루프에서 돌리면 안 된다. 시도 제한이
+     * 없으면 그 느림 자체가 서버를 미는 수단이 되기도 한다 — 위에서 먼저 세는 이유다.
+     */
+    private Mono<User> verifyCredentials(Email email, LoginCommand command) {
         return blockingBridge.mono(() -> {
             // 이메일 부재와 비밀번호 불일치를 같은 오류로 응답한다 — 어느 쪽인지 알려주면 가입 여부가 샌다.
             User user = loadUserPort.findByEmail(email)
@@ -116,7 +139,7 @@ public class AuthService implements SignUpUseCase, LoginUseCase, RefreshTokenUse
                 throw new BusinessException(AuthErrorCode.INVALID_CREDENTIALS);
             }
             return user;
-        }).flatMap(this::issueAndStore);
+        });
     }
 
     @Override

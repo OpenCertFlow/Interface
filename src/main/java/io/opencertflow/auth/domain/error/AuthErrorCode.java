@@ -37,7 +37,16 @@ public enum AuthErrorCode implements ErrorCode {
     GOOGLE_AUTH_FAILED("OCF-AUTH-010", "구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.", ErrorType.EXTERNAL_SERVICE),
 
     /** 필수 약관에 동의하지 않고 가입을 시도했다. */
-    TERMS_NOT_AGREED("OCF-AUTH-011", "필수 약관에 동의해야 가입할 수 있습니다.", ErrorType.VALIDATION);
+    TERMS_NOT_AGREED("OCF-AUTH-011", "필수 약관에 동의해야 가입할 수 있습니다.", ErrorType.VALIDATION),
+
+    /**
+     * 짧은 시간에 너무 많이 시도했다.
+     *
+     * <p>메시지에 남은 횟수나 잠금 해제 시각을 담지 않는다 — 공격자에게 카운터 상태를 알려 주는
+     * 것이고, 정상 사용자에게는 "잠시 후"로 충분하다.
+     */
+    TOO_MANY_ATTEMPTS("OCF-AUTH-012", "시도가 너무 잦습니다. 잠시 후 다시 시도해 주세요.",
+            ErrorType.RATE_LIMITED);
 
     private final String code;
     private final String defaultMessage;
