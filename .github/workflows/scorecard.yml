@@ -1,0 +1,53 @@
+# OpenSSF Scorecard — 공급망 보안 관행을 자동 점수화한다.
+#
+# "신뢰할 수 있는 오픈소스"라는 주장에는 근거가 필요하다. 브랜치 보호, 서명 커밋, 의존성 고정,
+# 위험한 워크플로 패턴 같은 것을 외부 도구가 점수로 매기면, 그 주장이 검증 가능한 사실이 된다.
+# 결과는 GitHub Security 탭과 배지로 노출된다.
+name: OpenSSF Scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    # 매주 월요일 03:20 UTC. 잦게 돌릴 이유가 없다.
+    - cron: "20 3 * * 1"
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard 분석
+    runs-on: ubuntu-latest
+    permissions:
+      # 결과를 코드 스캔 알림으로 올린다
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+
+    steps:
+      - name: 체크아웃
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Scorecard 실행
+        uses: ossf/scorecard-action@v2.4.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # publish_results를 켜면 배지를 달 수 있다. 공개 저장소여야 한다.
+          publish_results: true
+
+      - name: 결과 업로드(아티팩트)
+        uses: actions/upload-artifact@v7
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - name: 결과 업로드(코드 스캔)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
