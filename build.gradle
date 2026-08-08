@@ -2,9 +2,16 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.16'
 	id 'io.spring.dependency-management' version '1.1.7'
+	// 커버리지. 룰 엔진은 이 프로젝트의 핵심 자산이라 무엇이 검증되지 않았는지 보여야 한다.
+	id 'jacoco'
+	// 포맷 강제. 사람이 손으로 맞추면 결국 어긋나고, 그 diff가 진짜 변경을 가린다.
+	id 'com.diffplug.spotless' version '7.0.2'
+	// SDK 생성기와 뮤테이션 테스트는 플러그인을 쓰지 않는다 — gradle-pitest-plugin 최신(1.15.0)이
+	// Gradle 9에서 제거된 reporting.baseDir을 참조해 적용 자체가 실패한다.
+	// 아래에서 pitest CLI를 JavaExec으로 직접 부른다.
 }
 
-group = 'com.certimakers'
+group = 'io.opencertflow'
 version = '0.0.1-SNAPSHOT'
 
 java {
@@ -17,12 +24,21 @@ repositories {
 	mavenCentral()
 }
 
+// 빌드 도구들은 애플리케이션 클래스패스와 섞이면 안 된다.
+// pitest는 자체 계측 에이전트를 띄우고, SDK 생성기는 자체 Jackson·Swagger 버전을 들고 온다.
+configurations {
+	pitest
+	openapiGenerator
+}
+
 ext {
 	archunitVersion = '1.4.2'
 	springdocVersion = '2.8.6'
 	blockhoundVersion = '1.0.17.RELEASE'
 	jjwtVersion = '0.12.6'
 	openPdfVersion = '1.4.2'
+	jsonSchemaValidatorVersion = '1.5.6'
+	picocliVersion = '4.7.7'
 }
 
 dependencies {
@@ -49,6 +65,16 @@ dependencies {
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
+	// 룰·가중치 정의 파일(rules/, weights/)을 읽는다. 버전은 스프링 부트 BOM이 관리한다.
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+	// 커뮤니티가 보낸 룰 파일을 로드 전에 검증한다. 형식 오류를 NPE가 아니라 위치와 함께 알린다.
+	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
+
+	// CLI(opencertflow validate/diagnose/explain). 서버 없이 룰을 검증할 수 있어야
+	// "누구나 검증하고 확장한다"가 성립한다.
+	implementation "info.picocli:picocli:${picocliVersion}"
+	annotationProcessor "info.picocli:picocli-codegen:${picocliVersion}"
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -72,6 +98,139 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// 뮤테이션 테스트 도구. 별도 컨피규레이션이라 애플리케이션 클래스패스를 오염시키지 않는다.
+	pitest 'org.pitest:pitest-command-line:1.17.4'
+	pitest 'org.pitest:pitest-junit5-plugin:1.2.1'
+
+	// SDK 생성기 CLI.
+	openapiGenerator 'org.openapitools:openapi-generator-cli:7.11.0'
+}
+
+// 룰·가중치·스키마는 저장소 루트에 둔다 — 커뮤니티가 GitHub에서 바로 보고 PR을 보낼 수 있어야
+// 하기 때문이다. 런타임에는 클래스패스에서 읽으므로 jar에 함께 담는다.
+processResources {
+	from('rules') { into 'rules' }
+	from('weights') { into 'weights' }
+	from('schema') { into 'schema' }
+}
+
+// 룰 검증을 빌드에서 바로 돌린다. CI와 로컬이 같은 명령을 쓴다.
+//   ./gradlew validateRules
+// 서버·DB 없이 순수 도메인 코드만 돌아간다 — 커뮤니티 기여자가 인프라 없이 검증할 수 있어야 한다.
+tasks.register('validateRules', JavaExec) {
+	group = 'verification'
+	description = '룰 YAML의 구조·값 타입·의미를 검증한다'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'io.opencertflow.cli.OpenCertFlowCli'
+	jvmArgs '-Dfile.encoding=UTF-8'
+	// 경고로는 실패시키지 않는다. '어떤 룰도 보지 않는 속성'은 제품군에 집중한 룰셋이면 늘
+	// 나오는 지적이라 기본값으로 두면 신호가 아니라 소음이 된다. 오류만 빌드를 깬다.
+	// 엄격하게 보려면: ./gradlew validateRules --args='validate rules --fail-on-warning'
+	args 'validate', 'rules'
+}
+
+tasks.named('check') {
+	dependsOn 'validateRules'
+}
+
+// ── SDK ──────────────────────────────────────────────────────────────────────
+//
+// openapi/openapi.json이 SDK의 원본이다. 사람이 갱신을 기억하는 절차는 반드시 잊히므로,
+// OpenApiSpecTest가 매 CI마다 실제 API와 비교해 드리프트를 실패로 만든다.
+//   갱신:  ./gradlew updateOpenApiSpec
+//   생성:  ./gradlew generateSdks
+def openApiSpec = layout.projectDirectory.file('openapi/openapi.json')
+
+// 스펙 관련 테스트는 BlockHound 없이 도는 전용 태스크로 분리한다(아래 classpath 주석 참조).
+// 그래서 일반 test 스위트에서는 빼야 한다 — 넣어 두면 BlockHound에 걸려 늘 실패한다.
+tasks.named('test', Test) {
+	filter { excludeTestsMatching 'io.opencertflow.OpenApiSpecTest' }
+}
+
+// 커밋된 스펙이 실제 API와 같은지 검사한다. check에 걸어 드리프트가 쌓이지 않게 한다.
+tasks.register('checkOpenApiSpec', Test) {
+	group = 'verification'
+	description = 'openapi/openapi.json이 실제 API와 일치하는지 검사한다 (Docker 필요)'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath.filter { !it.name.contains('blockhound') }
+	useJUnitPlatform()
+	filter { includeTestsMatching 'io.opencertflow.OpenApiSpecTest' }
+	jvmArgs '-Dfile.encoding=UTF-8'
+	outputs.upToDateWhen { false }
+}
+
+tasks.named('check') {
+	dependsOn 'checkOpenApiSpec'
+}
+
+tasks.register('updateOpenApiSpec', Test) {
+	group = 'documentation'
+	description = 'API를 떠서 openapi/openapi.json을 갱신한다 (Docker 필요)'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	// BlockHound를 이 태스크에서만 뺀다.
+	//
+	// springdoc은 스펙을 만들 때 클래스 파일을 RandomAccessFile로 읽는데, 그 호출이 리액터
+	// 스레드에서 일어나 BlockHound가 막는다. <b>이 지적 자체는 옳다</b> — 운영에서 /v3/api-docs를
+	// 부르면 실제로 이벤트 루프가 잠깐 묶인다(문서 엔드포인트라 영향은 작지만 사실이다).
+	//
+	// 그래서 전역 허용 규칙을 추가해 방어선을 약화시키는 대신, '스펙을 파일로 뽑는' 이 빌드
+	// 작업에서만 에이전트를 빼는 쪽을 택한다. 본 테스트 스위트의 BlockHound는 그대로 살아 있다.
+	classpath = sourceSets.test.runtimeClasspath.filter { !it.name.contains('blockhound') }
+	useJUnitPlatform()
+	filter { includeTestsMatching 'io.opencertflow.OpenApiSpecTest' }
+	systemProperty 'updateOpenApiSpec', 'true'
+	jvmArgs '-Dfile.encoding=UTF-8'
+	outputs.upToDateWhen { false }
+}
+
+// 언어별 클라이언트. 스펙 하나에서 전부 생성되므로 SDK가 API보다 낡을 수 없다.
+def sdkTargets = [
+		typescript: 'typescript-fetch',
+		python    : 'python',
+		kotlin    : 'kotlin',
+]
+
+// 생성기는 <b>언어마다 별도 JVM</b>으로 돌린다.
+//
+// openapi-generator의 Gradle 태스크를 쓰면 한 빌드 안에서 여러 인스턴스가 파싱 상태를 공유해,
+// 체인의 마지막 생성기가 늘 'openAPI is null'로 죽는다(순서를 바꾸면 죽는 대상도 바뀐다).
+// CLI를 JavaExec으로 부르면 프로세스가 분리되어 그 공유 자체가 사라진다.
+sdkTargets.each { name, generatorName ->
+	tasks.register("generateSdk${name.capitalize()}", JavaExec) {
+		group = 'documentation'
+		description = "${name} 클라이언트 SDK를 생성한다"
+		mainClass = 'org.openapitools.codegen.OpenAPIGenerator'
+		classpath = configurations.openapiGenerator
+		def out = layout.buildDirectory.dir("sdk/${name}").get().asFile
+		args = [
+				'generate',
+				'-i', openApiSpec.asFile.toString().replace('\\', '/'),
+				'-g', generatorName,
+				'-o', out.toString().replace('\\', '/'),
+				'--package-name', 'opencertflow',
+				// 스펙 검증은 OpenApiSpecTest가 이미 실제 API와 대조하며 끝냈다.
+				'--skip-validate-spec',
+		]
+		jvmArgs '-Dfile.encoding=UTF-8'
+		inputs.file(openApiSpec).withPropertyName('spec')
+		outputs.dir(out).withPropertyName('sdk')
+		onlyIf {
+			// 스펙이 아직 없으면 조용히 건너뛴다. 최초 체크아웃에서 빌드가 깨지지 않게 한다.
+			if (!openApiSpec.asFile.exists()) {
+				logger.lifecycle("openapi/openapi.json이 없어 ${name} SDK 생성을 건너뜁니다. "
+						+ "./gradlew updateOpenApiSpec 을 먼저 돌리세요.")
+				return false
+			}
+			return true
+		}
+	}
+}
+
+tasks.register('generateSdks') {
+	group = 'documentation'
+	description = '모든 언어의 클라이언트 SDK를 생성한다'
+	dependsOn sdkTargets.keySet().collect { "generateSdk${it.capitalize()}" }
 }
 
 tasks.withType(Test).configureEach {
@@ -89,3 +248,114 @@ tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
 }
 
+// ── 품질 게이트 ──────────────────────────────────────────────────────────────
+
+// 포맷은 도구가 정한다. 손으로 맞추면 결국 어긋나고, 그 diff가 진짜 변경을 가린다.
+// 실제로 이 저장소에서 Javadoc이 통째로 날아가고 파라미터 사이 공백이 사라지는 사고가 있었다.
+spotless {
+	// 줄바꿈은 건드리지 않는다. 이 저장소는 Windows에서 CRLF로 체크아웃되어 있고, 지금 LF로
+	// 통일하면 554개 파일이 통째로 diff에 잡혀 진짜 변경이 묻힌다. 줄바꿈 정규화를 하려면
+	// .gitattributes에 `* text=auto eol=lf`를 넣고 한 커밋으로 따로 처리하는 편이 낫다.
+	lineEndings = com.diffplug.spotless.LineEnding.PRESERVE
+
+	java {
+		target 'src/**/*.java'
+		// <b>전체 포매터(googleJavaFormat 등)를 의도적으로 쓰지 않는다.</b>
+		//
+		// 이 코드베이스의 Javadoc은 손으로 줄바꿈을 맞춰 문단을 만든 것이고, 그 배치 자체가
+		// 설명의 일부다("이유 → 반례 → 규칙" 순으로 읽히도록 끊어 놓았다). 전체 포매터를 걸면
+		// 34k 줄이 재포맷되면서 그 구조가 통째로 리플로우된다 — 얻는 것(일관된 들여쓰기)보다
+		// 잃는 것(읽히도록 만든 문서)이 크다.
+		//
+		// 그래서 '되돌릴 수 없는 훼손만 막는' 최소 규칙만 건다. 실제로 이 저장소에서 Javadoc이
+		// 통째로 날아가고 파라미터 사이 공백이 사라진 사고가 있었고, 이 세 줄이 그런 종류를 잡는다.
+		removeUnusedImports()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+	format 'misc', {
+		target '*.md', '*.gradle', '.github/**/*.yml', 'rules/**/*.yaml', 'weights/**/*.yaml'
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
+jacoco {
+	toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true   // CI 배지·커버리지 서비스가 읽는다
+		html.required = true
+	}
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			// 생성 코드와 설정·엔트리포인트는 커버리지 분모에서 뺀다. 여기에 테스트를 쓰라고
+			// 요구하면 숫자를 위한 테스트가 늘어날 뿐이다.
+			fileTree(dir: it, exclude: [
+					'**/OpenCertFlowApplication.class',
+					'**/config/**',
+					'**/*Properties.class',
+					'**/*Request.class',
+					'**/*Response.class',
+			])
+		}))
+	}
+}
+
+// 커버리지 하한. 지금 수치를 지키는 선에서 잡고, 내려가면 실패시킨다.
+// 목표는 숫자를 올리는 게 아니라 '조용히 떨어지는 것'을 막는 것이다.
+jacocoTestCoverageVerification {
+	dependsOn jacocoTestReport
+	violationRules {
+		rule {
+			// 룰 엔진과 점수 산정은 이 서비스가 파는 것 자체다. 더 높게 요구한다.
+			element = 'PACKAGE'
+			includes = ['io.opencertflow.diagnosis.domain.*']
+			limit {
+				counter = 'LINE'
+				minimum = 0.80
+			}
+		}
+	}
+}
+
+// 뮤테이션 테스트. 테스트가 '있다'가 아니라 '잡는다'를 증명한다.
+//   ./gradlew pitest
+//
+// 순수 함수 도메인(룰 평가·점수 산정)에만 돌린다. 어댑터까지 넓히면 느려지고, 그러면 아무도
+// 돌리지 않는다. 이 프로젝트에서 틀리면 가장 위험한 코드가 도메인이기도 하다.
+tasks.register('pitest', JavaExec) {
+	group = 'verification'
+	description = '도메인 룰 엔진에 뮤테이션 테스트를 돌린다'
+	dependsOn tasks.named('testClasses')
+	mainClass = 'org.pitest.mutationtest.commandline.MutationCoverageReport'
+	// BlockHound를 뺀다. 둘 다 바이트코드를 계측하는데, BlockHound가 먼저 붙으면 pitest의
+	// 커버리지 수집이 죽는다(DefaultCoverageGenerator.gatherCoverageData). 뮤테이션 테스트는
+	// 도메인 순수 함수만 대상으로 하므로 블로킹 검사가 필요 없는 영역이기도 하다.
+	classpath = configurations.pitest +
+			sourceSets.test.runtimeClasspath.filter { !it.name.contains('blockhound') }
+	def reportDir = layout.buildDirectory.dir('reports/pitest').get().asFile
+	args = [
+			'--reportDir', reportDir.toString(),
+			'--targetClasses', 'io.opencertflow.diagnosis.domain.*',
+			'--targetTests', 'io.opencertflow.diagnosis.domain.*',
+			'--sourceDirs', file('src/main/java').toString(),
+			'--outputFormats', 'HTML,XML',
+			'--threads', '4',
+			'--timestampedReports', 'false',
+			// 하한은 실측 후 올린다. 처음부터 높게 잡으면 팀이 태스크를 꺼 버린다.
+			'--mutationThreshold', '60',
+			'--failWhenNoMutations', 'false',
+	]
+	jvmArgs '-Dfile.encoding=UTF-8'
+	doFirst { reportDir.mkdirs() }
+}
+
+
+// CLI를 Gradle 로거를 거치지 않고 직접 실행하기 위한 클래스패스 출력(디버그·배포 스크립트용).
+tasks.register('printRuntimeClasspath') {
+	doLast { println sourceSets.main.runtimeClasspath.asPath }
+}
