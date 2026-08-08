@@ -1,0 +1,19 @@
+OpenCertFlow
+Copyright 2026 The OpenCertFlow Contributors
+
+This product includes software developed by the OpenCertFlow project
+(https://github.com/OpenCertFlow).
+
+---
+
+이 배포물에 포함된 인증 규칙(`rules/`)과 준비도 가중치(`weights/`)는 대한민국
+「전기용품 및 생활용품 안전관리법」과 그 하위 고시를 참고하여 작성된 것으로,
+법령 원문 자체가 아니며 법적 효력을 갖지 않습니다. 규칙은 사전 점검을 돕기 위한
+참고 자료이며, 실제 인증 대상 여부와 제출 서류는 반드시 소관 기관 또는 지정
+시험·인증기관을 통해 확인해야 합니다.
+
+The certification rules (`rules/`) and readiness weights (`weights/`) bundled with
+this distribution are derived from public Korean product-safety regulations. They
+are reference material for pre-assessment only, carry no legal force, and are not
+a substitute for confirmation by the competent authority or an accredited
+testing/certification body.
