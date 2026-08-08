@@ -19,7 +19,7 @@ repositories {
 
 ext {
 	archunitVersion = '1.4.2'
-	springdocVersion = '2.8.6'
+	springdocVersion = '3.1.0'
 	blockhoundVersion = '1.0.17.RELEASE'
 	jjwtVersion = '0.12.6'
 	openPdfVersion = '1.4.2'
