@@ -79,6 +79,11 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/v1/files/**").permitAll()
                         // 어떤 문서를 만들 수 있는지는 로그인 전에도 보여 준다
                         .pathMatchers(HttpMethod.GET, "/api/v1/documents/templates").permitAll()
+                        // 약관·리포트 문구는 로그인 전 화면에서 그대로 보여 준다.
+                        // 예전에는 마지막 anyExchange().permitAll()에 흘러 들어가 우연히 열려
+                        // 있었다. 이제 기본이 거부이므로 열려는 의도를 여기에 적는다.
+                        .pathMatchers(HttpMethod.GET, "/api/v1/terms").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/report-phrases").permitAll()
                         // 관리자 전용. 권한 판단을 여기 한 곳에만 둔다
                         .pathMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // 컨설턴트 상담 처리. 컨설턴트와 관리자가 쓴다(소공인 접수는 /consulting-leads로 공개)
@@ -90,7 +95,16 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/boards/**").authenticated()
                         .pathMatchers("/api/v1/files/**").authenticated()
                         .pathMatchers("/api/v1/documents/**").authenticated()
-                        .anyExchange().permitAll())
+                        // 기본은 거부다.
+                        //
+                        // 예전에는 permitAll이었다. 그러면 새 컨트롤러를 추가할 때 규칙 등록을
+                        // 잊는 순간 <b>조용히 공개된다</b> — 아무 오류도 나지 않고 테스트도 통과하며,
+                        // 공개되었다는 사실을 아무도 모른다. 실수의 방향이 위험한 쪽이었다.
+                        //
+                        // 이제 잊으면 401이 난다. 개발 중에 즉시 드러나고, 열어야 한다면 위에
+                        // 규칙을 한 줄 추가하는 것이 그 판단을 기록으로 남기는 방법이 된다.
+                        // AuthorizationMatrixTest가 어느 경로가 열려 있는지를 고정한다.
+                        .anyExchange().denyAll())
                 .addFilterAt(jwtFilter, org.springframework.security.config.web.server.SecurityWebFiltersOrder.AUTHENTICATION)
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint((exchange, error) ->
