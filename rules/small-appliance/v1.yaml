@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=../../schema/ruleset.schema.json
+#
+# 소형가전 룰셋 v1
+#
+# 실제 KC 제도를 단순화한 데모 규칙이며, 드라이기류 대표 시나리오를 검증한다.
+# 이 파일이 룰의 진실의 원천(source of truth)이다 — DB는 런타임 사본일 뿐이며
+# 기동 시 RuleFileLoader가 이 파일로 덮어쓴다.
+#
+# 검증:  ./gradlew validateRules      또는  opencertflow validate rules/
+# 스키마: schema/ruleset.schema.json
+
+productGroup: SMALL_APPLIANCE
+version: 1
+active: true
+description: 소형가전(드라이어류) 데모 룰셋
+
+rules:
+  - code: R-SA-001
+    priority: 10
+    description: 전기 사용 + 정격전압 50V 초과 소형가전은 안전확인 대상 후보
+    condition:
+      type: allOf
+      conditions:
+        - { type: attr, attribute: USES_ELECTRICITY, operator: EQ, value: true }
+        - { type: attr, attribute: RATED_VOLTAGE, operator: GT, value: 50 }
+    effects:
+      - { type: addCandidate, schemeCode: KC_SAFETY_CONFIRM_ELECTRIC, certificationType: SAFETY_CONFIRM }
+      - { type: requireDocument, documentCode: BIZ_LICENSE, requirement: REQUIRED }
+      - { type: requireDocument, documentCode: TEST_REPORT, requirement: REQUIRED }
+      - { type: requireDocument, documentCode: CIRCUIT_DIAGRAM, requirement: RECOMMENDED }
+      - { type: requireDocument, documentCode: PARTS_LIST, requirement: RECOMMENDED }
+
+  - code: R-SA-002
+    priority: 20
+    description: 전기용품 표시·라벨링 확인 항목
+    condition:
+      type: allOf
+      conditions:
+        - { type: attr, attribute: USES_ELECTRICITY, operator: EQ, value: true }
+        - { type: attr, attribute: RATED_VOLTAGE, operator: GT, value: 50 }
+    effects:
+      - { type: addLabelingCheck, label: KC 마크 및 안전확인 표시 }
+      - { type: addLabelingCheck, label: 정격전압·소비전력 표시 }
+      - { type: requireDocument, documentCode: SAFETY_LABEL_SAMPLE, requirement: REQUIRED }
+
+  - code: R-SA-010
+    priority: 10
+    description: 어린이용 제품은 어린이제품 안전인증 대상 후보
+    condition: { type: attr, attribute: TARGET_USER, operator: EQ, value: CHILD }
+    effects:
+      - { type: addCandidate, schemeCode: KC_CHILD_SAFETY_CERT, certificationType: SAFETY_CERT }
+
+  - code: R-SA-090
+    priority: 90
+    description: 정격전압 미상 시 판단 불가 → 전문가 확인
+    condition:
+      type: allOf
+      conditions:
+        - { type: attr, attribute: USES_ELECTRICITY, operator: EQ, value: true }
+        - { type: attr, attribute: RATED_VOLTAGE, operator: EQ, value: null }
+        - type: not
+          condition: { type: attr, attribute: HAS_BATTERY, operator: EQ, value: true }
+    effects:
+      - type: flagExpertReview
+        reason: AMBIGUOUS_CONDITION
+        question: 정격전압 정보가 없어 안전확인 대상 여부를 판단할 수 없습니다. 정격전압을 확인해 주세요.
+
+  # ── 제품군 공통 룰 (R-COM-*) ────────────────────────────────────────────────
+  # 모든 제품군 룰셋에 같은 내용으로 존재한다. 한쪽만 고치지 않도록 주의한다.
+
+  - code: R-COM-001
+    priority: 50
+    description: 변경 모델 → 기존 인증 범위 확인 필요
+    condition: { type: attr, attribute: IS_MODIFIED_MODEL, operator: EQ, value: true }
+    effects:
+      - type: flagExpertReview
+        reason: NO_EVIDENCE
+        question: 기존 인증받은 모델을 변경한 제품입니다. 변경 범위가 기존 인증 범위를 벗어나 재인증·변경신고가 필요한지 확인해 주세요.
+
+  - code: R-COM-002
+    priority: 51
+    description: 수입·OEM·ODM → 제조 책임·서류 확인 필요
+    condition: { type: attr, attribute: MANUFACTURING_TYPE, operator: IN, value: [IMPORTED, OEM, ODM] }
+    effects:
+      - type: flagExpertReview
+        reason: NO_EVIDENCE
+        question: 수입·OEM·ODM 제품은 제조 책임 주체와 확보 가능한 제조자 자료(시험성적서·설계자료 등)가 달라집니다. 인증 책임과 필요 서류를 확인해 주세요.
