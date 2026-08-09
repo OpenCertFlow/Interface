@@ -1405,6 +1405,9 @@
             "minimum" : 0,
             "type" : "integer"
           },
+          "powerSource" : {
+            "type" : "string"
+          },
           "productGroup" : {
             "minLength" : 1,
             "type" : "string"

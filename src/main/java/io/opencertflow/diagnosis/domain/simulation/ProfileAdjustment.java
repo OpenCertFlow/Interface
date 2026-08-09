@@ -98,7 +98,10 @@ public record ProfileAdjustment(
         return new ProductProfile(
                 base.productName(),
                 base.productGroup(),
-                new ElectricalSpec(electric, voltage, power, battery),
+                // 전원 방식은 시뮬레이션이 바꾸지 않는다. "직류로 바꾸면 등급이 내려가나요"는
+                // 사양 변경이 아니라 다른 제품을 만드는 것에 가깝다 — 원본을 그대로 보존한다.
+                new ElectricalSpec(
+                        electric, voltage, power, battery, baseElectrical.powerSource()),
                 base.heating(),
                 targetUser != null ? targetUser : base.targetUser(),
                 salesChannel != null ? salesChannel : base.salesChannel(),

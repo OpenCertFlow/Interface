@@ -102,7 +102,7 @@ class RuleEvaluatorTest {
         ProductProfile childDryer = new ProductProfile(
                 "어린이용 드라이기",
                 io.opencertflow.diagnosis.domain.model.ProductGroup.SMALL_APPLIANCE,
-                new io.opencertflow.diagnosis.domain.model.ElectricalSpec(true, 220, 800, false),
+                new io.opencertflow.diagnosis.domain.model.ElectricalSpec(true, 220, 800, false, io.opencertflow.diagnosis.domain.model.PowerSource.AC),
                 TargetUser.CHILD,
                 io.opencertflow.diagnosis.domain.model.SalesChannel.ONLINE,
                 Set.of(io.opencertflow.diagnosis.domain.model.MaterialType.PLASTIC),

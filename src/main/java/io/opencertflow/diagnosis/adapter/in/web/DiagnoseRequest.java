@@ -19,6 +19,10 @@ public record DiagnoseRequest(
         @PositiveOrZero Integer ratedVoltage,
         @PositiveOrZero Integer powerConsumption,
         @NotNull Boolean hasBattery,
+        // 전원 방식(AC/DC). 인증 등급을 가르는 값이라 추론하지 않고 받는다 — 시행규칙이
+        // 전기찜질기를 교류면 별표 3(안전인증), 직류면 별표 5(공급자적합성확인)에 넣는다.
+        // 선택 항목이다. 비우면 UNKNOWN이 되어 전문가 확인으로 안내된다.
+        String powerSource,
         @NotBlank String targetUser,
         @NotBlank String salesChannel,
         List<String> materials,

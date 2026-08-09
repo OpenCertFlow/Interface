@@ -25,8 +25,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * 나오는지가 핵심이다. 시드 룰셋이 잘못 로딩되거나 발열 속성이 전달되지 않으면 두 제품이 같은
  * 결과를 내고, 그러면 제품군을 나눈 의미가 없다.
  *
- * <p>전기방석의 인증 등급·서류는 공식 확인 전이라 단정하지 않는다. 이 테스트도 "정확히 어떤
- * 인증이 나오는가"가 아니라 "판단할 수 없음을 정직하게 알리는가"를 확인한다.
+ * <p>전기방석의 인증 등급은 시행규칙 별표로 확인되어 있다 — 교류면 별표 3(안전인증),
+ * 직류면 별표 5(공급자적합성확인). 둘의 무게가 전혀 다르므로(공장심사 유무) 등급 분기를
+ * 여기서 고정한다. 전원 방식을 모르면 어느 쪽으로도 단정하지 않는다.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
@@ -152,15 +153,15 @@ class TwoProductGroupIntegrationTest {
     }
 
     @Test
-    @DisplayName("전기방석은 공식 확인 전이라 '전문가 확인 필요'로 정직하게 안내한다")
-    void 전기방석은_확인_전이라_전문가_확인으로_보낸다() {
-        JsonNode report = diagnose(heatingPad(true, 45));
+    @DisplayName("교류 전기방석은 안전인증과 함께 공장심사를 미리 알린다")
+    void 안전인증은_공장심사를_함께_알린다() {
+        Map<String, Object> ac = heatingPad(true, 45);
+        ac.put("powerSource", "AC");
 
-        String expertItems = report.at("/data/expertReviewItems").toString();
-        assertThat(expertItems)
-                .as("등급이 확인되지 않았으므로 근거 부재 사유로 안내해야 한다")
-                .contains("NO_EVIDENCE");
-        assertThat(expertItems).contains("인증 제도와 등급");
+        String expertItems = diagnose(ac).at("/data/expertReviewItems").toString();
+
+        // 안전인증은 제품시험으로 끝나지 않는다. 공장심사를 뒤늦게 알면 일정과 비용이 함께 틀어진다.
+        assertThat(expertItems).contains("공장 심사");
     }
 
     @Test
@@ -271,5 +272,56 @@ class TwoProductGroupIntegrationTest {
         self.put("manufacturingType", "SELF_MADE");
         assertThat(diagnose(self).at("/data/expertReviewItems").toString())
                 .doesNotContain("제조 책임");
+    }
+
+    // ── 전원 방식이 인증 등급을 가른다 ──────────────────────────────
+    //
+    // 「전기용품 및 생활용품 안전관리법 시행규칙」은 전기찜질기를 전원 방식에 따라 나눈다.
+    //   별표 3 안전인증대상          10) 교류전원을 사용하는 전기찜질기, 발 보온기
+    //   별표 5 공급자적합성확인대상  16) 직류전원을 사용하는 전기찜질기 및 발 보온기
+    //
+    // 둘의 무게가 전혀 다르다(공장심사 유무). 잘못 안내하면 소공인이 필요 없는 비용을 쓰거나,
+    // 받아야 할 인증을 놓친다. 그래서 등급 분기는 반드시 테스트로 고정한다.
+
+    @Test
+    @DisplayName("교류전원 전기방석은 안전인증 대상이다 (시행규칙 별표 3 제10호)")
+    void 교류_전기방석은_안전인증이다() {
+        Map<String, Object> ac = heatingPad(true, 45);
+        ac.put("powerSource", "AC");
+
+        String candidates = diagnose(ac).at("/data/candidates").toString();
+
+        assertThat(candidates).contains("SAFETY_CERT");
+        assertThat(candidates)
+                .as("교류 제품에 공급자적합성확인을 안내하면 받아야 할 인증을 놓치게 된다")
+                .doesNotContain("SUPPLIER_DOC");
+    }
+
+    @Test
+    @DisplayName("직류전원 전기방석은 공급자적합성확인 대상이다 (시행규칙 별표 5 제16호)")
+    void 직류_전기방석은_공급자적합성확인이다() {
+        Map<String, Object> dc = heatingPad(true, 45);
+        dc.put("powerSource", "DC");
+
+        String candidates = diagnose(dc).at("/data/candidates").toString();
+
+        assertThat(candidates).contains("SUPPLIER_DOC");
+        assertThat(candidates)
+                .as("직류 제품에 안전인증을 안내하면 필요 없는 공장심사 비용을 물리게 된다")
+                .doesNotContain("SAFETY_CERT");
+    }
+
+    @Test
+    @DisplayName("전원 방식을 모르면 등급을 단정하지 않고 확인을 요청한다")
+    void 전원방식_모르면_판단하지_않는다() {
+        // powerSource를 아예 보내지 않는다 — 기존 클라이언트가 그러하듯.
+        JsonNode report = diagnose(heatingPad(true, 45));
+
+        assertThat(report.at("/data/expertReviewItems").toString())
+                .contains("전원 방식");
+        assertThat(report.at("/data/candidates").toString())
+                .as("모르는데 등급을 고르면 둘 중 하나는 반드시 틀린 안내가 된다")
+                .doesNotContain("SAFETY_CERT")
+                .doesNotContain("SUPPLIER_DOC");
     }
 }

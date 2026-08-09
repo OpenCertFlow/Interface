@@ -42,6 +42,20 @@ public enum Attribute {
     },
 
     /**
+     * 전원 방식(교류/직류/모름). <b>인증 등급을 가르는 값이다.</b>
+     *
+     * <p>시행규칙은 같은 품목도 전원 방식에 따라 다른 별표에 넣는다 — 전기찜질기는 교류면 별표 3
+     * (안전인증대상), 직류면 별표 5(공급자적합성확인대상)다. 정격전압이나 배터리 유무로 추측하지
+     * 않고 입력으로 받는다({@link io.opencertflow.diagnosis.domain.model.PowerSource}).
+     */
+    POWER_SOURCE(ValueKind.POWER_SOURCE) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.electrical().powerSource();
+        }
+    },
+
+    /**
      * 신체에 닿는 방식({@link BodyContactType}). 발열 제품에서 화상 위험 판단의 핵심 입력이다.
      *
      * <p>발열 사양이 없는 제품(드라이기 등)은 {@code null}을 반환한다 — {@code NONE}이 아니다.

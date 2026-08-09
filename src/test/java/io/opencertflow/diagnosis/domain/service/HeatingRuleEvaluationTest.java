@@ -10,6 +10,7 @@ import static io.opencertflow.diagnosis.domain.rule.Operator.GT;
 import static io.opencertflow.diagnosis.domain.rule.Operator.IN;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
 import io.opencertflow.diagnosis.domain.model.BodyContactType;
 import io.opencertflow.diagnosis.domain.model.ManufacturingType;
@@ -67,7 +68,7 @@ class HeatingRuleEvaluationTest {
         return new ProductProfile(
                 "보온용 전기방석",
                 ProductGroup.ELECTRIC_HEATING_PAD,
-                new ElectricalSpec(true, 220, 60, false),
+                new ElectricalSpec(true, 220, 60, false, PowerSource.AC),
                 new HeatingSpec(
                         BodyContactType.DIRECT_SKIN, controller, steps,
                         surfaceTemperature, source,
@@ -86,7 +87,7 @@ class HeatingRuleEvaluationTest {
         return new ProductProfile(
                 "가정용 헤어드라이어",
                 ProductGroup.SMALL_APPLIANCE,
-                new ElectricalSpec(true, 220, 1200, false),
+                new ElectricalSpec(true, 220, 1200, false, PowerSource.AC),
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.PLASTIC),
@@ -261,7 +262,7 @@ class HeatingRuleEvaluationTest {
             return new ProductProfile(
                     "찜질 전기방석",
                     ProductGroup.ELECTRIC_HEATING_PAD,
-                    new ElectricalSpec(true, 220, 60, false),
+                    new ElectricalSpec(true, 220, 60, false, PowerSource.AC),
                     new HeatingSpec(
                             BodyContactType.DIRECT_SKIN, ControllerStatus.PRESENT, 3,
                             45, TemperatureSource.MEASURED,

@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.opencertflow.common.domain.error.BusinessException;
 import io.opencertflow.diagnosis.domain.ProductProfileFixtures;
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.ChecklistItem;
 import io.opencertflow.diagnosis.domain.model.DegradedFlags;
 import io.opencertflow.diagnosis.domain.model.Diagnosis;
@@ -180,7 +181,7 @@ class DiagnosisComparatorTest {
         ProductProfile heatingPad = new ProductProfile(
                 "보온용 전기방석",
                 ProductGroup.ELECTRIC_HEATING_PAD,
-                new ElectricalSpec(true, 220, 60, false),
+                new ElectricalSpec(true, 220, 60, false, PowerSource.AC),
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.TEXTILE),
