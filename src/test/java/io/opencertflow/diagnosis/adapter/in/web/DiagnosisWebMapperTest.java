@@ -5,6 +5,7 @@ import static io.opencertflow.diagnosis.domain.RuleSetFixtures.TEST_REPORT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.opencertflow.diagnosis.domain.ProductProfileFixtures;
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
 import io.opencertflow.diagnosis.domain.model.BodyContactType;
 import io.opencertflow.diagnosis.domain.model.ControllerStatus;
@@ -106,7 +107,7 @@ class DiagnosisWebMapperTest {
         return new ProductProfile(
                 "보온용 전기방석",
                 ProductGroup.ELECTRIC_HEATING_PAD,
-                new ElectricalSpec(true, 220, 60, false),
+                new ElectricalSpec(true, 220, 60, false, PowerSource.AC),
                 new HeatingSpec(
                         BodyContactType.DIRECT_SKIN,
                         ControllerStatus.PRESENT,

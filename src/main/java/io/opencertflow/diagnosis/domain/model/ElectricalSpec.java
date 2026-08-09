@@ -14,17 +14,26 @@ import java.util.Optional;
  * @param ratedVoltage      정격전압(V). 전기 미사용 시 null
  * @param powerConsumption  소비전력(W). 전기 미사용 시 null
  * @param hasBattery        배터리 내장 여부
+ * @param powerSource       전원 방식(교류/직류/모름). <b>인증 등급을 가르는 값이다</b> —
+ *                          시행규칙이 같은 품목도 전원 방식에 따라 다른 별표에 넣는다.
+ *                          정격전압이나 배터리 유무로 추측하지 않는다({@link PowerSource} 참조)
  */
 public record ElectricalSpec(
         boolean usesElectricity,
         Integer ratedVoltage,
         Integer powerConsumption,
-        boolean hasBattery) {
+        boolean hasBattery,
+        PowerSource powerSource) {
 
     public ElectricalSpec {
         if (!usesElectricity && (ratedVoltage != null || powerConsumption != null)) {
             throw io.opencertflow.common.domain.error.BusinessException.invalid(
                     "전기를 사용하지 않는 제품에 정격전압·소비전력이 입력되었습니다.");
+        }
+        // 입력하지 않았으면 '모름'이다. null로 두면 룰이 이 값을 물을 때마다 분기가 늘어나고,
+        // 결국 어딘가에서 '모름'과 '없음'이 뭉개진다.
+        if (powerSource == null) {
+            powerSource = PowerSource.UNKNOWN;
         }
         if (ratedVoltage != null) {
             Guard.inRange(ratedVoltage, 0, 100_000, "ratedVoltage");
@@ -35,7 +44,7 @@ public record ElectricalSpec(
     }
 
     public static ElectricalSpec nonElectric() {
-        return new ElectricalSpec(false, null, null, false);
+        return new ElectricalSpec(false, null, null, false, PowerSource.UNKNOWN);
     }
 
     public Optional<Integer> ratedVoltageValue() {

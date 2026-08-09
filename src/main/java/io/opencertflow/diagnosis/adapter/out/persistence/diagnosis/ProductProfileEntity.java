@@ -42,6 +42,10 @@ public class ProductProfileEntity {
     @Column(name = "has_battery", nullable = false)
     private boolean hasBattery;
 
+    /** 전원 방식(AC/DC/UNKNOWN). 인증 등급을 가르는 값이다 — V31 마이그레이션 주석 참조. */
+    @Column(name = "power_source", nullable = false)
+    private String powerSource;
+
     @Column(name = "target_user", nullable = false)
     private String targetUser;
 
@@ -136,13 +140,14 @@ public class ProductProfileEntity {
             Boolean separableElectricParts, Boolean hasSeparateAdapter,
             Boolean adapterExternallyAttached, Boolean adapterCertified,
             String adjustmentMode, Boolean temperatureLimitDevice,
-            String manufacturingType, Boolean modifiedModel) {
+            String manufacturingType, Boolean modifiedModel, String powerSource) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
         this.ratedVoltage = ratedVoltage;
         this.powerConsumption = powerConsumption;
         this.hasBattery = hasBattery;
+        this.powerSource = powerSource;
         this.targetUser = targetUser;
         this.salesChannel = salesChannel;
         this.materials = materials;
@@ -194,6 +199,10 @@ public class ProductProfileEntity {
 
     public boolean isHasBattery() {
         return hasBattery;
+    }
+
+    public String getPowerSource() {
+        return powerSource;
     }
 
     public String getTargetUser() {

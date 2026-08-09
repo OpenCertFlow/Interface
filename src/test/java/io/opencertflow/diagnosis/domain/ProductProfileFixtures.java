@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.domain;
 
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.DocumentCode;
 import io.opencertflow.diagnosis.domain.model.ElectricalSpec;
 import io.opencertflow.diagnosis.domain.model.MaterialType;
@@ -22,7 +23,7 @@ public final class ProductProfileFixtures {
         return new ProductProfile(
                 "가정용 헤어드라이어",
                 ProductGroup.SMALL_APPLIANCE,
-                new ElectricalSpec(true, 220, 1200, false),
+                new ElectricalSpec(true, 220, 1200, false, PowerSource.AC),
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.PLASTIC, MaterialType.METAL),
@@ -34,7 +35,7 @@ public final class ProductProfileFixtures {
         return new ProductProfile(
                 "가정용 헤어드라이어",
                 ProductGroup.SMALL_APPLIANCE,
-                new ElectricalSpec(true, null, null, false),
+                new ElectricalSpec(true, null, null, false, PowerSource.AC),
                 TargetUser.GENERAL,
                 SalesChannel.ONLINE,
                 Set.of(MaterialType.PLASTIC),

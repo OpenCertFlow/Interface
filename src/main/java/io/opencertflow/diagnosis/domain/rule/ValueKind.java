@@ -17,6 +17,9 @@ public enum ValueKind {
     BODY_CONTACT_TYPE,
     CONTROLLER_STATUS,
     TEMPERATURE_SOURCE,
+
+    /** 전원 방식(교류/직류/모름). 인증 등급을 가르는 값이다. */
+    POWER_SOURCE,
     ADJUSTMENT_MODE,
     MANUFACTURING_TYPE
 }

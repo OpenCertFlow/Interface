@@ -1,6 +1,7 @@
 package io.opencertflow.diagnosis.adapter.out.persistence.diagnosis;
 
 import io.opencertflow.common.adapter.out.persistence.json.JsonColumns;
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
 import io.opencertflow.diagnosis.domain.model.BodyContactType;
 import io.opencertflow.diagnosis.domain.model.CertificationCandidate;
@@ -114,7 +115,8 @@ public class DiagnosisMapper {
                         ? heating.adjustmentMode().name() : null,
                 heating != null ? heating.temperatureLimitDevice() : null,
                 profile.manufacturingType().name(),
-                profile.modifiedModel());
+                profile.modifiedModel(),
+                electrical.powerSource().name());
         entity.setUnknownDocuments(JsonColumns.writeStringList(
                 profile.unknownDocuments().stream().map(DocumentCode::value).toList()));
         return entity;
@@ -185,7 +187,12 @@ public class DiagnosisMapper {
     private ProductProfile toProfile(ProductProfileEntity entity) {
         ElectricalSpec electrical = new ElectricalSpec(
                 entity.isUsesElectricity(), entity.getRatedVoltage(),
-                entity.getPowerConsumption(), entity.isHasBattery());
+                entity.getPowerConsumption(), entity.isHasBattery(),
+                // V31 이전에 저장된 진단은 이 값이 없다. UNKNOWN으로 되살려 "모름"을 보존한다 —
+                // AC로 추정해 채우면 재현했을 때 원래 진단과 다른 결과가 나온다.
+                entity.getPowerSource() == null
+                        ? PowerSource.UNKNOWN
+                        : PowerSource.valueOf(entity.getPowerSource()));
         Set<MaterialType> materials = JsonColumns.readStringList(entity.getMaterials()).stream()
                 .map(MaterialType::valueOf)
                 .collect(Collectors.toUnmodifiableSet());

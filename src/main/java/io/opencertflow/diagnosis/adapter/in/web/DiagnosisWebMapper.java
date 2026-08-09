@@ -8,6 +8,7 @@ import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.Evidence
 import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ExpertReviewView;
 import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.NarrationView;
 import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ScoreView;
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
 import io.opencertflow.diagnosis.domain.model.BodyContactType;
 import io.opencertflow.diagnosis.domain.model.ControllerStatus;
@@ -45,7 +46,12 @@ public class DiagnosisWebMapper {
                 usesElectricity,
                 usesElectricity ? request.ratedVoltage() : null,
                 usesElectricity ? request.powerConsumption() : null,
-                request.hasBattery());
+                request.hasBattery(),
+                // 비워서 보내면 UNKNOWN이다. 220V일 테니 AC로 채우는 식의 추론을 하지 않는다 —
+                // 틀렸을 때 사용자는 자기가 입력하지도 않은 값 때문에 잘못된 안내를 받게 된다.
+                request.powerSource() == null || request.powerSource().isBlank()
+                        ? PowerSource.UNKNOWN
+                        : parse(PowerSource.class, request.powerSource(), "powerSource"));
 
         return new ProductProfile(
                 request.productName(),
@@ -86,6 +92,7 @@ public class DiagnosisWebMapper {
                 electrical.ratedVoltage(),
                 electrical.powerConsumption(),
                 electrical.hasBattery(),
+                electrical.powerSource().name(),
                 profile.targetUser().name(),
                 profile.salesChannel().name(),
                 profile.materials().stream().map(Enum::name).toList(),

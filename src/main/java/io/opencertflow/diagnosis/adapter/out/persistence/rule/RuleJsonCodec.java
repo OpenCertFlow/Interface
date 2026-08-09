@@ -10,6 +10,7 @@ import io.opencertflow.diagnosis.domain.model.DocumentCode;
 import io.opencertflow.diagnosis.domain.model.ExpertReviewReason;
 import io.opencertflow.diagnosis.domain.model.ManufacturingType;
 import io.opencertflow.diagnosis.domain.model.MaterialType;
+import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.ProductGroup;
 import io.opencertflow.diagnosis.domain.model.Requirement;
 import io.opencertflow.diagnosis.domain.model.SalesChannel;
@@ -125,6 +126,7 @@ public class RuleJsonCodec {
             case BODY_CONTACT_TYPE -> enumValue(BodyContactType.class, node.asText());
             case CONTROLLER_STATUS -> enumValue(ControllerStatus.class, node.asText());
             case TEMPERATURE_SOURCE -> enumValue(TemperatureSource.class, node.asText());
+            case POWER_SOURCE -> enumValue(PowerSource.class, node.asText());
             case ADJUSTMENT_MODE -> enumValue(AdjustmentMode.class, node.asText());
             case MANUFACTURING_TYPE -> enumValue(ManufacturingType.class, node.asText());
         };
