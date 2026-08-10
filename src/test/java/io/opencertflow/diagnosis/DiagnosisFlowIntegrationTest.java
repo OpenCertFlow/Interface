@@ -43,19 +43,22 @@ class DiagnosisFlowIntegrationTest {
     WebTestClient webTestClient;
 
     @Test
-    @DisplayName("220V 드라이기 진단 → 201, 안전확인 후보 · 준비도 점수 · 근거 · 저장까지 한 흐름")
+    @DisplayName("220V 드라이기 진단 → 201, 안전인증 후보 · 준비도 점수 · 근거 · 저장까지 한 흐름")
     void 드라이기_진단_전체흐름() {
-        Map<String, Object> request = Map.of(
-                "productName", "가정용 헤어드라이어",
-                "productGroup", "SMALL_APPLIANCE",
-                "usesElectricity", true,
-                "ratedVoltage", 220,
-                "powerConsumption", 1200,
-                "hasBattery", false,
-                "targetUser", "GENERAL",
-                "salesChannel", "ONLINE",
-                "materials", List.of("PLASTIC", "METAL"),
-                "heldDocuments", List.of("TEST_REPORT"));
+        // Map.of는 10쌍이 한계라 ofEntries를 쓴다.
+        Map<String, Object> request = Map.ofEntries(
+                Map.entry("productName", "가정용 헤어드라이어"),
+                Map.entry("productGroup", "SMALL_APPLIANCE"),
+                // 인증 등급은 품목이 정한다 — 모발관리기는 시행규칙 별표 3(안전인증)이다.
+                Map.entry("applianceItem", "HAIR_CARE_DEVICE"),
+                Map.entry("usesElectricity", true),
+                Map.entry("ratedVoltage", 220),
+                Map.entry("powerConsumption", 1200),
+                Map.entry("hasBattery", false),
+                Map.entry("targetUser", "GENERAL"),
+                Map.entry("salesChannel", "ONLINE"),
+                Map.entry("materials", List.of("PLASTIC", "METAL")),
+                Map.entry("heldDocuments", List.of("TEST_REPORT")));
 
         // POST — 진단 실행
         JsonNode created = webTestClient.post().uri("/api/v1/diagnoses")
@@ -89,10 +92,10 @@ class DiagnosisFlowIntegrationTest {
         assertThat(data.at("/score/applicable").asBoolean()).isTrue();
         assertThat(data.at("/score/percentage").asInt()).isBetween(0, 100);
 
-        // 안전확인 후보가 식별되고, 그 근거 룰(R-SA-001)이 함께 남는다
+        // 안전인증 후보가 식별되고(모발관리기 = 시행규칙 별표 3), 근거 룰이 함께 남는다
         JsonNode candidates = data.at("/candidates");
         assertThat(candidates).isNotEmpty();
-        assertThat(candidates.toString()).contains("KC_SAFETY_CONFIRM_ELECTRIC", "R-SA-001");
+        assertThat(candidates.toString()).contains("KC_SAFETY_CERT_ELECTRIC", "R-SA-020");
 
         // 체크리스트에 필수 서류가 잡히고, 근거(스텁)와 문장이 붙는다
         assertThat(data.at("/checklist").toString()).contains("BIZ_LICENSE");

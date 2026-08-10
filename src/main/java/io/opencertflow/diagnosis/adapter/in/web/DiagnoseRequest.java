@@ -23,6 +23,9 @@ public record DiagnoseRequest(
         // 전기찜질기를 교류면 별표 3(안전인증), 직류면 별표 5(공급자적합성확인)에 넣는다.
         // 선택 항목이다. 비우면 UNKNOWN이 되어 전문가 확인으로 안내된다.
         String powerSource,
+        // 시행규칙 별표의 품목. 인증 등급이 여기서 정해진다 — 제품군이 아니라 품목 단위다.
+        // 선택 항목이며, 비우면 UNKNOWN이 되어 전문가 확인으로 안내된다.
+        String applianceItem,
         @NotBlank String targetUser,
         @NotBlank String salesChannel,
         List<String> materials,

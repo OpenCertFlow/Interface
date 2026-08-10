@@ -20,6 +20,9 @@ public enum ValueKind {
 
     /** 전원 방식(교류/직류/모름). 인증 등급을 가르는 값이다. */
     POWER_SOURCE,
+
+    /** 시행규칙 별표의 품목. 인증 등급은 제품군이 아니라 품목 단위로 정해진다. */
+    APPLIANCE_ITEM,
     ADJUSTMENT_MODE,
     MANUFACTURING_TYPE
 }

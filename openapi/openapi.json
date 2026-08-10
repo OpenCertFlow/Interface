@@ -1351,6 +1351,9 @@
             "minimum" : 0,
             "type" : "integer"
           },
+          "applianceItem" : {
+            "type" : "string"
+          },
           "autoShutOff" : {
             "type" : "boolean"
           },

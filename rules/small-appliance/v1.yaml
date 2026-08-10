@@ -2,18 +2,19 @@
 #
 # 소형가전 룰셋 v1
 #
-# ⚠️ 이 룰셋의 인증 등급은 아직 시행규칙으로 확인되지 않았다 (#26)
+# ── 인증 등급의 근거 ─────────────────────────────────────────────────────────
 #
-# 실제 KC 제도를 단순화한 데모 규칙이다. 확인해 보니 최소 한 곳이 어긋난다 —
-# 대표 시나리오인 헤어드라이어는 시행규칙 별표 3(안전인증대상) 5) '모발관리기'에 해당하는데,
-# 아래 R-SA-001은 안전확인으로 안내한다. 인증 등록부에서도 모발건조기 25건이 전부 안전인증이다.
+# 등급은 제품군이 아니라 <품목> 단위로 정해진다. 「전기용품 및 생활용품 안전관리법
+# 시행규칙」의 별표가 품목을 나열하며, 같은 소형가전 안에도 등급이 섞여 있다.
 #
-# 근본 문제는 값 하나가 아니라 조건이 너무 넓다는 것이다. "전기 사용 + 50V 초과"는 소형가전
-# 전체를 덮는데, 그 안에는 안전확인인 품목도 공급자적합성확인인 품목도 있다. 한 등급을
-# 제품군 전체에 붙이는 구조 자체를 고쳐야 한다.
+#   별표 3 안전인증대상   5) 모발관리기(헤어드라이어) · 3) 주방용전열기구 · 25) 가습기 …
+#   별표 4 안전확인대상   3) 이·미용기기 · 42) 전기청소기 · 45) 전기건조기 …
 #
-# 확인 절차는 CONTRIBUTING.md의 '인증 등급을 확인하는 절차'에 있다.
-# 전기방석 룰셋(rules/electric-heating-pad/v1.yaml)이 그 절차를 마친 예다.
+# 예전 룰은 "전기 사용 + 50V 초과"만 보고 소형가전 전체에 안전확인을 붙였다. 그 결과
+# 헤어드라이어에 받아야 할 인증을 축소해 안내했다(#26). 등급은 이제 품목 룰이 정한다.
+#
+# 확인 방법: CONTRIBUTING.md의 "인증 등급을 확인하는 절차"
+# 품목 목록: docs/reference/전기용품-별표-품목.md
 #
 # 이 파일이 룰의 진실의 원천(source of truth)이다 — DB는 런타임 사본일 뿐이며
 # 기동 시 RuleFileLoader가 이 파일로 덮어쓴다.
@@ -27,20 +28,76 @@ active: true
 description: 소형가전(드라이어류) 데모 룰셋
 
 rules:
+  # ── 등급은 품목이 정한다 ────────────────────────────────────────────────────
+  #
+  # 예전 R-SA-001은 "전기 사용 + 50V 초과"만 보고 소형가전 전체에 안전확인을 붙였다.
+  # 그래서 헤어드라이어(별표 3 안전인증 대상)에 받아야 할 인증을 축소해 안내했다.
+  # 이제 등급은 품목 룰이 정하고, 이 룰은 전기용품 공통 서류만 요구한다.
+
   - code: R-SA-001
     priority: 10
-    description: 전기 사용 + 정격전압 50V 초과 소형가전은 안전확인 대상 후보
+    description: 전기 사용 + 정격전압 50V 초과 → 전기용품 공통 서류
     condition:
       type: allOf
       conditions:
         - { type: attr, attribute: USES_ELECTRICITY, operator: EQ, value: true }
         - { type: attr, attribute: RATED_VOLTAGE, operator: GT, value: 50 }
     effects:
-      - { type: addCandidate, schemeCode: KC_SAFETY_CONFIRM_ELECTRIC, certificationType: SAFETY_CONFIRM }
       - { type: requireDocument, documentCode: BIZ_LICENSE, requirement: REQUIRED }
       - { type: requireDocument, documentCode: TEST_REPORT, requirement: REQUIRED }
       - { type: requireDocument, documentCode: CIRCUIT_DIAGRAM, requirement: RECOMMENDED }
       - { type: requireDocument, documentCode: PARTS_LIST, requirement: RECOMMENDED }
+
+  # 별표 3 · 안전인증대상전기용품 — 제품시험 + 공장심사
+  #    2) 전기다리미 및 전기프레스기   3) 주방용전열기구   5) 모발관리기
+  #    8) 전기액체가열기기            16) 전열기구        17) 전기마사지기
+  #   25) 가습기
+  - code: R-SA-020
+    priority: 15
+    description: 별표 3 품목 → 안전인증 대상
+    condition:
+      type: attr
+      attribute: APPLIANCE_ITEM
+      operator: IN
+      value: [ELECTRIC_IRON, KITCHEN_HEATING_APPLIANCE, HAIR_CARE_DEVICE,
+              LIQUID_HEATING_APPLIANCE, HEATING_APPLIANCE, ELECTRIC_MASSAGER, HUMIDIFIER]
+    effects:
+      - { type: addCandidate, schemeCode: KC_SAFETY_CERT_ELECTRIC, certificationType: SAFETY_CERT }
+      - { type: requireDocument, documentCode: CIRCUIT_DIAGRAM, requirement: REQUIRED }
+      - { type: requireDocument, documentCode: PARTS_LIST, requirement: REQUIRED }
+      # 안전인증은 서류만으로 끝나지 않는다. 뒤늦게 알면 일정과 비용이 함께 틀어진다.
+      - type: flagExpertReview
+        reason: NO_EVIDENCE
+        question: 안전인증은 제품시험과 함께 제조공장 심사를 받습니다. 공장 소재지와 생산 설비 기준을 인증기관에 미리 확인해 주세요.
+
+  # 별표 4 · 안전확인대상전기용품 — 시험성적서 제출 후 신고
+  #    3) 이·미용기기   7) 구강청결기   42) 전기청소기
+  #   45) 전기건조기(손·발·의류·농산물 등. 모발은 별표 3의 모발관리기다)
+  - code: R-SA-021
+    priority: 15
+    description: 별표 4 품목 → 안전확인 대상
+    condition:
+      type: attr
+      attribute: APPLIANCE_ITEM
+      operator: IN
+      value: [BEAUTY_DEVICE, ORAL_CLEANER, VACUUM_CLEANER, DRYING_APPLIANCE]
+    effects:
+      - { type: addCandidate, schemeCode: KC_SAFETY_CONFIRM_ELECTRIC, certificationType: SAFETY_CONFIRM }
+
+  # 품목을 모르면 등급을 고를 수 없다. 안전인증으로 뭉개면 불필요한 공장심사 비용을,
+  # 안전확인으로 뭉개면 받아야 할 인증 누락을 안내하게 된다. 어느 쪽도 해서는 안 된다.
+  - code: R-SA-022
+    priority: 14
+    description: 품목 미확인 → 등급 판단 불가
+    condition:
+      type: allOf
+      conditions:
+        - { type: attr, attribute: USES_ELECTRICITY, operator: EQ, value: true }
+        - { type: attr, attribute: APPLIANCE_ITEM, operator: IN, value: [UNKNOWN, OTHER] }
+    effects:
+      - type: flagExpertReview
+        reason: AMBIGUOUS_CONDITION
+        question: 인증 등급은 제품군이 아니라 품목별로 정해집니다(시행규칙 별표 3·4·5). 제품이 어느 품목에 해당하는지 확인해 주세요.
 
   - code: R-SA-002
     priority: 20

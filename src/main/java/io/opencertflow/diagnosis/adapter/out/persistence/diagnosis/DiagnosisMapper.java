@@ -1,6 +1,7 @@
 package io.opencertflow.diagnosis.adapter.out.persistence.diagnosis;
 
 import io.opencertflow.common.adapter.out.persistence.json.JsonColumns;
+import io.opencertflow.diagnosis.domain.model.ApplianceItem;
 import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
 import io.opencertflow.diagnosis.domain.model.BodyContactType;
@@ -116,7 +117,8 @@ public class DiagnosisMapper {
                 heating != null ? heating.temperatureLimitDevice() : null,
                 profile.manufacturingType().name(),
                 profile.modifiedModel(),
-                electrical.powerSource().name());
+                electrical.powerSource().name(),
+                profile.applianceItem().name());
         entity.setUnknownDocuments(JsonColumns.writeStringList(
                 profile.unknownDocuments().stream().map(DocumentCode::value).toList()));
         return entity;
@@ -239,7 +241,11 @@ public class DiagnosisMapper {
                 entity.getManufacturingType() != null
                         ? ManufacturingType.valueOf(entity.getManufacturingType())
                         : ManufacturingType.UNKNOWN,
-                Boolean.TRUE.equals(entity.getModifiedModel()));
+                Boolean.TRUE.equals(entity.getModifiedModel()),
+                // V32 이전 진단은 이 값이 없다. UNKNOWN으로 되살려 '모름'을 보존한다.
+                entity.getApplianceItem() == null
+                        ? ApplianceItem.UNKNOWN
+                        : ApplianceItem.valueOf(entity.getApplianceItem()));
     }
 
     private ReadinessScore toScore(DiagnosisEntity entity) {

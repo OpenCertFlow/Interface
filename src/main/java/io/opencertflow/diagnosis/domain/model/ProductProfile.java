@@ -33,7 +33,8 @@ public record ProductProfile(
         Set<DocumentCode> heldDocuments,
         Set<DocumentCode> unknownDocuments,
         ManufacturingType manufacturingType,
-        boolean modifiedModel) {
+        boolean modifiedModel,
+        ApplianceItem applianceItem) {
 
     public ProductProfile {
         Guard.hasText(productName, "productName");
@@ -45,6 +46,10 @@ public record ProductProfile(
         materials = Set.copyOf(Guard.notNull(materials, "materials"));
         heldDocuments = Set.copyOf(Guard.notNull(heldDocuments, "heldDocuments"));
         unknownDocuments = unknownDocuments == null ? Set.of() : Set.copyOf(unknownDocuments);
+        // 선택하지 않았으면 모름이다. 없음으로 뭉개면 등급을 단정하게 된다.
+        if (applianceItem == null) {
+            applianceItem = ApplianceItem.UNKNOWN;
+        }
     }
 
     /**
@@ -63,7 +68,8 @@ public record ProductProfile(
             ManufacturingType manufacturingType,
             boolean modifiedModel) {
         this(productName, productGroup, electrical, heating, targetUser, salesChannel,
-                materials, heldDocuments, Set.of(), manufacturingType, modifiedModel);
+                materials, heldDocuments, Set.of(), manufacturingType, modifiedModel,
+                ApplianceItem.UNKNOWN);
     }
 
     /**
@@ -82,7 +88,7 @@ public record ProductProfile(
             Set<DocumentCode> heldDocuments) {
         this(productName, productGroup, electrical, null,
                 targetUser, salesChannel, materials, heldDocuments, Set.of(),
-                ManufacturingType.UNKNOWN, false);
+                ManufacturingType.UNKNOWN, false, ApplianceItem.UNKNOWN);
     }
 
     public boolean holds(DocumentCode document) {
