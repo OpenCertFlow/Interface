@@ -56,6 +56,20 @@ public enum Attribute {
     },
 
     /**
+     * 시행규칙 별표의 품목. <b>인증 등급은 제품군이 아니라 품목 단위로 정해진다.</b>
+     *
+     * <p>별표 3(안전인증)·4(안전확인)·5(공급자적합성확인)가 각각 품목을 나열하며, 같은
+     * '소형가전' 안에도 세 등급이 모두 들어 있다. 제품군 하나에 등급 하나를 붙이면 반드시
+     * 누군가는 틀린 안내를 받는다({@link io.opencertflow.diagnosis.domain.model.ApplianceItem}).
+     */
+    APPLIANCE_ITEM(ValueKind.APPLIANCE_ITEM) {
+        @Override
+        public Object resolve(ProductProfile profile) {
+            return profile.applianceItem();
+        }
+    },
+
+    /**
      * 신체에 닿는 방식({@link BodyContactType}). 발열 제품에서 화상 위험 판단의 핵심 입력이다.
      *
      * <p>발열 사양이 없는 제품(드라이기 등)은 {@code null}을 반환한다 — {@code NONE}이 아니다.

@@ -51,6 +51,7 @@ class TwoProductGroupIntegrationTest {
         Map<String, Object> request = new HashMap<>();
         request.put("productName", "가정용 헤어드라이어");
         request.put("productGroup", "SMALL_APPLIANCE");
+        request.put("applianceItem", "HAIR_CARE_DEVICE");
         request.put("usesElectricity", true);
         request.put("ratedVoltage", 220);
         request.put("powerConsumption", 1200);
@@ -129,12 +130,12 @@ class TwoProductGroupIntegrationTest {
     }
 
     @Test
-    @DisplayName("드라이기는 기존대로 안전확인 후보가 나온다 — 제품군 추가가 기존 진단을 깨지 않았다")
-    void 드라이기_진단은_그대로다() {
+    @DisplayName("드라이기는 안전인증 후보가 나온다 — 모발관리기는 시행규칙 별표 3이다")
+    void 드라이기_진단은_안전인증이다() {
         JsonNode report = diagnose(hairDryer());
 
         assertThat(report.at("/data/candidates").toString())
-                .contains("KC_SAFETY_CONFIRM_ELECTRIC", "SAFETY_CONFIRM");
+                .contains("KC_SAFETY_CERT_ELECTRIC", "SAFETY_CERT");
         assertThat(report.at("/data/score/applicable").asBoolean()).isTrue();
     }
 
@@ -144,12 +145,13 @@ class TwoProductGroupIntegrationTest {
         JsonNode dryer = diagnose(hairDryer());
         JsonNode pad = diagnose(heatingPad(true, 45));
 
-        // 서로 다른 제품군 룰셋이 매칭되었으므로 후보 구성이 다르다.
+        // 드라이기는 품목이 확인되어 안전인증이 나오고, 전기방석은 전원 방식을 보내지
+        // 않았으므로 등급을 단정하지 않는다. 두 룰셋이 실제로 다르게 동작한다.
         assertThat(pad.at("/data/candidates").toString())
-                .as("전기방석은 소형가전 안전확인 룰(R-SA-001)에 매칭되면 안 된다")
-                .doesNotContain("KC_SAFETY_CONFIRM_ELECTRIC");
+                .as("전기방석이 소형가전 품목 룰에 매칭되면 안 된다")
+                .doesNotContain("KC_SAFETY_CERT_ELECTRIC");
         assertThat(dryer.at("/data/candidates").toString())
-                .contains("KC_SAFETY_CONFIRM_ELECTRIC");
+                .contains("KC_SAFETY_CERT_ELECTRIC");
     }
 
     @Test
@@ -309,6 +311,55 @@ class TwoProductGroupIntegrationTest {
         assertThat(candidates)
                 .as("직류 제품에 안전인증을 안내하면 필요 없는 공장심사 비용을 물리게 된다")
                 .doesNotContain("SAFETY_CERT");
+    }
+
+    // ── 소형가전은 품목이 인증 등급을 가른다 ────────────────────────
+    //
+    // 예전 룰은 "전기 사용 + 50V 초과"만 보고 소형가전 전체에 안전확인을 붙였다. 그래서
+    // 헤어드라이어(별표 3 안전인증 대상)에 받아야 할 인증을 축소해 안내했다(#26).
+
+    @Test
+    @DisplayName("모발관리기(헤어드라이어)는 안전인증 대상이다 — 시행규칙 별표 3 제5호")
+    void 모발관리기는_안전인증이다() {
+        Map<String, Object> dryer = hairDryer();
+        dryer.put("applianceItem", "HAIR_CARE_DEVICE");
+
+        String candidates = diagnose(dryer).at("/data/candidates").toString();
+
+        assertThat(candidates).contains("SAFETY_CERT");
+        assertThat(candidates)
+                .as("안전확인으로 안내하면 받아야 할 인증을 축소해 알려 주게 된다")
+                .doesNotContain("SAFETY_CONFIRM");
+    }
+
+    @Test
+    @DisplayName("전기청소기는 안전확인 대상이다 — 시행규칙 별표 4 제42호")
+    void 전기청소기는_안전확인이다() {
+        Map<String, Object> cleaner = hairDryer();
+        cleaner.put("productName", "가정용 전기청소기");
+        cleaner.put("applianceItem", "VACUUM_CLEANER");
+
+        String candidates = diagnose(cleaner).at("/data/candidates").toString();
+
+        assertThat(candidates).contains("SAFETY_CONFIRM");
+        assertThat(candidates)
+                .as("안전인증으로 안내하면 필요 없는 공장심사 비용을 물리게 된다")
+                .doesNotContain("SAFETY_CERT");
+    }
+
+    @Test
+    @DisplayName("품목을 모르면 등급을 단정하지 않는다")
+    void 품목_모르면_등급을_고르지_않는다() {
+        // applianceItem을 빼고 보낸다 — 이 필드를 모르는 기존 클라이언트가 그러하듯.
+        Map<String, Object> unspecified = hairDryer();
+        unspecified.remove("applianceItem");
+        JsonNode report = diagnose(unspecified);
+
+        assertThat(report.at("/data/expertReviewItems").toString()).contains("품목");
+        assertThat(report.at("/data/candidates").toString())
+                .as("모르는데 등급을 고르면 둘 중 하나는 반드시 틀린 안내가 된다")
+                .doesNotContain("SAFETY_CERT")
+                .doesNotContain("SAFETY_CONFIRM");
     }
 
     @Test

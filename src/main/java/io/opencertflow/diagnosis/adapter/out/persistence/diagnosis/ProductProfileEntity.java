@@ -46,6 +46,10 @@ public class ProductProfileEntity {
     @Column(name = "power_source", nullable = false)
     private String powerSource;
 
+    /** 시행규칙 별표의 품목. 인증 등급 판정의 기준이다 — V32 마이그레이션 주석 참조. */
+    @Column(name = "appliance_item", nullable = false)
+    private String applianceItem;
+
     @Column(name = "target_user", nullable = false)
     private String targetUser;
 
@@ -140,7 +144,8 @@ public class ProductProfileEntity {
             Boolean separableElectricParts, Boolean hasSeparateAdapter,
             Boolean adapterExternallyAttached, Boolean adapterCertified,
             String adjustmentMode, Boolean temperatureLimitDevice,
-            String manufacturingType, Boolean modifiedModel, String powerSource) {
+            String manufacturingType, Boolean modifiedModel, String powerSource,
+            String applianceItem) {
         this.productName = productName;
         this.productGroup = productGroup;
         this.usesElectricity = usesElectricity;
@@ -148,6 +153,7 @@ public class ProductProfileEntity {
         this.powerConsumption = powerConsumption;
         this.hasBattery = hasBattery;
         this.powerSource = powerSource;
+        this.applianceItem = applianceItem;
         this.targetUser = targetUser;
         this.salesChannel = salesChannel;
         this.materials = materials;
@@ -203,6 +209,10 @@ public class ProductProfileEntity {
 
     public String getPowerSource() {
         return powerSource;
+    }
+
+    public String getApplianceItem() {
+        return applianceItem;
     }
 
     public String getTargetUser() {

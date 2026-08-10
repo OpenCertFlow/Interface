@@ -113,6 +113,8 @@ public record ProfileAdjustment(
                         .filter(code -> !held.contains(code))
                         .collect(java.util.stream.Collectors.toUnmodifiableSet()),
                 base.manufacturingType(),
-                base.modifiedModel());
+                base.modifiedModel(),
+                // 품목은 시뮬레이션 대상이 아니다. 품목을 바꾸면 다른 제품이다.
+                base.applianceItem());
     }
 }

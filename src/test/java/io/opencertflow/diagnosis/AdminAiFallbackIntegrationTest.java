@@ -59,6 +59,7 @@ class AdminAiFallbackIntegrationTest {
         Map<String, Object> request = new java.util.HashMap<>();
         request.put("productName", "가정용 헤어드라이어");
         request.put("productGroup", "SMALL_APPLIANCE");
+        request.put("applianceItem", "HAIR_CARE_DEVICE");
         request.put("usesElectricity", true);
         request.put("ratedVoltage", 220);
         request.put("powerConsumption", 1200);

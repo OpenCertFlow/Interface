@@ -8,6 +8,7 @@ import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.Evidence
 import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ExpertReviewView;
 import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.NarrationView;
 import io.opencertflow.diagnosis.adapter.in.web.DiagnosisReportResponse.ScoreView;
+import io.opencertflow.diagnosis.domain.model.ApplianceItem;
 import io.opencertflow.diagnosis.domain.model.PowerSource;
 import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
 import io.opencertflow.diagnosis.domain.model.BodyContactType;
@@ -69,11 +70,14 @@ public class DiagnosisWebMapper {
                 request.unknownDocuments().stream()
                         .map(DocumentCode::of)
                         .collect(Collectors.toUnmodifiableSet()),
-                // 제조형태·변경모델은 선택 입력이다. 미입력이면 '모름'·false로 두어 기존 요청과 호환.
+                // 품목·제조형태·변경모델은 선택 입력이다. 미입력이면 '모름'·false로 두어 기존 요청과 호환.
                 request.manufacturingType() == null || request.manufacturingType().isBlank()
                         ? ManufacturingType.UNKNOWN
                         : parse(ManufacturingType.class, request.manufacturingType(), "manufacturingType"),
-                Boolean.TRUE.equals(request.isModifiedModel()));
+                Boolean.TRUE.equals(request.isModifiedModel()),
+                request.applianceItem() == null || request.applianceItem().isBlank()
+                        ? ApplianceItem.UNKNOWN
+                        : parse(ApplianceItem.class, request.applianceItem(), "applianceItem"));
     }
 
     /**
@@ -93,6 +97,7 @@ public class DiagnosisWebMapper {
                 electrical.powerConsumption(),
                 electrical.hasBattery(),
                 electrical.powerSource().name(),
+                profile.applianceItem().name(),
                 profile.targetUser().name(),
                 profile.salesChannel().name(),
                 profile.materials().stream().map(Enum::name).toList(),

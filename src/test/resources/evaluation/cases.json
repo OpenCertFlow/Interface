@@ -19,7 +19,8 @@
         "TEST_REPORT",
         "BIZ_LICENSE",
         "CIRCUIT_DIAGRAM"
-      ]
+      ],
+      "applianceItem": "HAIR_CARE_DEVICE"
     },
     "expect": {
       "minCandidates": 1,
@@ -44,7 +45,8 @@
       "materials": [
         "PLASTIC"
       ],
-      "heldDocuments": []
+      "heldDocuments": [],
+      "applianceItem": "HAIR_CARE_DEVICE"
     },
     "expect": {
       "minCandidates": 1,
@@ -74,7 +76,8 @@
       ],
       "unknownDocuments": [
         "TEST_REPORT"
-      ]
+      ],
+      "applianceItem": "HAIR_CARE_DEVICE"
     },
     "expect": {
       "minCandidates": 1,
@@ -139,7 +142,8 @@
       ],
       "unknownDocuments": [
         "TEST_REPORT"
-      ]
+      ],
+      "applianceItem": "HAIR_CARE_DEVICE"
     },
     "expect": {
       "minCandidates": 1,
@@ -224,7 +228,8 @@
       ],
       "heldDocuments": [
         "TEST_REPORT"
-      ]
+      ],
+      "applianceItem": "HAIR_CARE_DEVICE"
     },
     "expect": {
       "minCandidates": 1,
