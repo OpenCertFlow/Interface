@@ -348,6 +348,23 @@ class TwoProductGroupIntegrationTest {
     }
 
     @Test
+    @DisplayName("전기시계는 공급자적합성확인 대상이다 — 시행규칙 별표 5 제6호")
+    void 전기시계는_공급자적합성확인이다() {
+        Map<String, Object> clock = hairDryer();
+        clock.put("productName", "탁상 전기시계");
+        clock.put("applianceItem", "ELECTRIC_CLOCK");
+
+        String candidates = diagnose(clock).at("/data/candidates").toString();
+
+        assertThat(candidates).contains("SUPPLIER_DOC");
+        // 세 등급이 서로 섞이면 안 된다. 무게가 전혀 다르다.
+        assertThat(candidates)
+                .as("공급자적합성확인 품목에 안전인증·안전확인을 안내하면 과잉 안내가 된다")
+                .doesNotContain("SAFETY_CERT")
+                .doesNotContain("SAFETY_CONFIRM");
+    }
+
+    @Test
     @DisplayName("품목을 모르면 등급을 단정하지 않는다")
     void 품목_모르면_등급을_고르지_않는다() {
         // applianceItem을 빼고 보낸다 — 이 필드를 모르는 기존 클라이언트가 그러하듯.

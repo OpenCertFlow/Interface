@@ -84,6 +84,28 @@ rules:
     effects:
       - { type: addCandidate, schemeCode: KC_SAFETY_CONFIRM_ELECTRIC, certificationType: SAFETY_CONFIRM }
 
+  # 별표 5 · 공급자적합성확인대상전기용품 — 제조·수입자가 스스로 확인해 신고
+  #    4) 애완동물 목욕기    6) 전기시계          7) 적외선·자외선방사 피부관리기
+  #   11) 보풀 제거기       13) 전기 작동 도어록  14) 직류 공기청정기
+  #   15) 전동형 롤스크린
+  #
+  # 인증기관을 거치지 않으므로 KC 인증 등록부에 나타나지 않는다. 등록부에서 안 보인다고
+  # "인증이 필요 없다"고 읽으면 안 된다 — 신고 의무는 있다.
+  - code: R-SA-023
+    priority: 15
+    description: 별표 5 품목 → 공급자적합성확인 대상
+    condition:
+      type: allOf
+      conditions:
+        - { type: attr, attribute: USES_ELECTRICITY, operator: EQ, value: true }
+        - type: attr
+          attribute: APPLIANCE_ITEM
+          operator: IN
+          value: [PET_BATH, ELECTRIC_CLOCK, SKIN_CARE_RADIATION_DEVICE, LINT_REMOVER,
+                  ELECTRIC_DOOR_LOCK, AIR_PURIFIER_DC, MOTORIZED_ROLL_SCREEN]
+    effects:
+      - { type: addCandidate, schemeCode: KC_SUPPLIER_DOC_ELECTRIC, certificationType: SUPPLIER_DOC }
+
   # 품목을 모르면 등급을 고를 수 없다. 안전인증으로 뭉개면 불필요한 공장심사 비용을,
   # 안전확인으로 뭉개면 받아야 할 인증 누락을 안내하게 된다. 어느 쪽도 해서는 안 된다.
   - code: R-SA-022
