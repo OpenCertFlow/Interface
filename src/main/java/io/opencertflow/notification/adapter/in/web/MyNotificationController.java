@@ -1,5 +1,6 @@
 package io.opencertflow.notification.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 /** 내 알림 조회·읽음 처리(F-APP-045). /api/v1/me/** 는 인증이 필요하다. */
+@Tag(name = "내 알림", description = "알림 목록 · 읽음 처리")
 @WebAdapter
 @RequestMapping("/api/v1/me/notifications")
 public class MyNotificationController {

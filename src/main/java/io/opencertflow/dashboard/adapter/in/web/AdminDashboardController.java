@@ -1,5 +1,6 @@
 package io.opencertflow.dashboard.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /** 관리자 대시보드 통계 API(F-WADM-001). 사용자·진단·상담·룰셋·문서·감사 로그 집계. */
+@Tag(name = "관리자 · 대시보드", description = "진단·상담 지표 요약")
 @WebAdapter
 @RequestMapping("/api/v1/admin/dashboard")
 public class AdminDashboardController {

@@ -1,5 +1,6 @@
 package io.opencertflow.document.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
@@ -27,6 +28,7 @@ import reactor.core.publisher.Mono;
  * <p>양식 목록은 열려 있고(무엇을 만들 수 있는지 보여 주는 정보), 발급과 이력 조회는 인증이 필요하다 —
  * 발급 문서에는 사업자등록번호·연락처가 담긴다.
  */
+@Tag(name = "서류 발급", description = "양식 조회 · 발급 · 내려받기")
 @WebAdapter
 @RequestMapping("/api/v1/documents")
 public class DocumentController {

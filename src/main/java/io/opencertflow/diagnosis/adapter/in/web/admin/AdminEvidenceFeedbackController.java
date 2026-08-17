@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
  * <p>재검토 필요 건수가 많은 문서가 위로 온다. 관리자는 위에서부터 원문을 다시 보고 색인 태그나
  * 청킹을 고치면 된다.
  */
+@Tag(name = "관리자 · 근거 피드백", description = "컨설턴트가 남긴 근거 평가 집계")
 @WebAdapter
 @RequestMapping("/api/v1/admin/evidence-feedback")
 public class AdminEvidenceFeedbackController {

@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
  * 관리자 AI 장애 폴백 설정 API(F-WADM-020). 외부 AI가 불안정할 때 RAG·LLM 호출을 강제로 꺼
  * 진단이 타임아웃을 기다리지 않고 결정론 결과로 즉시 응답하게 한다. 판정은 룰이 하므로 정확성은 유지.
  */
+@Tag(name = "관리자 · AI 폴백", description = "RAG·문장화를 끄고 룰 결과만 내보내는 스위치")
 @WebAdapter
 @RequestMapping("/api/v1/admin/ai-fallback")
 public class AdminAiFallbackController {

@@ -1,5 +1,6 @@
 package io.opencertflow.auth.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.auth.application.port.in.ManageUserRoleUseCase;
 import io.opencertflow.auth.application.port.in.QueryUsersUseCase;
 import io.opencertflow.auth.application.port.in.QueryUsersUseCase.UserSummary;
@@ -26,6 +27,7 @@ import reactor.core.publisher.Mono;
  * <p>접근 제어는 시큐리티 경로 규칙({@code /api/v1/admin/**} → ADMIN)이 담당한다. 컨트롤러에서 다시
  * 권한을 확인하지 않는 이유는 판단이 두 곳에 있으면 언젠가 어긋나기 때문이다.
  */
+@Tag(name = "관리자 · 사용자", description = "가입자 목록 조회 · 권한 부여")
 @WebAdapter
 @RequestMapping("/api/v1/admin/users")
 public class AdminUserController {

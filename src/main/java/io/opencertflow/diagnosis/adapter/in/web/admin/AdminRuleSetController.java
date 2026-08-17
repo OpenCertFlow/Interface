@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Mono;
  * <p>접근 제어는 경로 규칙({@code /api/v1/admin/**} → ADMIN)이 담당한다. 컨트롤러는 다시 권한을
  * 확인하지 않는다(판단이 두 곳이면 언젠가 어긋난다).
  */
+@Tag(name = "관리자 · 룰셋", description = "룰셋 등록·검증·활성화")
 @WebAdapter
 @RequestMapping("/api/v1/admin/rule-sets")
 public class AdminRuleSetController {

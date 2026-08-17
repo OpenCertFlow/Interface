@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
  * <p>그 근거가 이 제품에 맞는지 가장 잘 아는 사람은 상담을 처리하는 컨설턴트다. 판단을 받아 두면
  * 색인 재검토의 우선순위가 생긴다.
  */
+@Tag(name = "근거 피드백(컨설턴트)", description = "진단 근거가 실제로 쓸모 있었는지 남긴다")
 @WebAdapter
 @RequestMapping("/api/v1/consulting/diagnoses/{diagnosisId}/evidence-feedback")
 public class EvidenceFeedbackController {
