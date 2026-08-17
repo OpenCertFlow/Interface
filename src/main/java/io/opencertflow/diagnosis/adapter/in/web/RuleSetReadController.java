@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
  *
  * <p>편집은 관리자 전용(/api/v1/admin/rule-sets)이고, 이 경로는 조회만 열어 CONSULTANT도 볼 수 있게 한다.
  */
+@Tag(name = "룰셋 조회", description = "적용된 판정 규칙 열람")
 @WebAdapter
 @RequestMapping("/api/v1/rule-sets")
 public class RuleSetReadController {

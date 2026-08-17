@@ -1,5 +1,6 @@
 package io.opencertflow.file.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
@@ -39,6 +40,7 @@ import reactor.core.publisher.Mono;
  * {@link StoredFile#requireReadableBy}가 파일별 공개 범위(visibility)를 보고 판단한다 — 공개
  * 파일은 누구나, 비공개 파일은 소유자·관리자만 받는다.
  */
+@Tag(name = "파일", description = "업로드 · 내려받기 · 삭제")
 @WebAdapter
 @RequestMapping("/api/v1/files")
 public class FileController {

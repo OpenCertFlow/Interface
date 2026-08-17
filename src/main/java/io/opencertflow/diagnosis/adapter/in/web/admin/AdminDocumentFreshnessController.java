@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -22,6 +23,7 @@ import reactor.core.publisher.Mono;
  * <p>우리는 공식 자료를 자동으로 갱신하지 않는다(운영지침 §9.2). 대신 원문이 달라졌는지를
  * 감지해 관리자에게 재검토를 요청한다. 무엇을 어떻게 고칠지는 사람이 원문을 읽고 정한다.
  */
+@Tag(name = "관리자 · 문서 신선도", description = "공식 문서 원문 변경 감지(갱신은 하지 않는다)")
 @WebAdapter
 @RequestMapping("/api/v1/admin/document-freshness")
 public class AdminDocumentFreshnessController {

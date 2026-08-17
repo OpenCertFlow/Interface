@@ -1,5 +1,6 @@
 package io.opencertflow.report.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /** 관리자 리포트 문구 관리 API(F-WADM-016). 코드 배포 없이 안내·면책 문구를 편집한다. */
+@Tag(name = "관리자 · 리포트 문구", description = "결과 화면에 쓰이는 문구 관리")
 @WebAdapter
 @RequestMapping("/api/v1/admin/report-phrases")
 public class AdminReportPhraseController {

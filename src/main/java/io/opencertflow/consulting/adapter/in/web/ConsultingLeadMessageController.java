@@ -1,5 +1,6 @@
 package io.opencertflow.consulting.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
  * 소공인의 상담 공개 메시지 조회(F-WCON-009 소비 측). 리드 id(Long)를 접근키로 쓴다 — 공개
  * 메시지(추가정보 요청·안내)만 보이고 내부 메모·작성자는 제외한다. 접수 경로와 같은 공개 path다.
  */
+@Tag(name = "상담 메시지(공개)", description = "소공인이 받은 안내·추가정보 요청 조회")
 @WebAdapter
 @RequestMapping("/api/v1/consulting-leads/{leadId}/messages")
 public class ConsultingLeadMessageController {

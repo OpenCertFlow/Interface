@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /** 관리자 공식 문서 메타데이터 API(F-WADM-012/013). 접근 제어는 경로 규칙(/api/v1/admin/**)이 담당한다. */
+@Tag(name = "관리자 · 공식 문서", description = "룰의 근거가 되는 원문 메타데이터")
 @WebAdapter
 @RequestMapping("/api/v1/admin/official-documents")
 public class AdminOfficialDocumentController {

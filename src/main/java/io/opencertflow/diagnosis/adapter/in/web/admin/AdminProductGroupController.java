@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -28,6 +29,7 @@ import reactor.core.publisher.Mono;
  *
  * <p>접근 제어는 경로 규칙({@code /api/v1/admin/**} → ADMIN)이 담당한다.
  */
+@Tag(name = "관리자 · 제품군 질문", description = "제품군별 입력 항목 재정의")
 @WebAdapter
 @RequestMapping("/api/v1/admin/product-groups")
 public class AdminProductGroupController {

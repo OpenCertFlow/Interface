@@ -1,5 +1,6 @@
 package io.opencertflow.board.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.board.application.port.in.CommentUseCase;
 import io.opencertflow.board.application.port.in.PostQuery;
 import io.opencertflow.board.application.port.in.PostUseCase;
@@ -33,6 +34,7 @@ import reactor.core.publisher.Mono;
  *
  * <p>목록·상세는 비로그인도 볼 수 있고(비밀글은 가려짐), 작성·수정·삭제는 인증이 필요하다.
  */
+@Tag(name = "게시판", description = "공지·문의 글과 댓글. 읽기는 공개, 쓰기는 로그인")
 @WebAdapter
 @RequestMapping("/api/v1/boards")
 public class BoardController {

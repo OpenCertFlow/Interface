@@ -1,5 +1,6 @@
 package io.opencertflow.audit.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.audit.application.port.in.QueryAuditLogUseCase;
 import io.opencertflow.audit.application.port.in.QueryAuditLogUseCase.AuditView;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 
 /** 관리자 감사 로그 조회 API(F-WADM-018). 조회(GET)는 감사 대상이 아니라 기록되지 않는다. */
+@Tag(name = "관리자 · 감사 로그", description = "관리자 변경 행위 기록 조회")
 @WebAdapter
 @RequestMapping("/api/v1/admin/audit-logs")
 public class AdminAuditLogController {

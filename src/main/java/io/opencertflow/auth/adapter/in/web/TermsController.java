@@ -1,5 +1,6 @@
 package io.opencertflow.auth.adapter.in.web;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.auth.application.port.in.GetTermsUseCase;
 import io.opencertflow.auth.application.port.in.GetTermsUseCase.TermView;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /** 약관 조회(F-AUTH-008). 회원가입 전 화면 구성용이라 인증 없이 연다. */
+@Tag(name = "약관", description = "가입 시 동의할 약관 목록(비로그인 가능)")
 @WebAdapter
 @RequestMapping("/api/v1/terms")
 public class TermsController {

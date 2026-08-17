@@ -1,5 +1,6 @@
 package io.opencertflow.diagnosis.adapter.in.web.admin;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.opencertflow.common.adapter.in.web.annotation.WebAdapter;
 import io.opencertflow.common.adapter.in.web.response.ApiResponse;
 import io.opencertflow.common.adapter.in.web.trace.TraceId;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import reactor.core.publisher.Mono;
 
 /** 관리자 준비도 가중치 API(F-WADM-011). 코드 배포 없이 서류별 가중치를 조정한다. */
+@Tag(name = "관리자 · 준비도 가중치", description = "서류별 점수 가중치 조정")
 @WebAdapter
 @RequestMapping("/api/v1/admin/document-weights")
 public class AdminDocumentWeightController {

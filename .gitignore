@@ -52,3 +52,7 @@ out/
 !.env.example
 *.local.yml
 *-secrets.yml
+
+# API 문서 생성용 벤더 번들. 1.7MB짜리 서드파티 자산을 이력에 남길 이유가 없다.
+# tools/build-api-docs.js가 필요할 때 다시 내려받는다.
+/tools/vendor/
