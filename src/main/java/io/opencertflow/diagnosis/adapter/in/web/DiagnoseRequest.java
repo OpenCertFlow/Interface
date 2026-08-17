@@ -1,5 +1,18 @@
 package io.opencertflow.diagnosis.adapter.in.web;
 
+import io.opencertflow.diagnosis.domain.model.ApplianceItem;
+import io.opencertflow.diagnosis.domain.model.AdjustmentMode;
+import io.opencertflow.diagnosis.domain.model.BodyContactType;
+import io.opencertflow.diagnosis.domain.model.ControllerStatus;
+import io.opencertflow.diagnosis.domain.model.ManufacturingType;
+import io.opencertflow.diagnosis.domain.model.MaterialType;
+import io.opencertflow.diagnosis.domain.model.PowerSource;
+import io.opencertflow.diagnosis.domain.model.ProductGroup;
+import io.opencertflow.diagnosis.domain.model.SalesChannel;
+import io.opencertflow.diagnosis.domain.model.TargetUser;
+import io.opencertflow.diagnosis.domain.model.TemperatureSource;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -14,7 +27,7 @@ import java.util.List;
  */
 public record DiagnoseRequest(
         @NotBlank String productName,
-        @NotBlank String productGroup,
+        @NotBlank @Schema(implementation = ProductGroup.class) String productGroup,
         @NotNull Boolean usesElectricity,
         @PositiveOrZero Integer ratedVoltage,
         @PositiveOrZero Integer powerConsumption,
@@ -22,13 +35,13 @@ public record DiagnoseRequest(
         // 전원 방식(AC/DC). 인증 등급을 가르는 값이라 추론하지 않고 받는다 — 시행규칙이
         // 전기찜질기를 교류면 별표 3(안전인증), 직류면 별표 5(공급자적합성확인)에 넣는다.
         // 선택 항목이다. 비우면 UNKNOWN이 되어 전문가 확인으로 안내된다.
-        String powerSource,
+        @Schema(implementation = PowerSource.class) String powerSource,
         // 시행규칙 별표의 품목. 인증 등급이 여기서 정해진다 — 제품군이 아니라 품목 단위다.
         // 선택 항목이며, 비우면 UNKNOWN이 되어 전문가 확인으로 안내된다.
-        String applianceItem,
-        @NotBlank String targetUser,
-        @NotBlank String salesChannel,
-        List<String> materials,
+        @Schema(implementation = ApplianceItem.class) String applianceItem,
+        @NotBlank @Schema(implementation = TargetUser.class) String targetUser,
+        @NotBlank @Schema(implementation = SalesChannel.class) String salesChannel,
+        @ArraySchema(schema = @Schema(implementation = MaterialType.class)) List<String> materials,
         List<String> heldDocuments,
 
         /**
@@ -38,7 +51,7 @@ public record DiagnoseRequest(
         List<String> unknownDocuments,
 
         /** 제조 형태(ManufacturingType: SELF_MADE/IMPORTED/OEM/ODM/UNKNOWN, F-APP-006) */
-        String manufacturingType,
+        @Schema(implementation = ManufacturingType.class) String manufacturingType,
 
         /** 기존 인증 모델을 변경한 제품인지(F-APP-008) */
         Boolean isModifiedModel,
@@ -47,22 +60,22 @@ public record DiagnoseRequest(
         // 어떤 제품군이 어떤 항목을 요구하는지는 GET /api/v1/product-groups가 알려 준다.
 
         /** 신체에 닿는 방식(BodyContactType). 발열 제품이 아니면 null */
-        String bodyContactType,
+        @Schema(implementation = BodyContactType.class) String bodyContactType,
 
         /** 온도조절기 유무(ControllerStatus: PRESENT/ABSENT/UNKNOWN). 발열 제품이 아니면 null */
-        String controllerStatus,
+        @Schema(implementation = ControllerStatus.class) String controllerStatus,
 
         /** 온도 조절 단계 수. 조절 방식이 STEP일 때만 값이 있다 */
         @PositiveOrZero Integer adjustmentSteps,
 
         /** 온도 조절 방식(AdjustmentMode: STEP/CONTINUOUS/OTHER). 조절기가 있을 때만 값이 있다 */
-        String adjustmentMode,
+        @Schema(implementation = AdjustmentMode.class) String adjustmentMode,
 
         /** 최고 표면온도(℃). 출처가 모름이면 null */
         @PositiveOrZero Integer maxSurfaceTemperatureCelsius,
 
         /** 표면온도 값의 출처(TemperatureSource: MEASURED/ESTIMATED/UNKNOWN) */
-        String temperatureSource,
+        @Schema(implementation = TemperatureSource.class) String temperatureSource,
 
         /** 혈액순환·통증 완화 등 의료적 효능을 표방하는지. 표방하면 의료기기 규제로 넘어간다 */
         Boolean medicalUseClaim,

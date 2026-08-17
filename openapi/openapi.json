@@ -1344,6 +1344,7 @@
             "type" : "boolean"
           },
           "adjustmentMode" : {
+            "enum" : [ "STEP", "CONTINUOUS", "OTHER" ],
             "type" : "string"
           },
           "adjustmentSteps" : {
@@ -1352,6 +1353,7 @@
             "type" : "integer"
           },
           "applianceItem" : {
+            "enum" : [ "ELECTRIC_IRON", "KITCHEN_HEATING_APPLIANCE", "HAIR_CARE_DEVICE", "KITCHEN_MOTOR_APPLIANCE_AC", "LIQUID_HEATING_APPLIANCE", "ELECTRIC_BLANKET", "WATER_HEATER", "REFRIGERATION_APPLIANCE", "BATTERY_CHARGER", "HEATING_APPLIANCE", "ELECTRIC_MASSAGER", "AIR_CONDITIONER", "INSECT_KILLER_AC", "FAN_RANGE_HOOD", "HUMIDIFIER", "BEAUTY_DEVICE", "ELECTRIC_CHAIR_BED", "HOT_WATER_MAT", "ORAL_CLEANER", "PEST_REPELLER", "DISHWASHER", "WATER_PURIFIER", "FITNESS_EQUIPMENT", "SEWING_MACHINE", "SAUNA_EQUIPMENT", "PET_APPLIANCE", "AIR_PURIFIER_AC", "KITCHEN_MOTOR_APPLIANCE_DC", "INSECT_KILLER_DC", "DEHUMIDIFIER", "FOOD_WASTE_DISPOSER", "FOOD_WARMER", "ELECTRIC_HEATER_GENERAL", "ELECTRIC_BATHTUB", "VACUUM_CLEANER", "WASHING_MACHINE", "MICROWAVE_OVEN", "DRYING_APPLIANCE", "TOILET_APPLIANCE", "PET_BATH", "ELECTRIC_CLOCK", "SKIN_CARE_RADIATION_DEVICE", "LINT_REMOVER", "ELECTRIC_DOOR_LOCK", "AIR_PURIFIER_DC", "MOTORIZED_ROLL_SCREEN", "OTHER", "UNKNOWN" ],
             "type" : "string"
           },
           "autoShutOff" : {
@@ -1363,9 +1365,11 @@
             "type" : "integer"
           },
           "bodyContactType" : {
+            "enum" : [ "DIRECT_SKIN", "THROUGH_CLOTHING", "THROUGH_COVER", "NONE", "UNKNOWN" ],
             "type" : "string"
           },
           "controllerStatus" : {
+            "enum" : [ "PRESENT", "ABSENT", "UNKNOWN" ],
             "type" : "string"
           },
           "hasBattery" : {
@@ -1384,10 +1388,12 @@
             "type" : "boolean"
           },
           "manufacturingType" : {
+            "enum" : [ "SELF_MADE", "IMPORTED", "OEM", "ODM", "UNKNOWN" ],
             "type" : "string"
           },
           "materials" : {
             "items" : {
+              "enum" : [ "PLASTIC", "METAL", "RUBBER", "GLASS", "TEXTILE", "OTHER" ],
               "type" : "string"
             },
             "type" : "array"
@@ -1409,9 +1415,11 @@
             "type" : "integer"
           },
           "powerSource" : {
+            "enum" : [ "AC", "DC", "UNKNOWN" ],
             "type" : "string"
           },
           "productGroup" : {
+            "enum" : [ "SMALL_APPLIANCE", "ELECTRIC_HEATING_PAD" ],
             "minLength" : 1,
             "type" : "string"
           },
@@ -1428,6 +1436,7 @@
             "type" : "boolean"
           },
           "salesChannel" : {
+            "enum" : [ "ONLINE", "OFFLINE", "BOTH" ],
             "minLength" : 1,
             "type" : "string"
           },
@@ -1435,6 +1444,7 @@
             "type" : "boolean"
           },
           "targetUser" : {
+            "enum" : [ "GENERAL", "CHILD", "INDUSTRIAL" ],
             "minLength" : 1,
             "type" : "string"
           },
@@ -1442,6 +1452,7 @@
             "type" : "boolean"
           },
           "temperatureSource" : {
+            "enum" : [ "MEASURED", "ESTIMATED", "UNKNOWN" ],
             "type" : "string"
           },
           "unknownDocuments" : {
