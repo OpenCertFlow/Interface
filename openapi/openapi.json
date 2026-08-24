@@ -838,6 +838,27 @@
         },
         "type" : "object"
       },
+      "ApiResponsePrepPlanResponse" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/PrepPlanResponse"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/ErrorResponse"
+          },
+          "success" : {
+            "type" : "boolean"
+          },
+          "timestamp" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "ApiResponseProfile" : {
         "properties" : {
           "data" : {
@@ -1586,6 +1607,18 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "prepCompleted" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prepProgress" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prepTotal" : {
+            "format" : "int32",
+            "type" : "integer"
           },
           "previousDiagnosisId" : {
             "type" : "string"
@@ -2399,6 +2432,62 @@
           "viewCount" : {
             "format" : "int64",
             "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PrepItemCheckRequest" : {
+        "properties" : {
+          "done" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "done" ],
+        "type" : "object"
+      },
+      "PrepItemView" : {
+        "properties" : {
+          "documentCode" : {
+            "type" : "string"
+          },
+          "done" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "PrepPlanResponse" : {
+        "properties" : {
+          "completed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "diagnosisId" : {
+            "type" : "string"
+          },
+          "hasItems" : {
+            "type" : "boolean"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PrepItemView"
+            },
+            "type" : "array"
+          },
+          "notice" : {
+            "type" : "string"
+          },
+          "progress" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
           }
         },
         "type" : "object"
@@ -3329,7 +3418,7 @@
   "paths" : {
     "/api/v1/admin/ai-fallback" : {
       "get" : {
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "responses" : {
           "200" : {
             "content" : {
@@ -3604,7 +3693,7 @@
     },
     "/api/v1/admin/official-documents/{id}" : {
       "get" : {
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -3887,7 +3976,7 @@
     },
     "/api/v1/admin/rule-sets/{id}" : {
       "get" : {
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -4346,7 +4435,7 @@
         "tags" : [ "게시판" ]
       },
       "get" : {
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "in" : "path",
           "name" : "postId",
@@ -4663,7 +4752,7 @@
     },
     "/api/v1/consulting/leads/{id}" : {
       "get" : {
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -4971,7 +5060,7 @@
         "tags" : [ "진단 초안" ]
       },
       "get" : {
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -5358,7 +5447,7 @@
     },
     "/api/v1/documents/issues/{documentId}" : {
       "get" : {
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "in" : "path",
           "name" : "documentId",
@@ -5667,6 +5756,138 @@
         "tags" : [ "마이페이지" ]
       }
     },
+    "/api/v1/me/prep-plans/{diagnosisId}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "diagnosisId",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "principal",
+          "required" : true,
+          "schema" : {
+            "properties" : {
+              "name" : {
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrepPlanResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "인증 준비 트래커" ]
+      },
+      "put" : {
+        "operationId" : "createOrGet",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "diagnosisId",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "principal",
+          "required" : true,
+          "schema" : {
+            "properties" : {
+              "name" : {
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrepPlanResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "인증 준비 트래커" ]
+      }
+    },
+    "/api/v1/me/prep-plans/{diagnosisId}/items/{documentCode}" : {
+      "patch" : {
+        "operationId" : "check_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "diagnosisId",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "documentCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "principal",
+          "required" : true,
+          "schema" : {
+            "properties" : {
+              "name" : {
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PrepItemCheckRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrepPlanResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "인증 준비 트래커" ]
+      }
+    },
     "/api/v1/me/session" : {
       "delete" : {
         "operationId" : "logout",
@@ -5753,7 +5974,7 @@
     },
     "/api/v1/rule-sets/{id}" : {
       "get" : {
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -5857,6 +6078,9 @@
   }, {
     "description" : "진단 시작 전 제품군과 입력 항목을 내려받는다(비로그인 가능)",
     "name" : "제품군·입력 스키마"
+  }, {
+    "description" : "누락 서류를 확보해 가며 체크하는 목록(본인만)",
+    "name" : "인증 준비 트래커"
   }, {
     "description" : "결과 화면 문구 조회(비로그인 가능)",
     "name" : "리포트 문구"
