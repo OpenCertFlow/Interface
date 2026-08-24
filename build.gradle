@@ -39,6 +39,7 @@ ext {
 	openPdfVersion = '1.4.2'
 	jsonSchemaValidatorVersion = '1.5.9'
 	picocliVersion = '4.7.7'
+	resilience4jVersion = '2.2.0'
 }
 
 dependencies {
@@ -55,6 +56,11 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:${springdocVersion}"
+
+	// AI 워커 회로 차단기. reactor 모듈은 체인 연산자를, micrometer 모듈은 상태 지표를 제공한다.
+	implementation "io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}"
+	implementation "io.github.resilience4j:resilience4j-reactor:${resilience4jVersion}"
+	implementation "io.github.resilience4j:resilience4j-micrometer:${resilience4jVersion}"
 
 	// PDF 생성. fonts-extra가 한글 CJK 폰트(Adobe-Korea1)를 제공한다.
 	implementation "com.github.librepdf:openpdf:${openPdfVersion}"
