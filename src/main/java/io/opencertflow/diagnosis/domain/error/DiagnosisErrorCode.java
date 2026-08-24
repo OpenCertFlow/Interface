@@ -32,7 +32,12 @@ public enum DiagnosisErrorCode implements ErrorCode {
     /** 재진단에서 제품군을 바꾸려 했다. 제품군이 다르면 다른 제품이므로 새 진단이어야 한다. */
     PRODUCT_GROUP_CHANGED("OCF-DIAG-007",
             "재진단에서는 제품군을 바꿀 수 없습니다. 다른 제품군은 새로 진단해 주세요.",
-            ErrorType.CONFLICT);
+            ErrorType.CONFLICT),
+
+    /** 준비목록에 없는 서류를 체크하려 함. 사용자가 임의 코드를 보내 목록을 늘리지 못하게 막는다. */
+    PREP_ITEM_NOT_FOUND("OCF-DIAG-008",
+            "준비 목록에 없는 서류입니다.",
+            ErrorType.NOT_FOUND);
 
     private final String code;
     private final String defaultMessage;
