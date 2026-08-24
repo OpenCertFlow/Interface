@@ -6,15 +6,19 @@ import io.opencertflow.common.domain.error.BusinessException;
 import io.opencertflow.common.domain.model.Guard;
 import io.opencertflow.diagnosis.application.port.in.DiagnoseCommand;
 import io.opencertflow.diagnosis.application.port.in.DiagnoseProductUseCase;
+import io.opencertflow.diagnosis.application.port.in.DiagnosisHistoryEntry;
 import io.opencertflow.diagnosis.application.port.in.DiagnosisHistoryUseCase;
 import io.opencertflow.diagnosis.application.port.out.DiagnosisHistoryPort;
 import io.opencertflow.diagnosis.application.port.out.LoadDiagnosisPort;
+import io.opencertflow.diagnosis.application.port.out.PrepPlanPort;
 import io.opencertflow.diagnosis.domain.error.DiagnosisErrorCode;
 import io.opencertflow.diagnosis.domain.model.Diagnosis;
 import io.opencertflow.diagnosis.domain.model.DiagnosisId;
 import io.opencertflow.diagnosis.domain.model.DiagnosisSummary;
+import io.opencertflow.diagnosis.domain.model.PrepPlan;
 import io.opencertflow.diagnosis.domain.model.ProductProfile;
 import java.util.List;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
@@ -31,23 +35,40 @@ public class DiagnosisHistoryService implements DiagnosisHistoryUseCase {
 
     private final DiagnosisHistoryPort historyPort;
     private final LoadDiagnosisPort loadDiagnosisPort;
+    private final PrepPlanPort prepPlanPort;
     private final DiagnoseProductUseCase diagnoseProductUseCase;
     private final BlockingBridge blockingBridge;
 
     public DiagnosisHistoryService(
             DiagnosisHistoryPort historyPort,
             LoadDiagnosisPort loadDiagnosisPort,
+            PrepPlanPort prepPlanPort,
             DiagnoseProductUseCase diagnoseProductUseCase,
             BlockingBridge blockingBridge) {
         this.historyPort = historyPort;
         this.loadDiagnosisPort = loadDiagnosisPort;
+        this.prepPlanPort = prepPlanPort;
         this.diagnoseProductUseCase = diagnoseProductUseCase;
         this.blockingBridge = blockingBridge;
     }
 
+    /**
+     * 진단 요약에 준비 현황(F-APP-049)을 붙여 돌려준다.
+     *
+     * <p>준비계획은 진단마다 조회하지 않고 <b>한 번에</b> 가져온다 — 목록 크기만큼 쿼리가 나가면
+     * N+1이다. 트래커를 만들지 않은 진단은 맵에 키가 없어 {@code null}로 남는다.
+     */
     @Override
-    public Mono<List<DiagnosisSummary>> listMine(String ownerUserId) {
-        return blockingBridge.mono(() -> historyPort.findByOwner(ownerUserId, MAX_HISTORY));
+    public Mono<List<DiagnosisHistoryEntry>> listMine(String ownerUserId) {
+        return blockingBridge.mono(() -> {
+            List<DiagnosisSummary> summaries = historyPort.findByOwner(ownerUserId, MAX_HISTORY);
+            Map<DiagnosisId, PrepPlan> plans = prepPlanPort.findByDiagnosisIds(
+                    summaries.stream().map(summary -> DiagnosisId.of(summary.id())).toList());
+            return summaries.stream()
+                    .map(summary -> new DiagnosisHistoryEntry(
+                            summary, plans.get(DiagnosisId.of(summary.id()))))
+                    .toList();
+        });
     }
 
     @Override
