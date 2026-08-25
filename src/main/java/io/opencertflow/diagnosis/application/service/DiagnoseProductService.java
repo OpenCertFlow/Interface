@@ -1,5 +1,8 @@
 package io.opencertflow.diagnosis.application.service;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import io.opencertflow.common.application.annotation.UseCase;
 import io.opencertflow.common.application.support.BlockingBridge;
 import io.opencertflow.common.domain.error.BusinessException;
@@ -66,6 +69,9 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
     private final IdGenerator idGenerator;
     private final TimeProvider timeProvider;
     private final DiagnosisPolicy policy;
+    /** 워커가 무응답일 때 매 진단이 타임아웃을 기다리지 않게 한다(#37). RAG·LLM은 별개 장애라 분리. */
+    private final CircuitBreaker ragBreaker;
+    private final CircuitBreaker llmBreaker;
 
     public DiagnoseProductService(
             LoadRuleSetPort loadRuleSetPort,
@@ -78,7 +84,8 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
             BlockingBridge blockingBridge,
             IdGenerator idGenerator,
             TimeProvider timeProvider,
-            DiagnosisPolicy policy) {
+            DiagnosisPolicy policy,
+            CircuitBreakerRegistry circuitBreakerRegistry) {
         this.loadRuleSetPort = loadRuleSetPort;
         this.loadScoreRubricPort = loadScoreRubricPort;
         this.searchEvidencePort = searchEvidencePort;
@@ -90,6 +97,8 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         this.idGenerator = idGenerator;
         this.timeProvider = timeProvider;
         this.policy = policy;
+        this.ragBreaker = circuitBreakerRegistry.circuitBreaker("ai-worker-search");
+        this.llmBreaker = circuitBreakerRegistry.circuitBreaker("ai-worker-narrate");
     }
 
     @Override
@@ -158,6 +167,9 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         }
         return searchEvidencePort.search(EvidenceQuery.from(diagnosis))
                 .timeout(policy.searchTimeout())
+                // 타임아웃 다음이어야 한다 — 타임아웃 에러가 차단기를 통과하며 실패로 집계된다.
+                // 회로가 열리면 search()를 구독조차 않고 예외를 내며, 아래 폴백이 그대로 받는다.
+                .transformDeferred(CircuitBreakerOperator.of(ragBreaker))
                 .doOnNext(diagnosis::attachEvidences)
                 .thenReturn(diagnosis)
                 .onErrorResume(error -> {
@@ -186,6 +198,7 @@ public class DiagnoseProductService implements DiagnoseProductUseCase {
         }
         return narrateReportPort.narrate(NarrationRequest.from(diagnosis))
                 .timeout(policy.narrateTimeout())
+                .transformDeferred(CircuitBreakerOperator.of(llmBreaker))
                 .doOnNext(diagnosis::attachNarration)
                 .thenReturn(diagnosis)
                 .onErrorResume(error -> {
