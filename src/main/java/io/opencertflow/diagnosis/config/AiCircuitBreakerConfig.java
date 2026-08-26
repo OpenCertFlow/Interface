@@ -41,19 +41,28 @@ public class AiCircuitBreakerConfig {
                         .build());
         // 회로 상태·차단 건수가 /actuator/metrics의 resilience4j.circuitbreaker.*로 노출된다.
         TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(registry).bindTo(meterRegistry);
-        // 상태 전환은 장애의 시작·복구 신호다(#39). 요청별 폴백 로그와 달리 전환 시점에 딱 한 번
-        // 남고, 운영자 알림으로도 보낸다 — 웹훅 미설정이면 NoOp이라 로그만 남는다.
+        // 상태 전환 로그는 전부 남긴다(사후 분석용 심장박동 기록 — 로그는 공짜). 알림은
+        // "사람이 행동을 바꿔야 할 사건" 둘에만 보낸다: 장애 시작(CLOSED→OPEN)과 복구(→CLOSED).
+        // 재시험 사이클(OPEN↔HALF_OPEN)까지 발송하면 트래픽 있는 긴 장애에서 30초마다
+        // 같은 사실이 반복돼 경보 피로가 된다 — ERROR 폴링에서 막은 그 문제다(#39).
         registry.getEventPublisher().onEntryAdded(entryAdded ->
                 entryAdded.getAddedEntry().getEventPublisher().onStateTransition(event -> {
                     var transition = event.getStateTransition();
-                    String detail = "%s: %s → %s".formatted(event.getCircuitBreakerName(),
-                            transition.getFromState(), transition.getToState());
-                    if (transition.getToState() == CircuitBreaker.State.OPEN) {
+                    CircuitBreaker.State from = transition.getFromState();
+                    CircuitBreaker.State to = transition.getToState();
+                    String detail = "%s: %s → %s".formatted(
+                            event.getCircuitBreakerName(), from, to);
+                    if (to == CircuitBreaker.State.OPEN) {
                         log.warn("회로 상태 전환: {}", detail);
                     } else {
                         log.info("회로 상태 전환: {}", detail);
                     }
-                    alertPort.send("회로 상태 전환", detail);
+                    boolean incident = from == CircuitBreaker.State.CLOSED
+                            && to == CircuitBreaker.State.OPEN;
+                    boolean recovery = to == CircuitBreaker.State.CLOSED;
+                    if (incident || recovery) {
+                        alertPort.send("회로 상태 전환", detail);
+                    }
                 }));
         return registry;
     }
