@@ -1,9 +1,13 @@
 package io.opencertflow.diagnosis.config;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.micrometer.tagged.TaggedCircuitBreakerMetrics;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.opencertflow.common.alert.application.port.out.OpsAlertPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,9 +26,11 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties(AiResilienceProperties.class)
 public class AiCircuitBreakerConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(AiCircuitBreakerConfig.class);
+
     @Bean
     public CircuitBreakerRegistry circuitBreakerRegistry(
-            AiResilienceProperties properties, MeterRegistry meterRegistry) {
+            AiResilienceProperties properties, MeterRegistry meterRegistry, OpsAlertPort alertPort) {
         CircuitBreakerRegistry registry = CircuitBreakerRegistry.of(
                 CircuitBreakerConfig.custom()
                         .slidingWindowSize(properties.slidingWindowSize())
@@ -35,6 +41,20 @@ public class AiCircuitBreakerConfig {
                         .build());
         // 회로 상태·차단 건수가 /actuator/metrics의 resilience4j.circuitbreaker.*로 노출된다.
         TaggedCircuitBreakerMetrics.ofCircuitBreakerRegistry(registry).bindTo(meterRegistry);
+        // 상태 전환은 장애의 시작·복구 신호다(#39). 요청별 폴백 로그와 달리 전환 시점에 딱 한 번
+        // 남고, 운영자 알림으로도 보낸다 — 웹훅 미설정이면 NoOp이라 로그만 남는다.
+        registry.getEventPublisher().onEntryAdded(entryAdded ->
+                entryAdded.getAddedEntry().getEventPublisher().onStateTransition(event -> {
+                    var transition = event.getStateTransition();
+                    String detail = "%s: %s → %s".formatted(event.getCircuitBreakerName(),
+                            transition.getFromState(), transition.getToState());
+                    if (transition.getToState() == CircuitBreaker.State.OPEN) {
+                        log.warn("회로 상태 전환: {}", detail);
+                    } else {
+                        log.info("회로 상태 전환: {}", detail);
+                    }
+                    alertPort.send("회로 상태 전환", detail);
+                }));
         return registry;
     }
 }
