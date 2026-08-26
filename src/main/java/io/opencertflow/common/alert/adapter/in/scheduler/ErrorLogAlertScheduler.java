@@ -3,7 +3,7 @@ package io.opencertflow.common.alert.adapter.in.scheduler;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.opencertflow.common.alert.application.port.out.OpsAlertPort;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +21,10 @@ import org.springframework.stereotype.Component;
  * 팀원 로컬·테스트·CI가 조용한 이유다.
  */
 @Component
-@ConditionalOnProperty(prefix = "opencertflow.alert", name = "webhook-url")
+// @ConditionalOnProperty는 빈 문자열도 "존재"로 판정한다 — 컴포즈 전달 통로가 값 없을 때
+// 빈 문자열을 주입하므로, hasText로 "실제 값이 있을 때"만 이 빈이 생성되게 한다.
+@ConditionalOnExpression(
+        "T(org.springframework.util.StringUtils).hasText('${opencertflow.alert.webhook-url:}')")
 public class ErrorLogAlertScheduler {
 
     private final MeterRegistry meterRegistry;
