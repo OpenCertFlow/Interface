@@ -104,7 +104,7 @@ jobs:
       # 태그는 정확한 버전으로 고정한다 — `@v2` 같은 이동 태그는 이 저장소에 존재하지 않아
       # "Unable to resolve action"으로 죽는다(실제로 겪었다).
       - name: OSV 스캔
-        uses: google/osv-scanner-action/osv-scanner-action@v2.5.0
+        uses: google/osv-scanner-action/osv-scanner-action@v2.5.1
         with:
           scan-args: |-
             --recursive
