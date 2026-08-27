@@ -127,6 +127,19 @@ opencertflow:
     # 응답 시간 예산. 초과 시 폴백한다 — 진단은 실패하지 않는다. docs/design/03-diagnosis-flow.md
     search-timeout: 2s
     narrate-timeout: 5s
+    # 회로 차단기(#37). 워커가 무응답일 때 매 진단이 위 타임아웃을 기다리지 않도록
+    # 연속 실패를 감지해 즉시 폴백하고, 복구를 자동 감지한다. 값 근거는 AiResilienceProperties.
+    resilience:
+      sliding-window-size: 10
+      minimum-number-of-calls: 5   # 라이브러리 기본 100 — 안 주면 소규모에서 회로가 안 열림
+      failure-rate-threshold: 50
+      wait-duration-in-open: 30s
+      permitted-calls-in-half-open: 3
+
+  # 운영자 알림(#39). webhook-url은 시크릿이라 여기 적지 않는다 — 환경변수
+  # OPENCERTFLOW_ALERT_WEBHOOK_URL로만 주입하며, 값이 없으면 발송·폴링이 통째로 비활성이다.
+  alert:
+    poll-interval: 1m   # ERROR 카운터 확인 주기. 근거는 AlertProperties javadoc
 
 management:
   endpoints:

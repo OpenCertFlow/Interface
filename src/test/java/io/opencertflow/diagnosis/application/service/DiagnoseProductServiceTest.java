@@ -114,7 +114,10 @@ class DiagnoseProductServiceTest {
             SaveDiagnosisPort save) {
         return new DiagnoseProductService(
                 loadRuleSet, rubricDefaults, search, narrate, save, fallbackOff, noMetrics,
-                blockingBridge, idGenerator, timeProvider, policy);
+                blockingBridge, idGenerator, timeProvider, policy,
+                // 기본 설정 레지스트리 — 최소 호출 수(100)를 채우지 않아 회로가 열리지 않는다.
+                // 이 테스트의 관심사는 진단 흐름이지 차단기가 아니다.
+                io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry.ofDefaults());
     }
 
     private DiagnoseCommand dryerCommand() {
