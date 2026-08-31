@@ -39,7 +39,7 @@ ext {
 	openPdfVersion = '1.4.2'
 	jsonSchemaValidatorVersion = '1.5.9'
 	picocliVersion = '4.7.7'
-	resilience4jVersion = '2.2.0'
+	resilience4jVersion = '2.4.0'
 }
 
 dependencies {
@@ -106,11 +106,11 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
 	// 뮤테이션 테스트 도구. 별도 컨피규레이션이라 애플리케이션 클래스패스를 오염시키지 않는다.
-	pitest 'org.pitest:pitest-command-line:1.25.9'
+	pitest 'org.pitest:pitest-command-line:1.30.0'
 	pitest 'org.pitest:pitest-junit5-plugin:1.2.3'
 
 	// SDK 생성기 CLI.
-	openapiGenerator 'org.openapitools:openapi-generator-cli:7.24.0'
+	openapiGenerator 'org.openapitools:openapi-generator-cli:7.25.0'
 }
 
 // 룰·가중치·스키마는 저장소 루트에 둔다 — 커뮤니티가 GitHub에서 바로 보고 PR을 보낼 수 있어야
